@@ -1,0 +1,37 @@
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+  tomcat:
+    max-http-form-post-size: 8MB
+    max-swallow-size: 8MB
+  error:
+    include-message: never
+    include-stacktrace: never
+spring:
+  application:
+    name: assurance-memory
+  lifecycle:
+    timeout-per-shutdown-phase: 25s
+  servlet:
+    multipart:
+      enabled: false
+  datasource:
+    url: ${JDBC_URL:jdbc:postgresql://localhost:5432/assurance}
+    username: ${DB_USER:assurance}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:16}
+      minimum-idle: 2
+      connection-timeout: 10000
+      validation-timeout: 3000
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+logging:
+  level:
+    root: INFO

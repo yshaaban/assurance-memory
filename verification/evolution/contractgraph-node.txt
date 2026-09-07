@@ -1,0 +1,63 @@
+
+> @contractgraph/tooling@0.1.0 test
+> npm run build && node --test dist/test/*.test.js
+
+
+> @contractgraph/tooling@0.1.0 build
+> tsc -p tsconfig.json
+
+✔ canonicalization is order-independent for objects (2.912667ms)
+✔ canonicalization preserves array order (0.258ms)
+✔ non-finite values are rejected (0.464625ms)
+✔ undefined cannot disappear from a validity key (0.157958ms)
+✔ safe lifecycle is model-supported (1.539875ms)
+✔ shortest safety counterexample is returned (1.067208ms)
+✔ cleanup skipped under interleaving violates bounded response (0.578917ms)
+✔ unexpected deadlock is not success (0.375166ms)
+✔ terminal states are explicit (0.356667ms)
+✔ state-budget exhaustion is UNKNOWN (0.352834ms)
+✔ transition-budget exhaustion is UNKNOWN (0.275333ms)
+✔ initial-state invariant is checked (0.179584ms)
+✔ trace checks initial-state invariant too (0.314209ms)
+✔ zero-step response requires immediate response (0.220167ms)
+✔ out-of-domain transitions cannot disappear silently (0.236084ms)
+✔ no requested properties means UNKNOWN (0.144792ms)
+✔ unknown state name is rejected (0.127667ms)
+✔ unknown variable in guard is rejected (0.108666ms)
+✔ duplicate transition identity is rejected (0.091416ms)
+✔ non-integer variable bounds rejected (0.094542ms)
+✔ assign/add collision is rejected (0.108667ms)
+✔ valid observed trace remains scoped to the trace (0.139416ms)
+✔ incomplete telemetry cannot establish trace completeness (0.104667ms)
+✔ out-of-order lifecycle event is refuted (0.09875ms)
+✔ unknown trace transition is refuted (0.138458ms)
+✔ detectors label heuristic debt as heuristic (0.254917ms)
+✔ new subject is an inventory drift signal (0.230458ms)
+✔ removed auth marker is classified as declaration drift (0.196583ms)
+✔ fixed-origin client rejects insecure nonlocal URLs (0.261583ms)
+✔ fixed-origin client rejects credentials in URL (0.100292ms)
+✔ repository traversal is rejected (0.154167ms)
+✔ localhost development transport allowed (0.18975ms)
+✔ MCP negotiates, exposes least-authority tools, and checks a local model (102.507459ms)
+✔ compiler extracts explicit obligations, calls and discarded promises (576.672791ms)
+✔ unconfigured sources cannot make inventory look complete (90.197959ms)
+✔ deleted files do not survive as stale partition artifacts (761.712375ms)
+✔ Java without an adapter is an explicit inventory gap (105.740167ms)
+✔ syntax errors cannot establish complete source inventory (288.557583ms)
+✔ test harness changes alter the global verification input fingerprint (657.747458ms)
+✔ clean Git inputs are verified against tracked blob content (484.398208ms)
+✔ ignored untracked source cannot be attested as the committed tree (364.699458ms)
+✔ scan lock prevents concurrent mutation of published partition directory (2.404583ms)
+✔ symbolic links outside the repository are not followed (68.598333ms)
+✔ JDK adapter finds Spring-style self-invocation and interruption candidates (607.095583ms)
+✔ compiler declaration content changes invalidate a reused dependency pathname (415.012541ms)
+✔ explicit workload context is fingerprinted and cannot spoof inventory flags (413.805292ms)
+✔ JDK adapter fingerprints dependency directory contents, not only its pathname (1186.853ms)
+ℹ tests 47
+ℹ suites 0
+ℹ pass 47
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6421.943334

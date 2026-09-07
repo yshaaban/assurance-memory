@@ -1,0 +1,82 @@
+{
+  "transitions": [
+    {
+      "id": "cancel",
+      "when": {
+        "op": "and",
+        "args": [
+          {
+            "op": "not",
+            "args": [
+              {
+                "var": "cancelled"
+              }
+            ]
+          },
+          {
+            "op": "not",
+            "args": [
+              {
+                "var": "published"
+              }
+            ]
+          }
+        ]
+      },
+      "set": {
+        "cancelled": true
+      }
+    },
+    {
+      "id": "publish",
+      "when": {
+        "op": "not",
+        "args": [
+          {
+            "var": "published"
+          }
+        ]
+      },
+      "set": {
+        "published": true
+      }
+    }
+  ],
+  "invariants": [
+    {
+      "id": "no-publication-after-cancel",
+      "predicate": {
+        "op": "not",
+        "args": [
+          {
+            "op": "and",
+            "args": [
+              {
+                "var": "cancelled"
+              },
+              {
+                "var": "published"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "maxStates": 100,
+  "maxDepth": 20,
+  "initial": {
+    "cancelled": false,
+    "published": false
+  },
+  "domains": {
+    "cancelled": [
+      false,
+      true
+    ],
+    "published": [
+      false,
+      true
+    ]
+  }
+}

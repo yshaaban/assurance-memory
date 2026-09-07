@@ -1,0 +1,50 @@
+PASS canonical key ordering
+PASS json roundtrip unicode and escaping
+PASS duplicate JSON keys rejected
+PASS trailing JSON rejected
+PASS leading-zero JSON rejected
+PASS nonfinite JSON rejected
+PASS partition hash independent of fact input order
+PASS duplicate facts rejected
+PASS edge source must exist
+PASS forged nonhash fact rejected
+PASS new selector member invalidates negative-space evidence
+PASS removed selector member invalidates
+PASS attribute change invalidates even with reused content hash
+PASS new edge invalidates an absence query
+PASS workload drift invalidates
+PASS coverage change invalidates
+PASS current required evidence supports scoped claim
+PASS expired support is stale
+PASS missing evidence is not success
+PASS counterexample refutes
+PASS counterevidence cannot be outvoted
+PASS counterevidence does not expire into a pass
+PASS all required methods must support
+PASS truncated analysis cannot pass
+PASS coverage gaps cannot pass
+PASS empty subject set does not pass accidentally
+PASS unsupported assumption blocks
+PASS future evidence ignored
+PASS require attribute detects declaration violation
+PASS syntax is not implementation proof
+PASS declared attribute rule can support declaration
+PASS retry layers compose to 27 attempts
+PASS percentile tail budgets are not simply added as p99
+PASS known forbidden dependency has a witness
+PASS possible dynamic dependency is unknown not a definitive violation
+PASS self assumptions rejected
+PASS circular justification rejected
+PASS missing assumptions reported
+PASS valid lease accepted
+PASS stale fence rejected even for same agent
+PASS expired lease rejected
+PASS wrong lease owner rejected
+PASS valid server context accepted
+PASS semantic head conflict requires rebase
+PASS policy change invalidates read context
+PASS context cannot be borrowed by another agent
+PASS expired context rejected
+PASS authorization declaration drift classified
+PASS environment drift classified without source diff
+CORE_TESTS_PASSED=49

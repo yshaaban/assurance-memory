@@ -1,0 +1,2 @@
+SPRING_SMOKE seed=PASS (restart the server, then verify)
+SPRING_SMOKE restart-persistence=PASS

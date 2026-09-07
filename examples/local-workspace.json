@@ -1,0 +1,6 @@
+{
+  "workspace": "local-demo",
+  "components": {
+    "lifecycle": { "root": "fixtures/ts" }
+  }
+}

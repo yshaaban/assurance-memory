@@ -1,0 +1,133 @@
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO]
+[INFO] assurance-memory                                                   [pom]
+[INFO] assurance-core                                                     [jar]
+[INFO] assurance-server                                                   [jar]
+[INFO]
+[INFO] -------------------< dev.assurance:assurance-memory >-------------------
+[INFO] Building assurance-memory 1.0.0                                    [1/3]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO]
+[INFO] --------------------< dev.assurance:assurance-core >--------------------
+[INFO] Building assurance-core 1.0.0                                      [2/3]
+[INFO]   from services/core/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- resources:3.4.0:resources (default-resources) @ assurance-core ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO]
+[INFO] --- compiler:3.14.0:compile (default-compile) @ assurance-core ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 18 source files with javac [debug release 21] to target/classes
+[INFO]
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ assurance-core ---
+[INFO] skip non existing resourceDirectory /workspace/assurance-memory/services/core/src/test/resources
+[INFO]
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ assurance-core ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 2 source files with javac [debug release 21] to target/test-classes
+[INFO]
+[INFO] --- surefire:3.5.3:test (default-test) @ assurance-core ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junit.JUnit3Provider
+[INFO]
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running dev.assurance.core.CoreSelfTest
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in dev.assurance.core.CoreSelfTest
+[INFO] Running dev.assurance.core.ScaleSelfTest
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in dev.assurance.core.ScaleSelfTest
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO]
+[INFO] --- exec:3.5.0:java (core-verification) @ assurance-core ---
+PASS mission frontier preserves alternatives, revision review, stale cursors and budgets
+PASS strict JSON and canonical digests
+PASS atomic rollback and event sequence
+PASS negative-scope membership and selective invalidation
+PASS unchanged scan and historical immutable subjects
+PASS optimistic publication rejects concurrent overwrites
+PASS idempotency is actor-bound and payload-bound
+PASS old checker results remain historical after drift
+PASS freshness, partial evidence, and explicit rechecks
+PASS flaky green retries cannot launder same-generation counterevidence
+PASS credentials cannot combine independent authority roles
+PASS model misspellings cannot silently drop guards
+PASS incomplete discovery is not absence evidence
+PASS fenced leases and semantic overlap
+PASS plans pin policy and snapshots
+PASS reviewed AND arguments, stale premises, and cycles
+PASS debt exceptions never alter truth and expire
+PASS critical obligations cannot be waived
+PASS memory provenance and staleness
+PASS finite-state counterexamples and bounded uncertainty
+PASS causal traces preserve identity and uncertainty
+PASS authorization and tenant isolation
+PASS JDK AST Spring and lifecycle diagnostics
+PASS HTTP boundary rejects bad credentials and origins
+PASS parallel optimistic writers have exactly one winner
+CORE_VERIFICATION tests=25 assertions=85 java=21.0.12.1
+[INFO]
+[INFO] --- jar:3.5.0:jar (default-jar) @ assurance-core ---
+[INFO] Building jar: /workspace/assurance-memory/services/core/target/assurance-core-1.0.0.jar
+[INFO]
+[INFO] -------------------< dev.assurance:assurance-server >-------------------
+[INFO] Building assurance-server 1.0.0                                    [3/3]
+[INFO]   from services/server/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- resources:3.4.0:resources (default-resources) @ assurance-server ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO]
+[INFO] --- compiler:3.14.0:compile (default-compile) @ assurance-server ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 2 source files with javac [debug release 21] to target/classes
+[INFO]
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ assurance-server ---
+[INFO] skip non existing resourceDirectory /workspace/assurance-memory/services/server/src/test/resources
+[INFO]
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ assurance-server ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 1 source file with javac [debug release 21] to target/test-classes
+[INFO]
+[INFO] --- surefire:3.5.3:test (default-test) @ assurance-server ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junit.JUnit3Provider
+[INFO]
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running dev.assurance.core.JdbcStoreSelfTest
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in dev.assurance.core.JdbcStoreSelfTest
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO]
+[INFO] --- jar:3.5.0:jar (default-jar) @ assurance-server ---
+[INFO] Building jar: /workspace/assurance-memory/services/server/target/assurance-server-1.0.0.jar
+[INFO]
+[INFO] --- spring-boot:4.0.3:repackage (default) @ assurance-server ---
+[INFO] Replacing main artifact /workspace/assurance-memory/services/server/target/assurance-server-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to /workspace/assurance-memory/services/server/target/assurance-server-1.0.0.jar.original
+[INFO]
+[INFO] --- exec:3.5.0:java (postgres-verification) @ assurance-server ---
+POSTGRES_VERIFICATION assertions=10 workspace=c2ae8c59-3cb9-4703-8a9e-27596ce3e21b
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for assurance-memory 1.0.0:
+[INFO]
+[INFO] assurance-memory ................................... SUCCESS [  0.001 s]
+[INFO] assurance-core ..................................... SUCCESS [  2.986 s]
+[INFO] assurance-server ................................... SUCCESS [  1.364 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  4.602 s
+[INFO] Finished at: 2026-09-07T22:54:00+03:00
+[INFO] ------------------------------------------------------------------------

@@ -1,0 +1,259 @@
+TAP version 13
+# Subtest: HTTP authorization, actor-bound idempotency and origin protection
+ok 1 - HTTP authorization, actor-bound idempotency and origin protection
+  ---
+  duration_ms: 440.166959
+  ...
+# Subtest: TS SDK to Java: generation invalidation, historical evidence, exact release receipt
+ok 2 - TS SDK to Java: generation invalidation, historical evidence, exact release receipt
+  ---
+  duration_ms: 205.455458
+  ...
+# Subtest: actual TS and Java/Spring analyzers publish paginated subject facts
+ok 3 - actual TS and Java/Spring analyzers publish paginated subject facts
+  ---
+  duration_ms: 1423.49625
+  ...
+# Subtest: finite-state model and causal trace checks run through shared HTTP boundary
+ok 4 - finite-state model and causal trace checks run through shared HTTP boundary
+  ---
+  duration_ms: 16.279166
+  ...
+# Subtest: real runner snapshots clean Git, strips secrets and refuses changed checker inputs
+ok 5 - real runner snapshots clean Git, strips secrets and refuses changed checker inputs
+  ---
+  duration_ms: 1177.851875
+  ...
+# Subtest: MCP stdio exposes a bounded agent-only surface and calls the live API
+ok 6 - MCP stdio exposes a bounded agent-only surface and calls the live API
+  ---
+  duration_ms: 104.030459
+  ...
+# (node:70907) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: persistent search, direct reverse imports, deletions, signatures and new membership
+not ok 7 - persistent search, direct reverse imports, deletions, signatures and new membership
+  ---
+  duration_ms: 10.975583
+  location: '/workspace/assurance-memory/packages/agent/dist/test/local.test.js:21:1'
+  failureType: 'testCodeFailure'
+  error: 'no such module: fts5'
+  code: 'ERR_SQLITE_ERROR'
+  stack: |-
+    new LocalIndex (file:///workspace/assurance-memory/packages/agent/dist/src/local-index.js:31:21)
+    TestContext.<anonymous> (file:///workspace/assurance-memory/packages/agent/dist/test/local.test.js:24:17)
+    async Test.run (node:internal/test_runner/test:932:9)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: failed workspace scan is atomic, and incomplete discovery cannot erase facts
+not ok 8 - failed workspace scan is atomic, and incomplete discovery cannot erase facts
+  ---
+  duration_ms: 0.718334
+  location: '/workspace/assurance-memory/packages/agent/dist/test/local.test.js:45:1'
+  failureType: 'testCodeFailure'
+  error: 'no such module: fts5'
+  code: 'ERR_SQLITE_ERROR'
+  stack: |-
+    new LocalIndex (file:///workspace/assurance-memory/packages/agent/dist/src/local-index.js:31:21)
+    TestContext.<anonymous> (file:///workspace/assurance-memory/packages/agent/dist/test/local.test.js:46:19)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:931:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:629:18)
+    Test.postRun (node:internal/test_runner/test:1042:19)
+    Test.run (node:internal/test_runner/test:970:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: candidate identity, stable keyset pages, resolution and reappearance retain provenance
+not ok 9 - candidate identity, stable keyset pages, resolution and reappearance retain provenance
+  ---
+  duration_ms: 1.0355
+  location: '/workspace/assurance-memory/packages/agent/dist/test/local.test.js:63:1'
+  failureType: 'testCodeFailure'
+  error: 'no such module: fts5'
+  code: 'ERR_SQLITE_ERROR'
+  stack: |-
+    new LocalIndex (file:///workspace/assurance-memory/packages/agent/dist/src/local-index.js:31:21)
+    TestContext.<anonymous> (file:///workspace/assurance-memory/packages/agent/dist/test/local.test.js:64:19)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:931:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:629:18)
+    Test.postRun (node:internal/test_runner/test:1042:19)
+    Test.run (node:internal/test_runner/test:970:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:629:7)
+  ...
+# Subtest: WAL readers see previous committed snapshot during writer staging
+not ok 10 - WAL readers see previous committed snapshot during writer staging
+  ---
+  duration_ms: 5.143792
+  location: '/workspace/assurance-memory/packages/agent/dist/test/local.test.js:91:1'
+  failureType: 'testCodeFailure'
+  error: 'no such module: fts5'
+  code: 'ERR_SQLITE_ERROR'
+  stack: |-
+    new LocalIndex (file:///workspace/assurance-memory/packages/agent/dist/src/local-index.js:31:21)
+    TestContext.<anonymous> (file:///workspace/assurance-memory/packages/agent/dist/test/local.test.js:93:20)
+    async Test.run (node:internal/test_runner/test:932:9)
+    async Test.processPendingSubtests (node:internal/test_runner/test:629:7)
+  ...
+# Subtest: environment changes invalidate context even when source facts are unchanged
+not ok 11 - environment changes invalidate context even when source facts are unchanged
+  ---
+  duration_ms: 0.64225
+  location: '/workspace/assurance-memory/packages/agent/dist/test/local.test.js:111:1'
+  failureType: 'testCodeFailure'
+  error: 'no such module: fts5'
+  code: 'ERR_SQLITE_ERROR'
+  stack: |-
+    new LocalIndex (file:///workspace/assurance-memory/packages/agent/dist/src/local-index.js:31:21)
+    TestContext.<anonymous> (file:///workspace/assurance-memory/packages/agent/dist/test/local.test.js:112:19)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:931:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:629:18)
+    Test.postRun (node:internal/test_runner/test:1042:19)
+    Test.run (node:internal/test_runner/test:970:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:629:7)
+  ...
+# Subtest: real compiler scan surfaces candidates locally without service credentials
+not ok 12 - real compiler scan surfaces candidates locally without service credentials
+  ---
+  duration_ms: 1.758792
+  location: '/workspace/assurance-memory/packages/agent/dist/test/local.test.js:128:1'
+  failureType: 'testCodeFailure'
+  error: 'no such module: fts5'
+  code: 'ERR_SQLITE_ERROR'
+  stack: |-
+    new LocalIndex (file:///workspace/assurance-memory/packages/agent/dist/src/local-index.js:31:21)
+    TestContext.<anonymous> (file:///workspace/assurance-memory/packages/agent/dist/test/local.test.js:130:19)
+    async Test.run (node:internal/test_runner/test:932:9)
+    async Test.processPendingSubtests (node:internal/test_runner/test:629:7)
+  ...
+# Subtest: classpath fingerprints change for overwritten and newly added compiler dependencies
+ok 13 - classpath fingerprints change for overwritten and newly added compiler dependencies
+  ---
+  duration_ms: 10.627083
+  ...
+# Subtest: frontier pagination rejects a changed local snapshot
+not ok 14 - frontier pagination rejects a changed local snapshot
+  ---
+  duration_ms: 1.67175
+  location: '/workspace/assurance-memory/packages/agent/dist/test/local.test.js:168:1'
+  failureType: 'testCodeFailure'
+  error: 'no such module: fts5'
+  code: 'ERR_SQLITE_ERROR'
+  stack: |-
+    new LocalIndex (file:///workspace/assurance-memory/packages/agent/dist/src/local-index.js:31:21)
+    TestContext.<anonymous> (file:///workspace/assurance-memory/packages/agent/dist/test/local.test.js:170:19)
+    async Test.run (node:internal/test_runner/test:932:9)
+    async Test.processPendingSubtests (node:internal/test_runner/test:629:7)
+  ...
+# Subtest: local MCP process exposes bounded read-only tools without credentials or a service
+not ok 15 - local MCP process exposes bounded read-only tools without credentials or a service
+  ---
+  duration_ms: 4.896167
+  location: '/workspace/assurance-memory/packages/agent/dist/test/local.test.js:188:1'
+  failureType: 'testCodeFailure'
+  error: 'no such module: fts5'
+  code: 'ERR_SQLITE_ERROR'
+  stack: |-
+    new LocalIndex (file:///workspace/assurance-memory/packages/agent/dist/src/local-index.js:31:21)
+    TestContext.<anonymous> (file:///workspace/assurance-memory/packages/agent/dist/test/local.test.js:193:19)
+    async Test.run (node:internal/test_runner/test:932:9)
+    async Test.processPendingSubtests (node:internal/test_runner/test:629:7)
+  ...
+# Subtest: transitive impact handles cycles and exposes node-budget exhaustion
+not ok 16 - transitive impact handles cycles and exposes node-budget exhaustion
+  ---
+  duration_ms: 1.094125
+  location: '/workspace/assurance-memory/packages/agent/dist/test/local.test.js:220:1'
+  failureType: 'testCodeFailure'
+  error: 'no such module: fts5'
+  code: 'ERR_SQLITE_ERROR'
+  stack: |-
+    new LocalIndex (file:///workspace/assurance-memory/packages/agent/dist/src/local-index.js:31:21)
+    TestContext.<anonymous> (file:///workspace/assurance-memory/packages/agent/dist/test/local.test.js:221:19)
+    Test.runInAsyncScope (node:async_hooks:211:14)
+    Test.run (node:internal/test_runner/test:931:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:629:18)
+    Test.postRun (node:internal/test_runner/test:1042:19)
+    Test.run (node:internal/test_runner/test:970:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:629:7)
+  ...
+# Subtest: repeated local function names in different callbacks retain distinct source identities
+ok 17 - repeated local function names in different callbacks retain distinct source identities
+  ---
+  duration_ms: 940.4955
+  ...
+# Subtest: effective compiler options outside source root participate in context identity
+ok 18 - effective compiler options outside source root participate in context identity
+  ---
+  duration_ms: 1030.25275
+  ...
+# Subtest: stable subject identities, glob semantics and path containment
+ok 19 - stable subject identities, glob semantics and path containment
+  ---
+  duration_ms: 1.490125
+  ...
+# Subtest: iterative SCC handles cycles and long graphs without recursive stack growth
+ok 20 - iterative SCC handles cycles and long graphs without recursive stack growth
+  ---
+  duration_ms: 24.081208
+  ...
+# Subtest: compiler analyzer detects lifecycle drift candidates without claiming proof
+ok 21 - compiler analyzer detects lifecycle drift candidates without claiming proof
+  ---
+  duration_ms: 955.897792
+  ...
+# Subtest: compiler analyzer detects layer cycles and preserves named identities across line movement
+ok 22 - compiler analyzer detects layer cycles and preserves named identities across line movement
+  ---
+  duration_ms: 974.209333
+  ...
+# Subtest: syntax and dynamic behavior remain visible as partial coverage
+ok 23 - syntax and dynamic behavior remain visible as partial coverage
+  ---
+  duration_ms: 636.703667
+  ...
+# Subtest: skipped symlinks prevent complete source discovery
+ok 24 - skipped symlinks prevent complete source discovery
+  ---
+  duration_ms: 322.811334
+  ...
+# Subtest: NFR margins, errors and rejected populations cannot be hidden
+ok 25 - NFR margins, errors and rejected populations cannot be hidden
+  ---
+  duration_ms: 0.85325
+  ...
+# Subtest: budget arithmetic uses percentile order statistics and multiplicative retries
+ok 26 - budget arithmetic uses percentile order statistics and multiplicative retries
+  ---
+  duration_ms: 0.14375
+  ...
+# Subtest: runner strips parent secrets, has a real timeout and uses shell:false
+ok 27 - runner strips parent secrets, has a real timeout and uses shell:false
+  ---
+  duration_ms: 223.186333
+  ...
+# Subtest: protected checker scopes bind content and new scope membership
+ok 28 - protected checker scopes bind content and new scope membership
+  ---
+  duration_ms: 3.153708
+  ...
+# Subtest: SDK rejects credential-bearing URLs, insecure remote transport and invalid workspaces
+ok 29 - SDK rejects credential-bearing URLs, insecure remote transport and invalid workspaces
+  ---
+  duration_ms: 0.319667
+  ...
+# Subtest: resolved external type content changes the dependency context digest
+ok 30 - resolved external type content changes the dependency context digest
+  ---
+  duration_ms: 476.474667
+  ...
+1..30
+# tests 30
+# suites 0
+# pass 21
+# fail 9
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5009.658666

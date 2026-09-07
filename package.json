@@ -1,0 +1,28 @@
+{
+  "name": "assurance-memory",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Requirement-centered memory, drift and coordination for code agents",
+  "type": "module",
+  "engines": {
+    "node": ">=24.16.0"
+  },
+  "workspaces": [
+    "packages/agent"
+  ],
+  "scripts": {
+    "build": "tsc -p packages/agent/tsconfig.json",
+    "test": "npm run build && bash scripts/test-java.sh && node --test packages/agent/dist/test/*.test.js",
+    "test:java": "bash scripts/test-java.sh",
+    "test:e2e": "npm run build && bash scripts/test-java.sh && node --test packages/agent/dist/test/e2e.test.js",
+    "demo": "npm run build && bash scripts/demo.sh",
+    "mcp": "node packages/agent/dist/src/mcp.js",
+    "test:ts": "npm run build && node --test packages/agent/dist/test/unit.test.js",
+    "local": "node packages/agent/dist/src/local-cli.js",
+    "test:local": "npm run build && node --test packages/agent/dist/test/local.test.js"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.7",
+    "typescript": "5.8.3"
+  }
+}

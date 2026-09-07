@@ -1,0 +1,332 @@
+# Local CLI and MCP reference
+
+This reference describes the implementation in version 1.1.0. Start with the [local workflow](LOCAL_WORKFLOW.md) for a walkthrough, [concepts](CONCEPTS.md) for the authority model, and [extension guide](EXTENDING.md) for detector behavior. The local index is an optional SQLite projection; the assurance service is a separate, authoritative workflow.
+
+## Executables and prerequisites
+
+Use the official Node 24.16+ build with SQLite FTS5. From the repository root:
+
+```sh
+npm ci --ignore-scripts
+npm run build
+node packages/agent/dist/src/local-cli.js --help
+```
+
+The workspace declares three executable names:
+
+| Name | Built entry point | Purpose |
+|---|---|---|
+| `assurance-local` | `packages/agent/dist/src/local-cli.js` | Scan into a local index and query it |
+| `assurance-mcp` | `packages/agent/dist/src/mcp.js` | Local or authenticated service MCP bridge |
+| `assurance` | `packages/agent/dist/src/cli.js` | Service publication, plans, runner and checks |
+
+The examples use explicit `node` paths so they do not depend on a global installation or shell link. `npm run local -- …` invokes the local entry point, but npm may print its own script banner: invoke `node` directly when stdout must contain only JSON.
+
+Successful local commands write one JSON object to stdout. Scan progress goes to stderr. Errors write a message to stderr and exit with status 1. Queries open an existing database read-only; run `scan` first. The local CLI does not require service credentials.
+
+## Workspace configuration
+
+```json
+{
+  "workspace": "payments",
+  "components": {
+    "api": {
+      "root": "../payments/packages/api",
+      "tsconfig": "tsconfig.json",
+      "exclude": ["generated/**", "vendor/**"],
+      "maxFiles": 20000,
+      "maxFileBytes": 1000000,
+      "layers": [
+        { "name": "domain", "match": "src/domain/**", "mayImport": [] },
+        { "name": "http", "match": "src/http/**", "mayImport": ["domain"] }
+      ]
+    }
+  }
+}
+```
+
+| Field | Meaning and default |
+|---|---|
+| `workspace` | String identifying the inventory. A database already assigned to another workspace is rejected. |
+| `components` | Nonempty object for local scans. Component IDs match `[A-Za-z0-9][A-Za-z0-9_.-]{0,49}`. |
+| `components.<id>.root` | Required directory; relative to the workspace JSON file. Resolved to its real path for local ingestion. |
+| `tsconfig` | Optional compiler configuration; relative to the component root. Concrete build target configurations are supported. Solution references are not expanded. |
+| `exclude` | Optional component-relative glob patterns. Supported syntax is `*`, `**`, `**/` and `?`; this is not a full gitignore implementation. |
+| `layers` | Optional ordered list of `{name, match, mayImport}`. The first matching layer classifies a path. A resolved import between different known layers must be in the source layer's `mayImport`. |
+| `maxFiles` | Recognized source/configuration file ceiling, default 20,000; accepted range 1–50,000. Exceeding it fails the scan. |
+| `maxFileBytes` | Per-file ceiling, default 1,000,000 bytes; accepted range 1–5,000,000. Oversized recognized files make discovery partial, so a local scan cannot publish. |
+| `environment` | Optional map of assumption names to 64-character lowercase SHA-256 digests. Supply digests of effective deployment/runtime inputs when relevant. Scanner-owned keys overwrite matching supplied keys. |
+| `javaClasspath` | Array of actual Java compiler inputs, resolved relative to the component root. An empty array is valid for JDK-only source. Required for local Java scanning. |
+| `javaCoreClassPath` | Classpath containing the supplied JDK adapter, resolved relative to the component root. Required alongside `javaClasspath`. |
+
+Build the Java adapter with JDK 21 using `bash scripts/test-java.sh`. A typical `javaCoreClassPath` is the absolute path to this repository's `.build/java`. Dependency resolution occurs outside the scanner; it does not run Maven, Gradle or package scripts.
+
+**Inventory detail:** discovery determines the TypeScript program's root files. `tsconfig` contributes compiler options; its `files`, `include` and `exclude` lists do not replace the scanner's inventory. Use component roots and the workspace's `exclude` for scan boundaries. External sources/types loaded by the compiler affect its dependency digest but do not become component facts.
+
+Discovery recognizes TS/JS variants (`.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs`, `.cjs`), Java, and selected configuration/document formats. It always excludes `node_modules`, `.git`, `target`, `dist`, `build`, `.build`, `.next`, `coverage`, `.gradle` and `.assurance-cache`. It does not ingest `.env`, `.env.*` or `auth.json`. Nonexcluded symlinks make discovery partial; they are not traversed. See [extraction limits](EXTENDING.md#extraction-and-coverage-limits) before interpreting absence.
+
+## Local command overview
+
+```text
+assurance-local scan --config FILE [--db FILE]
+assurance-local status --db FILE
+assurance-local search QUERY --db FILE [--limit N]
+assurance-local backlog --db FILE [--limit N] [--category CATEGORY] [--after CURSOR]
+assurance-local context SUBJECT_ID --db FILE [--limit N]
+assurance-local impact SUBJECT_ID --db FILE [--limit N]
+assurance-local drift SNAPSHOT --db FILE [--limit N] [--after ROW_ID]
+```
+
+| Option | Contract |
+|---|---|
+| `--db FILE` | Absolute or current-directory-relative database path. |
+| `--config FILE` | Required by `scan`. If `--db` is omitted, select `.assurance-cache/index.sqlite` beside this JSON file. Queries can also use `--config` solely to select this default path; they do not reload or validate the configuration. |
+| `--limit N` | Integer 1–200, default **20 for every local query**, including `drift`. |
+| `--category CATEGORY` | Backlog filter: `SIMPLIFICATION`, `INCONSISTENCY`, `RELIABILITY` or `COVERAGE`. Omission includes all categories. Case-sensitive. |
+| `--after CURSOR` | Backlog's opaque string cursor or drift's nonnegative numeric row cursor. Their formats are not interchangeable. |
+| `--help` | Print help without opening the index. |
+
+The parser accepts these global options, but only the commands above use them as described. There is no local `--component`: every configured component participates in a scan.
+
+## Scan and status
+
+```sh
+node packages/agent/dist/src/local-cli.js scan --config examples/local-workspace.json
+node packages/agent/dist/src/local-cli.js status --db examples/.assurance-cache/index.sqlite
+```
+
+`scan` returns `{snapshot, database, components, summary}`. Each entry in `components` contains `id`, counts of `added`, `changed`, `removed` and `unchanged` facts, `elapsedMs`, and `coverage`. The database path is absolute. The first committed local snapshot is 1. Every successful scan creates another snapshot, including scans with no changed facts; this differs from service component heads, which can remain stable on no-op publication.
+
+`status` returns the same summary shape embedded by `scan`:
+
+| Field | Meaning |
+|---|---|
+| `workspace`, `snapshot` | Index identity and latest committed local scan number |
+| `facts`, `opportunities` | Total current facts and currently emitted candidates |
+| `components` | Up to 200 components, sorted by ID; each includes root, snapshot, source revision, coverage, analyzer, rules, configuration/environment digests, `candidatePolicyDigest`, `factCount` and `findingCount` |
+| `componentsTruncated` | More than 200 components exist; this flag does not mean their facts were omitted from scanning |
+| `authority` | `LOCAL_INVESTIGATION_ONLY` |
+| `freshness` | `AS_OF_SCAN; rescan before editing or relying on absence` |
+| `history` | Retention reminder: drift history grows until the disposable index is rotated |
+
+Counts and paths depend on your checkout. This is an illustrative excerpt, with the component details omitted:
+
+```json
+{
+  "workspace": "payments",
+  "snapshot": 2,
+  "facts": 1200,
+  "opportunities": 43,
+  "componentsTruncated": false,
+  "authority": "LOCAL_INVESTIGATION_ONLY",
+  "freshness": "AS_OF_SCAN; rescan before editing or relying on absence"
+}
+```
+
+The database uses SQLite WAL and a 5-second busy timeout. A workspace scan begins one write transaction before extraction, ingests components in sorted ID order and commits them together. Queries can continue reading the prior committed state. Errors roll back facts, candidates, drift and snapshot metadata together. All previously indexed components must still be present and rescanned. To remove a component from the inventory or change its root, create a fresh index; a new component ID alone does not permit silently dropping the old component.
+
+## Search
+
+```sh
+node packages/agent/dist/src/local-cli.js search "payment retry" --db examples/.assurance-cache/index.sqlite --limit 10
+```
+
+Search indexes **locators, tags and effects**, not raw source bodies, comments, finding messages or embeddings. Input is limited to 500 characters. The first 20 letter/number/underscore tokens are quoted and joined with `AND` for FTS5. Punctuation-only input returns no matches. Supplying FTS syntax does not enable OR, prefix, phrase or wildcard queries. For example, `payment retry` requires both indexed tokens but does not require adjacency.
+
+Response: `{snapshot, items, limited: true}`. Items are facts with `component` and an FTS5 `rank`; lower rank values sort first, with subject ID as the tie-breaker. `limited` is always true because search returns a bounded top set, even when no match exists. It is not a detected truncation flag, and search has no continuation cursor. Use more specific tokens and read the cited source.
+
+A fact contains:
+
+```json
+{
+  "id": "<64-character subject digest>",
+  "component": "api",
+  "locator": "src/payment.ts#charge",
+  "path": "src/payment.ts",
+  "language": "TS",
+  "kind": "FUNCTION",
+  "contentHash": "<64-character digest>",
+  "signatureHash": "<64-character digest>",
+  "tags": ["all", "boundaries", "functions"],
+  "effects": ["RETRY"],
+  "metrics": { "lines": 12, "guards": 1, "assertions": 0 },
+  "line": 8,
+  "rank": -1.2
+}
+```
+
+This and later examples use explicit placeholder digests. Obtain real IDs from search/backlog; paths and line numbers are relative to the component's recorded root and scan.
+
+## Backlog and pagination
+
+```sh
+node packages/agent/dist/src/local-cli.js backlog --db examples/.assurance-cache/index.sqlite --category SIMPLIFICATION --limit 10
+node packages/agent/dist/src/local-cli.js backlog --db examples/.assurance-cache/index.sqlite --category SIMPLIFICATION --limit 10 --after '<returned next value>'
+```
+
+Response: `{snapshot, items, hasMore, next}`. Candidates sort by score descending, then ID ascending. Scores are severity priorities with a boundary bonus; they do not estimate debt cost or failure probability. [Candidate rules](EXTENDING.md#candidate-classification-and-scoring) describe the exact mapping.
+
+An illustrative one-item page:
+
+```json
+{
+  "snapshot": 2,
+  "items": [
+    {
+      "id": "<candidate digest>",
+      "component": "api",
+      "subjectId": "<subject digest>",
+      "ruleId": "DESIGN_BRANCH_CONCENTRATION",
+      "category": "SIMPLIFICATION",
+      "severity": "MEDIUM",
+      "score": 60,
+      "firstSeen": 1,
+      "lastSeen": 2,
+      "resolved": null,
+      "path": "src/payment.ts",
+      "line": 8,
+      "message": "10 conditional decisions share one function; inspect policy ownership and independent reasons to change.",
+      "confidence": "STATIC_CANDIDATE",
+      "nextStep": "Name a likely feature or policy change, inspect callers and ownership, and compare its current change surface with one simpler design.",
+      "evidenceNeeded": [
+        "Source and caller inspection at this snapshot",
+        "An explicit behavior contract and its assumptions",
+        "Before/after behavior tests and change-surface comparison"
+      ]
+    }
+  ],
+  "hasMore": true,
+  "next": "<opaque cursor returned by this page>"
+}
+```
+
+The opaque cursor pins the snapshot, category, last score and last ID. Continue with the same category and returned cursor while `hasMore` is true. Page size may change. A new successful scan, including an unchanged scan, or changing the category causes `Index changed; restart backlog pagination`. Restart at the first page; do not manufacture or edit cursors. On the final page `next` is null.
+
+Candidate identity is SHA-256 of `subjectId + ':' + ruleId`. Multiple sites of the same rule on one subject collapse to one candidate. `firstSeen` survives disappearance and reappearance; `lastSeen` records its latest emitted scan. Internally `resolved` records the scan in which it stopped being emitted. The backlog only returns unresolved rows, so its `resolved` is null. This lifecycle is detector bookkeeping, **not reviewed debt closure**. There is currently no CLI query for historical resolved candidates.
+
+## Context
+
+```sh
+node packages/agent/dist/src/local-cli.js context '<subject ID>' --db examples/.assurance-cache/index.sqlite --limit 20
+```
+
+Response: `{snapshot, subject, component, neighbors, opportunities, truncated, trust, coverage, nextStep}`.
+
+`subject` is the selected fact; `component` is its scan metadata. `opportunities` contains currently emitted candidates attached to that exact subject. A function query does not automatically include file-level findings. `neighbors` contains both direct imported and importing files for the subject's containing file. Both arrays are independently limited to `limit`; `truncated` is true if either has additional rows. There is no context pagination cursor.
+
+The context is a navigation aid. It has no raw source, exhaustive caller analysis or mandatory assurance obligation set. `trust` identifies source-derived content as untrusted; `nextStep` directs source inspection and service `plans.prepare` when approved obligations are needed. Unknown subject IDs fail with `Unknown subject ID; search first`.
+
+## Import impact
+
+```sh
+node packages/agent/dist/src/local-cli.js impact '<subject ID>' --db examples/.assurance-cache/index.sqlite --limit 100
+```
+
+Response: `{snapshot, seed, affected, truncated, modality, meaning}`. The seed is the subject's containing file ID. A breadth-first traversal follows incoming imports within that component. Each affected file has `{id, path, via, distance}`: `via` is the predecessor toward the seed and `distance` is the number of import edges. The seed itself is excluded; cycles do not repeatedly return a file.
+
+```json
+{
+  "snapshot": 2,
+  "seed": "<changed file ID>",
+  "affected": [
+    { "id": "<importer ID>", "path": "src/http.ts", "via": "<changed file ID>", "distance": 1 },
+    { "id": "<transitive importer ID>", "path": "src/server.ts", "via": "<importer ID>", "distance": 2 }
+  ],
+  "truncated": false,
+  "modality": "STATIC_IMPORT_REACHABILITY",
+  "meaning": "Potential change surface through component-local imports; not semantic behavioral impact or complete call-graph coverage"
+}
+```
+
+`limit` budgets affected nodes, with an additional bounded per-node adjacency read. `truncated` conservatively reports budget exhaustion. Rerun with a larger limit up to 200; there is no continuation cursor. `truncated: false` only means this traversal completed within the **stored import projection**. It does not fill extractor gaps, cross-component links, dynamic imports, calls or runtime dependencies. See [extraction limits](EXTENDING.md#extraction-and-coverage-limits).
+
+## Drift
+
+```sh
+node packages/agent/dist/src/local-cli.js drift 2 --db examples/.assurance-cache/index.sqlite --limit 50
+node packages/agent/dist/src/local-cli.js drift 2 --db examples/.assurance-cache/index.sqlite --limit 50 --after 123
+```
+
+`SNAPSHOT` is one positive integer identifying **the scan that recorded the changes**. This is not an arbitrary two-snapshot diff or “all changes since” query. First scans record initial facts as `ADDED`. No-op scans can have empty drift.
+
+Response: `{items, hasMore, next}`. Unlike the other local read responses, drift has no top-level `snapshot`; each row includes its snapshot. Rows sort by increasing numeric `id`. Continue with the same requested snapshot and `--after` set to `next`. Use `hasMore` to stop: `next` remains the last row ID, or the supplied `after` for an empty page, even when pagination is complete. New scans do not invalidate drift cursors because committed drift rows are immutable. An unknown positive snapshot returns an empty page; it does not prove that the snapshot existed.
+
+| `kind` | Payload |
+|---|---|
+| `ADDED` | Subject, component, path, line, `fields: []`, `before: null`, `after: <fact>` |
+| `CHANGED` | Subject, component, path, line, changed field names, before/after facts |
+| `REMOVED` | Subject, component, old path and line, `before: <fact>`, `after: null` |
+| `CONTEXT_CHANGED` | Component as subject; previous/current component metadata in `before` and `after` |
+
+Fact changes compare `contentHash`, `signatureHash`, `tags`, `effects`, `metrics`, `path`, `locator`, `kind` and `language`. A line-number-only change updates stored metadata but is not itself a `CHANGED` row. A locator/identity change commonly appears as removal plus addition. Context drift compares configuration digest, environment, analyzer, coverage and the compiled investigation policy's `candidatePolicyDigest`. Rebuild and restart scanner processes after changing that policy; its digest is computed on module load. A source revision label alone does not create context drift. Changing findings alone does not create fact drift.
+
+## Six local MCP tools
+
+Set `ASSURANCE_LOCAL_DB` to select local mode before launching the existing bridge:
+
+```json
+{
+  "mcpServers": {
+    "assurance-local": {
+      "command": "node",
+      "args": ["/absolute/path/assurance-memory/packages/agent/dist/src/mcp.js"],
+      "env": {
+        "ASSURANCE_LOCAL_DB": "/absolute/path/index.sqlite"
+      }
+    }
+  }
+}
+```
+
+The outer client configuration may differ; this is a conventional server declaration, not a client-specific installation command. Use an absolute database path because the bridge resolves relative paths against its process working directory. Its parent directory and WAL sidecars must remain accessible to SQLite; do not replace an active database underneath the process.
+
+| Tool | Required arguments | Optional arguments | Result |
+|---|---|---|---|
+| `assurance_local_status` | `{}` | None | Same as CLI `status` |
+| `assurance_local_search` | `query` string, at most 500 characters | `limit` | Same as CLI `search` |
+| `assurance_local_backlog` | `{}` | `category`, `after` string, `limit` | Same as CLI `backlog` |
+| `assurance_local_context` | `id` string | `limit` | Same as CLI `context` |
+| `assurance_local_impact` | `id` string | `limit` | Same as CLI `impact` |
+| `assurance_local_drift` | `snapshot` integer, at least 1 | `after` integer, at least 0; `limit` | Same as CLI `drift` |
+
+All local limits default to 20 and accept 1–200. The same `localQuery` function implements CLI and MCP reads. The MCP schemas advertise bounded strings for IDs; the shared local query layer further limits strings to 2,000 characters. Valid subject IDs are the returned 64-character digests. Tool arguments must be objects, including `{}` for status. Unknown or missing properties are rejected.
+
+Local mode exposes exactly these six tools, all annotated read-only. It opens the database read-only, does not scan and does not expose remote proposal, approval, evidence or lease operations. A failed local open does not fall back to remote mode. Remove `ASSURANCE_LOCAL_DB` and configure service credentials to use the separate [service tool surface](AGENT_PROTOCOL.md).
+
+The bridge uses newline-delimited JSON-RPC over stdio and protocol version `2025-06-18`. Initialize before `tools/list` or `tools/call`. A request example:
+
+```jsonl
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"example-client","version":"1"}}}
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"assurance_local_backlog","arguments":{"category":"SIMPLIFICATION","limit":10}}}
+```
+
+Successful calls return both JSON as `result.structuredContent` and the same serialized JSON as a text content block, with `isError: false`. Query errors return a text content block with `isError: true`; transport/method errors use JSON-RPC `error`. The bridge limits request lines to 1,000,000 bytes, serialized tool results to 4,000,000 bytes and active requests to 8. Oversized results fail instead of silently omitting data. Lower the page/node limit; `status` has no size-tuning parameter, so a workspace whose status cannot fit requires a smaller inventory or an implementation improvement.
+
+## Snapshot and retention rules
+
+Each local read uses one SQLite read transaction for its revision and rows. Separate calls can observe different committed scans, so compare their `snapshot` values before combining results. A backlog cursor pins cross-call pagination; other current-state queries have no historical snapshot selector. Drift provides historical changes, not arbitrary historical search/context. The source itself is outside this SQLite transaction: rescan a changed checkout before relying on its metadata.
+
+The index stores metadata and before/after drift facts, not full source bodies. Absolute roots, symbols, source paths, revision identifiers and findings may still disclose repository information. Keep it within the repository's normal access boundary and exclude it from Git. History has no automatic compaction or retention. To rotate it, stop readers/writers, choose a new database path, scan fully, then point clients to the new index. Historical local snapshot numbers and cursors belong to their original database and do not transfer. Durable evidence/decision records belong in the service.
+
+## Separate service CLI
+
+The service CLI is `node packages/agent/dist/src/cli.js`. It is not selected by `ASSURANCE_LOCAL_DB`. Except for `fingerprint` and `nfr`, commands use the authenticated service client. Configure `ASSURANCE_URL`, `ASSURANCE_WORKSPACE` and the appropriate `ASSURANCE_TOKEN`; see the [API](API.md) and [agent protocol](AGENT_PROTOCOL.md) for authority and request schemas.
+
+| Command | Options/arguments | Behavior |
+|---|---|---|
+| `scan` | `--config FILE`, optional `--component ID` | Publishes configured components individually to the service. Workspace must match `ASSURANCE_WORKSPACE` (default `demo`). This is not the local all-component SQLite transaction. |
+| `call OPERATION` | `--json FILE` or `--json -` | Sends the supplied JSON object to an API operation. |
+| `prepare` | `--components a,b --selectors component:a,component:b --intent TEXT`, optional `--supersedes ID` | Prepares a plan and expands remaining mandatory claim details. |
+| `validate PLAN_ID` | Positional plan ID | Reads current plan validation. |
+| `model` | `--json FILE` or `-` | Calls `models.check`; does not submit authoritative evidence. |
+| `trace` | `--json FILE` or `-` | Calls `traces.check`; does not submit authoritative evidence. |
+| `nfr` | `--json FILE` or `-`, containing `{envelope, batch}` | Evaluates the local latency envelope without service authentication. |
+| `runner` | `--config FILE`, optional `--once`, `--unsafe-local` | Runs configured checker jobs. Use operator-owned configuration and the [security model](SECURITY.md); `--unsafe-local` is an explicit escape from normal isolation. |
+| `fingerprint` | `--root DIR --patterns 'glob,glob'` | Computes a Git scope fingerprint locally. |
+| `--help` | No service required | Shows help. |
+
+For `--json -`, stdin JSON is limited to 8,000,000 bytes. Service operation payloads have their own validation limits. Runner commands execute checks under a separate authority: local scanning does not grant that authority. Reviewed mission decomposition and `claims.frontier` are documented in [concepts](CONCEPTS.md#the-reviewed-mission-frontier).
+
+## Implementation map
+
+The behavior above is implemented by [local-cli.ts](../packages/agent/src/local-cli.ts), [local-query.ts](../packages/agent/src/local-query.ts), [local-index.ts](../packages/agent/src/local-index.ts), [scan.ts](../packages/agent/src/scan.ts) and [mcp.ts](../packages/agent/src/mcp.ts). The [local tests](../packages/agent/test/local.test.ts) exercise rollback, drift, invalidation, cursor consistency, candidate lifecycle, import cycles and the MCP process boundary.

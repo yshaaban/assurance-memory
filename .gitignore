@@ -1,0 +1,12 @@
+node_modules/
+dist/
+target/
+.build/
+.env
+.assurance-cache/
+*.log
+coverage/
+
+.local/
+.assurance-secrets/
+verification/*.log

@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Approved assurance claim input",
+  "description": "Input to claims.approve. Additional cross-field, graph and authorization checks run in the service. Explicit values are required here rather than relying on service defaults.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "expectedRevision",
+    "statement",
+    "owner",
+    "components",
+    "watch",
+    "quantification",
+    "checks",
+    "mode",
+    "critical",
+    "allowPartialAnalysis"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.@/-]{0,119}$"
+    },
+    "expectedRevision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 12000
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,49}$"
+      }
+    },
+    "watch": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2000,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "maxLength": 240,
+        "pattern": "^(?:(?:component|context):[A-Za-z0-9][A-Za-z0-9_.-]{0,49}|scope:[A-Za-z0-9][A-Za-z0-9_.-]{0,49}:[A-Za-z0-9_.-]{1,80}|subject:[A-Za-z0-9][A-Za-z0-9_.-]{0,49}:[a-f0-9]{64})$"
+      }
+    },
+    "quantification": {
+      "enum": [
+        "ALL_MATCHING",
+        "EXACT_SUBJECTS"
+      ]
+    },
+    "checks": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "checker",
+          "version"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.@/-]{0,119}$"
+          },
+          "kind": {
+            "enum": [
+              "STATIC",
+              "TEST",
+              "MODEL",
+              "BENCHMARK",
+              "TRACE",
+              "REVIEW"
+            ]
+          },
+          "checker": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.@/-]{0,119}$"
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "maxAgeSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 31536000,
+            "default": 86400
+          }
+        }
+      }
+    },
+    "mode": {
+      "enum": [
+        "DIRECT",
+        "DECOMPOSED",
+        "BOTH"
+      ]
+    },
+    "critical": {
+      "type": "boolean"
+    },
+    "allowPartialAnalysis": {
+      "type": "boolean"
+    },
+    "definitions": {
+      "type": "object"
+    },
+    "sources": {
+      "type": "array"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "enum": [
+              "DIRECT",
+              "BOTH"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ]
+      },
+      "then": {
+        "properties": {
+          "checks": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

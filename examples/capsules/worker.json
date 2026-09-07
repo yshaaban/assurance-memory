@@ -1,0 +1,35 @@
+{
+  "id": "worker.cleanup",
+  "expectedRevision": 0,
+  "statement": "Every admitted operation releases its owned resources on normal completion, failure, cancellation and shutdown within the approved workload envelope.",
+  "owner": "platform",
+  "components": [
+    "worker"
+  ],
+  "watch": [
+    "component:worker"
+  ],
+  "quantification": "ALL_MATCHING",
+  "checks": [
+    {
+      "id": "lifecycle-regression",
+      "kind": "TEST",
+      "checker": "unit-tests",
+      "version": "1",
+      "maxAgeSeconds": 86400
+    }
+  ],
+  "mode": "DIRECT",
+  "critical": true,
+  "allowPartialAnalysis": false,
+  "definitions": {
+    "cancellation": "Requesting cancellation and confirming termination are distinct events.",
+    "coverage": "The sample analyzers are incomplete. This claim intentionally remains UNKNOWN until adequate analysis/evidence is configured."
+  },
+  "sources": [
+    {
+      "kind": "approved-example",
+      "reference": "Illustrative requirement, not a claim about your system"
+    }
+  ]
+}

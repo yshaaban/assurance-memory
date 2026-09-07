@@ -1,0 +1,78 @@
+
+added 4 packages, and audited 6 packages in 1s
+
+found 0 vulnerabilities
+
+> assurance-memory@1.1.0 test
+> npm run build && bash scripts/test-java.sh && node --test packages/agent/dist/test/*.test.js
+
+
+> assurance-memory@1.1.0 build
+> tsc -p packages/agent/tsconfig.json
+
+PASS mission frontier preserves alternatives, revision review, stale cursors and budgets
+PASS strict JSON and canonical digests
+PASS atomic rollback and event sequence
+PASS negative-scope membership and selective invalidation
+PASS unchanged scan and historical immutable subjects
+PASS optimistic publication rejects concurrent overwrites
+PASS idempotency is actor-bound and payload-bound
+PASS old checker results remain historical after drift
+PASS freshness, partial evidence, and explicit rechecks
+PASS flaky green retries cannot launder same-generation counterevidence
+PASS credentials cannot combine independent authority roles
+PASS model misspellings cannot silently drop guards
+PASS incomplete discovery is not absence evidence
+PASS fenced leases and semantic overlap
+PASS plans pin policy and snapshots
+PASS reviewed AND arguments, stale premises, and cycles
+PASS debt exceptions never alter truth and expire
+PASS critical obligations cannot be waived
+PASS memory provenance and staleness
+PASS finite-state counterexamples and bounded uncertainty
+PASS causal traces preserve identity and uncertainty
+PASS authorization and tenant isolation
+PASS JDK AST Spring and lifecycle diagnostics
+PASS HTTP boundary rejects bad credentials and origins
+PASS parallel optimistic writers have exactly one winner
+CORE_VERIFICATION tests=25 assertions=85 java=21.0.12.1
+✔ HTTP authorization, actor-bound idempotency and origin protection (207.832875ms)
+✔ TS SDK to Java: generation invalidation, historical evidence, exact release receipt (80.908958ms)
+✔ actual TS and Java/Spring analyzers publish paginated subject facts (514.698166ms)
+✔ finite-state model and causal trace checks run through shared HTTP boundary (7.265917ms)
+✔ real runner snapshots clean Git, strips secrets and refuses changed checker inputs (590.394541ms)
+✔ MCP stdio exposes a bounded agent-only surface and calls the live API (43.509917ms)
+✔ persistent search, direct reverse imports, deletions, signatures and new membership (12.00775ms)
+✔ failed workspace scan is atomic, and incomplete discovery cannot erase facts (0.934083ms)
+✔ candidate identity, stable keyset pages, resolution and reappearance retain provenance (6.817667ms)
+✔ WAL readers see previous committed snapshot during writer staging (7.388208ms)
+✔ environment changes invalidate context even when source facts are unchanged (0.934792ms)
+✔ real compiler scan surfaces candidates locally without service credentials (531.196667ms)
+✔ classpath fingerprints change for overwritten and newly added compiler dependencies (4.336958ms)
+✔ frontier pagination rejects a changed local snapshot (1.353375ms)
+✔ local MCP process exposes bounded read-only tools without credentials or a service (36.270875ms)
+✔ transitive impact handles cycles and exposes node-budget exhaustion (0.874042ms)
+✔ repeated local function names in different callbacks retain distinct source identities (173.110333ms)
+✔ effective compiler options outside source root participate in context identity (351.134416ms)
+✔ Java large methods appear in the simplification backlog (0.750833ms)
+✔ changing the candidate implementation emits context drift across process restarts (91.635166ms)
+✔ stable subject identities, glob semantics and path containment (1.406125ms)
+✔ iterative SCC handles cycles and long graphs without recursive stack growth (16.408333ms)
+✔ compiler analyzer detects lifecycle drift candidates without claiming proof (325.683583ms)
+✔ compiler analyzer detects layer cycles and preserves named identities across line movement (365.266375ms)
+✔ syntax and dynamic behavior remain visible as partial coverage (306.578ms)
+✔ skipped symlinks prevent complete source discovery (166.29325ms)
+✔ NFR margins, errors and rejected populations cannot be hidden (0.335875ms)
+✔ budget arithmetic uses percentile order statistics and multiplicative retries (0.180834ms)
+✔ runner strips parent secrets, has a real timeout and uses shell:false (177.776541ms)
+✔ protected checker scopes bind content and new scope membership (1.888458ms)
+✔ SDK rejects credential-bearing URLs, insecure remote transport and invalid workspaces (0.131875ms)
+✔ resolved external type content changes the dependency context digest (258.044791ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2797.000458

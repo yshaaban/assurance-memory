@@ -1,0 +1,7 @@
+{
+  "workspace": "demo",
+  "components": {
+    "gateway": { "root": "fixtures/ts", "maxFiles": 20000 },
+    "worker": { "root": "fixtures/java", "maxFiles": 20000 }
+  }
+}

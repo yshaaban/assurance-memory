@@ -1,0 +1,72 @@
+
+> assurance-memory@1.1.0 test
+> npm run build && bash scripts/test-java.sh && node --test packages/agent/dist/test/*.test.js
+
+
+> assurance-memory@1.1.0 build
+> tsc -p packages/agent/tsconfig.json
+
+PASS mission frontier preserves alternatives, revision review, stale cursors and budgets
+PASS strict JSON and canonical digests
+PASS atomic rollback and event sequence
+PASS negative-scope membership and selective invalidation
+PASS unchanged scan and historical immutable subjects
+PASS optimistic publication rejects concurrent overwrites
+PASS idempotency is actor-bound and payload-bound
+PASS old checker results remain historical after drift
+PASS freshness, partial evidence, and explicit rechecks
+PASS flaky green retries cannot launder same-generation counterevidence
+PASS credentials cannot combine independent authority roles
+PASS model misspellings cannot silently drop guards
+PASS incomplete discovery is not absence evidence
+PASS fenced leases and semantic overlap
+PASS plans pin policy and snapshots
+PASS reviewed AND arguments, stale premises, and cycles
+PASS debt exceptions never alter truth and expire
+PASS critical obligations cannot be waived
+PASS memory provenance and staleness
+PASS finite-state counterexamples and bounded uncertainty
+PASS causal traces preserve identity and uncertainty
+PASS authorization and tenant isolation
+PASS JDK AST Spring and lifecycle diagnostics
+PASS HTTP boundary rejects bad credentials and origins
+PASS parallel optimistic writers have exactly one winner
+CORE_VERIFICATION tests=25 assertions=85 java=21.0.12.1
+✔ HTTP authorization, actor-bound idempotency and origin protection (423.95525ms)
+✔ TS SDK to Java: generation invalidation, historical evidence, exact release receipt (160.112084ms)
+✔ actual TS and Java/Spring analyzers publish paginated subject facts (1256.895417ms)
+✔ finite-state model and causal trace checks run through shared HTTP boundary (15.173625ms)
+✔ real runner snapshots clean Git, strips secrets and refuses changed checker inputs (1272.262125ms)
+✔ MCP stdio exposes a bounded agent-only surface and calls the live API (92.674167ms)
+✔ persistent search, direct reverse imports, deletions, signatures and new membership (24.978542ms)
+✔ failed workspace scan is atomic, and incomplete discovery cannot erase facts (2.369334ms)
+✔ candidate identity, stable keyset pages, resolution and reappearance retain provenance (17.357583ms)
+✔ WAL readers see previous committed snapshot during writer staging (21.883125ms)
+✔ environment changes invalidate context even when source facts are unchanged (1.887083ms)
+✔ real compiler scan surfaces candidates locally without service credentials (1296.6545ms)
+✔ classpath fingerprints change for overwritten and newly added compiler dependencies (9.136875ms)
+✔ frontier pagination rejects a changed local snapshot (3.172542ms)
+✔ local MCP process exposes bounded read-only tools without credentials or a service (88.349708ms)
+✔ transitive impact handles cycles and exposes node-budget exhaustion (2.199708ms)
+✔ repeated local function names in different callbacks retain distinct source identities (415.678042ms)
+✔ effective compiler options outside source root participate in context identity (798.2275ms)
+✔ stable subject identities, glob semantics and path containment (1.54025ms)
+✔ iterative SCC handles cycles and long graphs without recursive stack growth (43.542709ms)
+✔ compiler analyzer detects lifecycle drift candidates without claiming proof (815.289416ms)
+✔ compiler analyzer detects layer cycles and preserves named identities across line movement (830.916958ms)
+✔ syntax and dynamic behavior remain visible as partial coverage (749.856125ms)
+✔ skipped symlinks prevent complete source discovery (343.871167ms)
+✔ NFR margins, errors and rejected populations cannot be hidden (0.620542ms)
+✔ budget arithmetic uses percentile order statistics and multiplicative retries (0.137833ms)
+✔ runner strips parent secrets, has a real timeout and uses shell:false (204.1615ms)
+✔ protected checker scopes bind content and new scope membership (2.524875ms)
+✔ SDK rejects credential-bearing URLs, insecure remote transport and invalid workspaces (0.275125ms)
+✔ resolved external type content changes the dependency context digest (481.568125ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4716.261625

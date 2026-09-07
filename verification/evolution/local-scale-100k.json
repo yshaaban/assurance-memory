@@ -1,0 +1,25 @@
+{
+  "workload": "Synthetic local SQLite projection; excludes compiler extraction and remote service",
+  "facts": 100000,
+  "components": 10,
+  "scanMs": {
+    "initial": 15472,
+    "unchanged": 1914,
+    "one-change": 1762
+  },
+  "changedFactCounts": [
+    100000,
+    0,
+    1
+  ],
+  "searchPlusContextMs": {
+    "p50": 0.47466699999858974,
+    "p95": 0.8765830000011192,
+    "p99": 1.8771670000023732
+  },
+  "databaseBytes": 202694656,
+  "peakRssBytes": 450641920,
+  "node": "v24.16.0",
+  "platform": "darwin/arm64",
+  "observedFacts": 100000
+}

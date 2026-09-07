@@ -1,0 +1,19 @@
+{
+  "name": "@assurance-memory/agent",
+  "version": "1.1.0",
+  "type": "module",
+  "private": true,
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "bin": {
+    "assurance": "dist/src/cli.js",
+    "assurance-mcp": "dist/src/mcp.js",
+    "assurance-local": "dist/src/local-cli.js"
+  },
+  "dependencies": {
+    "typescript": "5.8.3"
+  },
+  "engines": {
+    "node": ">=24.16.0"
+  }
+}

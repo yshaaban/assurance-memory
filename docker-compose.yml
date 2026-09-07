@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: assurance
+      POSTGRES_USER: assurance
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in an operator-owned environment file}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U assurance -d assurance"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [backend]
+    restart: unless-stopped
+  assurance:
+    build:
+      context: .
+      dockerfile: services/server/Dockerfile
+    environment:
+      JDBC_URL: jdbc:postgresql://postgres:5432/assurance
+      DB_USER: assurance
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+      ASSURANCE_AUTH_FILE: /run/secrets/assurance-auth
+      DB_POOL_SIZE: 16
+    secrets: [assurance-auth]
+    ports: ["127.0.0.1:8080:8080"]
+    depends_on:
+      postgres: {condition: service_healthy}
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=256m"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    stop_grace_period: 30s
+    networks: [backend]
+    restart: unless-stopped
+secrets:
+  assurance-auth:
+    file: ${ASSURANCE_AUTH_FILE_PATH:?Set absolute path to generated auth.json}
+volumes:
+  postgres-data:
+networks:
+  backend:

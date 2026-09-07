@@ -1,0 +1,74 @@
+
+> assurance-memory@1.1.0 test
+> npm run build && bash scripts/test-java.sh && node --test packages/agent/dist/test/*.test.js
+
+
+> assurance-memory@1.1.0 build
+> tsc -p packages/agent/tsconfig.json
+
+PASS mission frontier preserves alternatives, revision review, stale cursors and budgets
+PASS strict JSON and canonical digests
+PASS atomic rollback and event sequence
+PASS negative-scope membership and selective invalidation
+PASS unchanged scan and historical immutable subjects
+PASS optimistic publication rejects concurrent overwrites
+PASS idempotency is actor-bound and payload-bound
+PASS old checker results remain historical after drift
+PASS freshness, partial evidence, and explicit rechecks
+PASS flaky green retries cannot launder same-generation counterevidence
+PASS credentials cannot combine independent authority roles
+PASS model misspellings cannot silently drop guards
+PASS incomplete discovery is not absence evidence
+PASS fenced leases and semantic overlap
+PASS plans pin policy and snapshots
+PASS reviewed AND arguments, stale premises, and cycles
+PASS debt exceptions never alter truth and expire
+PASS critical obligations cannot be waived
+PASS memory provenance and staleness
+PASS finite-state counterexamples and bounded uncertainty
+PASS causal traces preserve identity and uncertainty
+PASS authorization and tenant isolation
+PASS JDK AST Spring and lifecycle diagnostics
+PASS HTTP boundary rejects bad credentials and origins
+PASS parallel optimistic writers have exactly one winner
+CORE_VERIFICATION tests=25 assertions=85 java=21.0.12.1
+✔ HTTP authorization, actor-bound idempotency and origin protection (214.790083ms)
+✔ TS SDK to Java: generation invalidation, historical evidence, exact release receipt (99.584375ms)
+✔ actual TS and Java/Spring analyzers publish paginated subject facts (563.23025ms)
+✔ finite-state model and causal trace checks run through shared HTTP boundary (11.107ms)
+✔ real runner snapshots clean Git, strips secrets and refuses changed checker inputs (618.164667ms)
+✔ MCP stdio exposes a bounded agent-only surface and calls the live API (41.441125ms)
+✔ persistent search, direct reverse imports, deletions, signatures and new membership (10.896375ms)
+✔ failed workspace scan is atomic, and incomplete discovery cannot erase facts (1.924875ms)
+✔ candidate identity, stable keyset pages, resolution and reappearance retain provenance (6.382042ms)
+✔ WAL readers see previous committed snapshot during writer staging (6.368875ms)
+✔ environment changes invalidate context even when source facts are unchanged (0.635625ms)
+✔ real compiler scan surfaces candidates locally without service credentials (541.290541ms)
+✔ classpath fingerprints change for overwritten and newly added compiler dependencies (7.526375ms)
+✔ frontier pagination rejects a changed local snapshot (2.241041ms)
+✔ local MCP process exposes bounded read-only tools without credentials or a service (39.758959ms)
+✔ transitive impact handles cycles and exposes node-budget exhaustion (0.843625ms)
+✔ repeated local function names in different callbacks retain distinct source identities (188.516583ms)
+✔ effective compiler options outside source root participate in context identity (378.086708ms)
+✔ Java large methods appear in the simplification backlog (0.701375ms)
+✔ changing the candidate implementation emits context drift across process restarts (84.922083ms)
+✔ stable subject identities, glob semantics and path containment (0.701958ms)
+✔ iterative SCC handles cycles and long graphs without recursive stack growth (18.066708ms)
+✔ compiler analyzer detects lifecycle drift candidates without claiming proof (313.81025ms)
+✔ compiler analyzer detects layer cycles and preserves named identities across line movement (352.160208ms)
+✔ syntax and dynamic behavior remain visible as partial coverage (331.769833ms)
+✔ skipped symlinks prevent complete source discovery (167.211ms)
+✔ NFR margins, errors and rejected populations cannot be hidden (0.332166ms)
+✔ budget arithmetic uses percentile order statistics and multiplicative retries (0.073833ms)
+✔ runner strips parent secrets, has a real timeout and uses shell:false (177.60025ms)
+✔ protected checker scopes bind content and new scope membership (1.847875ms)
+✔ SDK rejects credential-bearing URLs, insecure remote transport and invalid workspaces (0.144792ms)
+✔ resolved external type content changes the dependency context digest (287.6805ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2910.427292

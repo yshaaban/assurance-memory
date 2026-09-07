@@ -1,0 +1,38 @@
+name: verify
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  core-and-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version-file: ".nvmrc"}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: "21"}
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: node scripts/benchmark-local.mjs 10000
+  spring-and-postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env: {POSTGRES_USER: assurance, POSTGRES_PASSWORD: ci-disposable, POSTGRES_DB: assurance}
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U assurance -d assurance"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      JDBC_URL: jdbc:postgresql://localhost:5432/assurance
+      DB_USER: assurance
+      DB_PASSWORD: ci-disposable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version-file: ".nvmrc"}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: "21", cache: maven}
+      - run: mvn -B -ntp -Ppostgres-it verify
+      - run: bash scripts/test-spring.sh

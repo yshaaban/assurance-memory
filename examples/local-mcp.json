@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "assurance-local": {
+      "command": "node",
+      "args": ["/absolute/path/assurance-memory/packages/agent/dist/src/mcp.js"],
+      "env": { "ASSURANCE_LOCAL_DB": "/absolute/path/index.sqlite" }
+    }
+  }
+}

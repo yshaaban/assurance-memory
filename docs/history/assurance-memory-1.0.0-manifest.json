@@ -1,0 +1,352 @@
+{
+  "name": "assurance-memory",
+  "version": "1.0.0",
+  "recordedDate": "2026-09-06",
+  "scope": "Source, examples, documentation and actual verification logs. Dependencies and build outputs excluded.",
+  "files": {
+    ".dockerignore": {
+      "bytes": 103,
+      "sha256": "75cb0c55fb06bc1f9337106e9cb1f2ed1d4c2136bc1c8c6714a1065c7791efa6"
+    },
+    ".github/workflows/verify.yml": {
+      "bytes": 1236,
+      "sha256": "dbed3516225752d422102e80e5f7ced0608c9a08da2df407d32e4662c99f4f8a"
+    },
+    ".gitignore": {
+      "bytes": 123,
+      "sha256": "ee78947b2acf4ff6263337110a9f4f7713375293b61e73be4b282a0521e1964f"
+    },
+    "README.md": {
+      "bytes": 11708,
+      "sha256": "d366337677b9d890c476a1d698811a2677ab886976e2c5ab69a89c50602311bb"
+    },
+    "docker-compose.yml": {
+      "bytes": 1273,
+      "sha256": "260eaf655af2cef40cdde4bc617c5f7df8cc928cfa9b375c92409313ac3aa578"
+    },
+    "docs/AGENT_PROTOCOL.md": {
+      "bytes": 6418,
+      "sha256": "15f49807e287ce6c847d6a55c4e473481c15dd6ca488c360ede4cf0be68d1028"
+    },
+    "docs/API.md": {
+      "bytes": 11185,
+      "sha256": "70ac75a4ed19adf4150c6507446d58f26d66146ba323e89911aeeb83f1a0265f"
+    },
+    "docs/ARCHITECTURE.md": {
+      "bytes": 8855,
+      "sha256": "cd2b371df9e7126e1a0c38b2c211ac2c96877363f5df98e9e08c4b10dd98770b"
+    },
+    "docs/DRIFT_COVERAGE.md": {
+      "bytes": 10975,
+      "sha256": "61e7e2ecbd910aea36f9a3b56b0606c15f0d5236e79c97c980445e331e92400a"
+    },
+    "docs/SCALING.md": {
+      "bytes": 6278,
+      "sha256": "5c3236cbcfe5cda07ca7493ac475bc2b7b03a8d64afbc65380cb547ab3e1bc2d"
+    },
+    "docs/SECURITY.md": {
+      "bytes": 4714,
+      "sha256": "e6a0acbb9a6a6cb7e05e9f0dcee549ad513771f7c582847abbd25a4da40fe5b1"
+    },
+    "docs/SOURCES.md": {
+      "bytes": 2281,
+      "sha256": "389b8c9910bf163f33d7dff97703d1c0a85f9a5fd91462fa9b34158e45814572"
+    },
+    "docs/VERIFICATION.md": {
+      "bytes": 6319,
+      "sha256": "651c5c26fdeb19b270847afc70254fe9bacbb5432fb623a33e65ce42dc4fcf58"
+    },
+    "examples/agents/AGENTS.md": {
+      "bytes": 1359,
+      "sha256": "1029064a42a7b6c8a76eabf2931979c4eb53faf5d31dd9a5ac533f2255563ac6"
+    },
+    "examples/capsules/gateway.json": {
+      "bytes": 1011,
+      "sha256": "8330bc15fe6907b1b0a0e8369246075365f7b9a65b28d787a517c8108123d782"
+    },
+    "examples/capsules/worker.json": {
+      "bytes": 1008,
+      "sha256": "c01c77e3eb8cc33c6ecc3c296dfa981b0d1c48473fbbe4bcaca67d9c70c13e59"
+    },
+    "examples/fixtures/java/Worker.java": {
+      "bytes": 774,
+      "sha256": "df257ad7d8f2e141ed525c3529c8c40cb87b18ee228f4220d2501fc78819dccb"
+    },
+    "examples/fixtures/ts/lifecycle.ts": {
+      "bytes": 655,
+      "sha256": "eff2dbc46af6b486dbdd04e6e08bda3c1d2cbcc51e2a010ac2fd089e7592425f"
+    },
+    "examples/models/cancellation-safe.json": {
+      "bytes": 1553,
+      "sha256": "18ed711d9cae7e4a472b9000ee5e3175fddaa98a1174e695cb1910aadadb815b"
+    },
+    "examples/models/cancellation-unsafe.json": {
+      "bytes": 1303,
+      "sha256": "c0bf515833259957f6b6ca4b91035175c7afaed8babfb6fc7370adfc45883aac"
+    },
+    "examples/workspace.json": {
+      "bytes": 171,
+      "sha256": "9f595215ac3c9565ce3d8f98442ff22c9275cd846888a3a9810c6b4cce3a1100"
+    },
+    "package.json": {
+      "bytes": 876,
+      "sha256": "a2cc733b3cdffafa6ce3babba4f8259a65f7bdd088dc20e9a4dd3c910cd35786"
+    },
+    "packages/agent/package.json": {
+      "bytes": 292,
+      "sha256": "a0021bc03cbe07350ff669cd198a387c3028679301840193d5c54125160078d6"
+    },
+    "packages/agent/src/analyzer.ts": {
+      "bytes": 19690,
+      "sha256": "a3b006c2f06dca09303611846e92b26b115ffd42a77baa753cc1ab0c47f4aebc"
+    },
+    "packages/agent/src/cli.ts": {
+      "bytes": 5020,
+      "sha256": "0862170353f6a5de90fd9ce9f013eb551a6db8ed2961c81d40e359f763ead116"
+    },
+    "packages/agent/src/client.ts": {
+      "bytes": 6615,
+      "sha256": "f2b897a6ac3f683d8f417c97da1744671bac6c4c58921949bd815de0a9c4fe9e"
+    },
+    "packages/agent/src/index.ts": {
+      "bytes": 170,
+      "sha256": "2944296cfb68606069e129471cee7e3112384c99377f2e0588a49f70646b4e7e"
+    },
+    "packages/agent/src/mcp.ts": {
+      "bytes": 10151,
+      "sha256": "fa1157b4afe37feb7c0a1f51c46b135a98d06068ce206d42f8d60cf482c46dcb"
+    },
+    "packages/agent/src/nfr.ts": {
+      "bytes": 4830,
+      "sha256": "517a356d5929c3df07132e96363452bd5ab48a2494c6efcb8a04f88d058735ad"
+    },
+    "packages/agent/src/rules.ts": {
+      "bytes": 803,
+      "sha256": "38c19bf1df9d67a1f42c9977db894cda38ca6044ed4623db05874421dd72be52"
+    },
+    "packages/agent/src/runner.ts": {
+      "bytes": 16176,
+      "sha256": "e65bfed7a5e17a783c188adb5713c29a276ff3dc7a53208ad03dddc7c8739f3b"
+    },
+    "packages/agent/src/scan.ts": {
+      "bytes": 14049,
+      "sha256": "7eee626460486502daf2908bfc9450726fab27be883eebb33fc6de5c16ee79b4"
+    },
+    "packages/agent/src/types.ts": {
+      "bytes": 3120,
+      "sha256": "d42612bd72be5c30d5aa5bc99c799677ba2d72bd5581e1f8db921bce0c4f1904"
+    },
+    "packages/agent/src/util.ts": {
+      "bytes": 2882,
+      "sha256": "94dd1ff86ee875cacdc89da578eeaa4377890f373ddc17353965bfe49070dc42"
+    },
+    "packages/agent/test/e2e.test.ts": {
+      "bytes": 14274,
+      "sha256": "796232b37272da000827b217b10f642706a1c5894317547b211e88d11cb0f07e"
+    },
+    "packages/agent/test/unit.test.ts": {
+      "bytes": 8786,
+      "sha256": "9352cda946732b592fa1b6988724aa6df5c06e9d4ea9040c5ffc181e6ee855f1"
+    },
+    "packages/agent/tsconfig.json": {
+      "bytes": 392,
+      "sha256": "8c9d3b63bb8e2513adeac1823565d1334074e204057a59740feb38075f3369ad"
+    },
+    "pom.xml": {
+      "bytes": 1355,
+      "sha256": "b27b101312c168b170d62b594fbf9f8ce132b90943f1bd48d8d3922f547beb8e"
+    },
+    "schemas/README.md": {
+      "bytes": 697,
+      "sha256": "eacee87adc86ff6dcf99d63c7f2bbee615f6f5f1402469c0c3cd4794202f5ff6"
+    },
+    "schemas/claim.schema.json": {
+      "bytes": 3423,
+      "sha256": "588242457b80db4ffabfdc398a39310cb73baef3fa35e94000f9bab4fe8e55bf"
+    },
+    "schemas/model.schema.json": {
+      "bytes": 4948,
+      "sha256": "aae25a283933b20398b1b5ba494166e543a2d17dad1754542a28097fd2a3b709"
+    },
+    "schemas/workspace.schema.json": {
+      "bytes": 2398,
+      "sha256": "d087b0bd4306a8f6b55e185bb8af493d5f51d69dc9d5ed7ed4c3ae2529a5ad1c"
+    },
+    "scripts/demo.mjs": {
+      "bytes": 2167,
+      "sha256": "f5631f67c8ae239559c2d656d61894fd5891b2bd414517048417c28e506d579f"
+    },
+    "scripts/demo.sh": {
+      "bytes": 638,
+      "sha256": "f9171772f07c1ff1cbecfb26aec55a29cd2dc81cc23b425cb4c50bd72140b0b6"
+    },
+    "scripts/init-auth.mjs": {
+      "bytes": 1810,
+      "sha256": "e0ebec80655f8b2f6afd59f8cc8a307bda05bb821a90c9b2fbf6a40397e5c875"
+    },
+    "scripts/test-deployed.mjs": {
+      "bytes": 4157,
+      "sha256": "f7c6ea8be8ea3086efd370cb9d616506a0eb1067d1bb93a412bc5abbfd8cfb38"
+    },
+    "scripts/test-java.sh": {
+      "bytes": 432,
+      "sha256": "c7472152d48ef93d04e0f87b79fcc1614635c6d7cf3bab0ed7ebcc7b65c71082"
+    },
+    "scripts/test-spring.sh": {
+      "bytes": 998,
+      "sha256": "abe925544d0435e621a3c14ea4aa7c80b30e60be5a6a9c9e0e246c21c6960d91"
+    },
+    "services/core/pom.xml": {
+      "bytes": 849,
+      "sha256": "0ca907c7030aadc376c4dd164a4a6af0d43a1de8f24c700f30f0d46349c337e0"
+    },
+    "services/core/src/main/java/dev/assurance/core/ApiRouter.java": {
+      "bytes": 4081,
+      "sha256": "490243e38ca098e99059dafe4dca2bba6a6c46efe38c9e039c5dfc39b6361b32"
+    },
+    "services/core/src/main/java/dev/assurance/core/Auth.java": {
+      "bytes": 3535,
+      "sha256": "01a18113b29a5f2e06921c236c5487c703b569017b53fa37d56eab0609279572"
+    },
+    "services/core/src/main/java/dev/assurance/core/Claims.java": {
+      "bytes": 24444,
+      "sha256": "97becfabe67e8022f6905aefc49d8f55269ee9bc2ffaf3b4f836b02382e834b9"
+    },
+    "services/core/src/main/java/dev/assurance/core/Coordination.java": {
+      "bytes": 15467,
+      "sha256": "64c725625ed7f7142fb82dc18c3e3b5cc290120d4adfb74caaed744d51fc8fbc"
+    },
+    "services/core/src/main/java/dev/assurance/core/DevServer.java": {
+      "bytes": 2426,
+      "sha256": "a01ba779dd6d61b48c89511aaa84e3e4f0b1f5eafaf44d4b1a1a3a8cdcffe5fb"
+    },
+    "services/core/src/main/java/dev/assurance/core/JavaAnalyzer.java": {
+      "bytes": 21972,
+      "sha256": "6326249fd32fa27a4a32d0d230a0e52bae4c6588de1be27d1998e4ac48a1a27a"
+    },
+    "services/core/src/main/java/dev/assurance/core/JavaScanMain.java": {
+      "bytes": 578,
+      "sha256": "db20a0861e80da5d1d467735929186950dd02fbc37b0e8e54f32d49964fa0142"
+    },
+    "services/core/src/main/java/dev/assurance/core/JdbcStore.java": {
+      "bytes": 12041,
+      "sha256": "7ffd2626fe7804f3bad7ecb6186ca507462b4f4678d9568681c94fb8db1721d7"
+    },
+    "services/core/src/main/java/dev/assurance/core/Json.java": {
+      "bytes": 11454,
+      "sha256": "c7ddefcb358622ea744d18c3120a2a6828fb86c318fd9369658c363476db7f20"
+    },
+    "services/core/src/main/java/dev/assurance/core/Kernel.java": {
+      "bytes": 7901,
+      "sha256": "708fd7ef38dcbdf029ac3cfe3590597d743ccdf93a15adb8bd1711a5f53bec94"
+    },
+    "services/core/src/main/java/dev/assurance/core/MemoryDebt.java": {
+      "bytes": 10859,
+      "sha256": "ed0366e73038da1669249e1fabb9ed5cac30e50711482d4b03824e10b0b820c2"
+    },
+    "services/core/src/main/java/dev/assurance/core/MemoryStore.java": {
+      "bytes": 5500,
+      "sha256": "1b8d7e4c1ecfdca5da3bd53565c73f5c457c31a7f2e3b980eb689f81d36fb1dd"
+    },
+    "services/core/src/main/java/dev/assurance/core/ModelChecker.java": {
+      "bytes": 9899,
+      "sha256": "b9814a0c7fc14357dace3789b0a3b32dc18b6b45e6495b69f97a9422f1cccb27"
+    },
+    "services/core/src/main/java/dev/assurance/core/Problem.java": {
+      "bytes": 828,
+      "sha256": "c9b1cbaac21e7e4bfdd7b9f6a5b3f2e37312e9cb8c46a1510b22d4608bd1a293"
+    },
+    "services/core/src/main/java/dev/assurance/core/Scans.java": {
+      "bytes": 19907,
+      "sha256": "9c01da08ef736efa7dd0bfd5c2f3dba9226c6092e3891dec3f443a06445355a6"
+    },
+    "services/core/src/main/java/dev/assurance/core/Store.java": {
+      "bytes": 2060,
+      "sha256": "2149532ca14257647fd811754ff64f1db30c00b9f5271e1a50e1a3637a159cd0"
+    },
+    "services/core/src/main/java/dev/assurance/core/TraceChecker.java": {
+      "bytes": 3189,
+      "sha256": "1fb4f604e6ce397ab7c165f2b9fc2c48e8b7e9b034025b8153da449a973277b5"
+    },
+    "services/core/src/main/resources/db/migration/V001.sql": {
+      "bytes": 1233,
+      "sha256": "89aea064056f2de7af148ae58895b8335df17bac04d62b4de51885f8d106889f"
+    },
+    "services/core/src/test/java/dev/assurance/core/CoreSelfTest.java": {
+      "bytes": 27110,
+      "sha256": "ff566c67ef7e15924255d7adceef94db3145f98c39c53053c0e38358041fd243"
+    },
+    "services/core/src/test/java/dev/assurance/core/ScaleSelfTest.java": {
+      "bytes": 3533,
+      "sha256": "dda08be6da586f51099a16351fdee60eb5feb1b8c02bc0339ac36f336caf8884"
+    },
+    "services/server/Dockerfile": {
+      "bytes": 517,
+      "sha256": "2ac74dc80307a874876297243fa510552f17474fbc062808d7bd82783ca13ac0"
+    },
+    "services/server/pom.xml": {
+      "bytes": 1847,
+      "sha256": "f0dbf52f40c4c989153b027fcac16295dc7196453f7288f3f1df589c5e398c7d"
+    },
+    "services/server/src/main/java/dev/assurance/server/Application.java": {
+      "bytes": 2051,
+      "sha256": "22257cfc2d6b90e30d479d228c8f133b6ba0618d8f4db8a1ed34f3fbec3354e4"
+    },
+    "services/server/src/main/java/dev/assurance/server/AssuranceController.java": {
+      "bytes": 1241,
+      "sha256": "08e51ede439f75775f4e697483bd9bf04fb5a5b3829d24924ad7cb2d6757ea53"
+    },
+    "services/server/src/main/resources/application.yml": {
+      "bytes": 771,
+      "sha256": "ba7e85cd55c949d1acd9727f6b4ee4c8a78382ec66ff3475f03bdf656bf345db"
+    },
+    "services/server/src/test/java/dev/assurance/core/JdbcStoreSelfTest.java": {
+      "bytes": 5860,
+      "sha256": "80913e090ddf04dba5231736c8503c3df1ed1144d573adb8f3aabe7126e80beb"
+    },
+    "verification/delivery.log": {
+      "bytes": 400,
+      "sha256": "3da08bb5796b80c7dbe60af8fed9153a13cadc7c254b25a64f96400cc6da7419"
+    },
+    "verification/demo.log": {
+      "bytes": 4319,
+      "sha256": "3c5e7a778d9ecd2d847a1d11aafaf2e52ff96ae5c96ec4336eb1bdc76a50a031"
+    },
+    "verification/java.log": {
+      "bytes": 1269,
+      "sha256": "436dc28deda607d90b35b96205d92ac020e389a2311af8e1d2c48833d4ed4adc"
+    },
+    "verification/pre-fix-concurrency-fixture.log": {
+      "bytes": 1807,
+      "sha256": "e88cc0e6a826dde7f181d6bac387c50e47712ba4de28123dae0797bbacfa8be9"
+    },
+    "verification/repeat-1.log": {
+      "bytes": 1269,
+      "sha256": "436dc28deda607d90b35b96205d92ac020e389a2311af8e1d2c48833d4ed4adc"
+    },
+    "verification/repeat-2.log": {
+      "bytes": 1269,
+      "sha256": "436dc28deda607d90b35b96205d92ac020e389a2311af8e1d2c48833d4ed4adc"
+    },
+    "verification/repeat-3.log": {
+      "bytes": 1269,
+      "sha256": "436dc28deda607d90b35b96205d92ac020e389a2311af8e1d2c48833d4ed4adc"
+    },
+    "verification/repeat-4.log": {
+      "bytes": 1269,
+      "sha256": "436dc28deda607d90b35b96205d92ac020e389a2311af8e1d2c48833d4ed4adc"
+    },
+    "verification/repeat-5.log": {
+      "bytes": 1269,
+      "sha256": "436dc28deda607d90b35b96205d92ac020e389a2311af8e1d2c48833d4ed4adc"
+    },
+    "verification/scale.json": {
+      "bytes": 266,
+      "sha256": "99fb883d7992ee861a94b336487386078ca6ada26be2410fe05236a96852dd7f"
+    },
+    "verification/tests.log": {
+      "bytes": 5456,
+      "sha256": "cb19ce1bebc72aa8ec9eef5dc4bdb4706e84fd514a9130758a19ae1b1a4b6b69"
+    }
+  }
+}
