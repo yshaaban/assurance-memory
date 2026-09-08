@@ -1,6 +1,6 @@
 # Local CLI and MCP reference
 
-This reference describes the implementation in version 1.1.0. Start with the [local workflow](LOCAL_WORKFLOW.md) for a walkthrough, [concepts](CONCEPTS.md) for the authority model, and [extension guide](EXTENDING.md) for detector behavior. The local index is an optional SQLite projection; the assurance service is a separate, authoritative workflow.
+This reference describes the implementation in version 1.2.0. Start with the [local workflow](LOCAL_WORKFLOW.md) for a walkthrough, [concepts](CONCEPTS.md) for the authority model, and [extension guide](EXTENDING.md) for detector behavior. The local index is an optional SQLite projection; the assurance service is a separate, authoritative workflow.
 
 ## Executables and prerequisites
 
@@ -22,7 +22,7 @@ The workspace declares three executable names:
 
 The examples use explicit `node` paths so they do not depend on a global installation or shell link. `npm run local -- …` invokes the local entry point, but npm may print its own script banner: invoke `node` directly when stdout must contain only JSON.
 
-Successful local commands write one JSON object to stdout. Scan progress goes to stderr. Errors write a message to stderr and exit with status 1. Queries open an existing database read-only; run `scan` first. The local CLI does not require service credentials.
+Successful local commands write one JSON object to stdout. Scan progress goes to stderr. Errors write a message to stderr and exit with status 1. Queries open an existing database read-only; run `scan` first. `review` is a separate CLI write that appends a local annotation. The local CLI does not require service credentials.
 
 ## Workspace configuration
 
@@ -74,6 +74,8 @@ assurance-local search QUERY --db FILE [--limit N]
 assurance-local backlog --db FILE [--limit N] [--category CATEGORY] [--after CURSOR]
 assurance-local context SUBJECT_ID --db FILE [--limit N]
 assurance-local impact SUBJECT_ID --db FILE [--limit N]
+assurance-local review --input FILE --db FILE
+assurance-local reviews CANDIDATE_ID --db FILE [--limit N] [--after CURSOR]
 assurance-local drift SNAPSHOT --db FILE [--limit N] [--after ROW_ID]
 ```
 
@@ -83,10 +85,11 @@ assurance-local drift SNAPSHOT --db FILE [--limit N] [--after ROW_ID]
 | `--config FILE` | Required by `scan`. If `--db` is omitted, select `.assurance-cache/index.sqlite` beside this JSON file. Queries can also use `--config` solely to select this default path; they do not reload or validate the configuration. |
 | `--limit N` | Integer 1–200, default **20 for every local query**, including `drift`. |
 | `--category CATEGORY` | Backlog filter: `SIMPLIFICATION`, `INCONSISTENCY`, `RELIABILITY` or `COVERAGE`. Omission includes all categories. Case-sensitive. |
-| `--after CURSOR` | Backlog's opaque string cursor or drift's nonnegative numeric row cursor. Their formats are not interchangeable. |
+| `--after CURSOR` | Backlog/review-history opaque string cursor or drift's nonnegative numeric row cursor. Their formats are not interchangeable. |
+| `--input FILE` | Required by `review`: path to one JSON file, at most 65,536 bytes. This option does not read stdin. |
 | `--help` | Print help without opening the index. |
 
-The parser accepts these global options, but only the commands above use them as described. There is no local `--component`: every configured component participates in a scan.
+Commands reject unsupported options and unexpected positional arguments. Quote multi-word search queries. There is no local `--component`: every configured component participates in a scan.
 
 ## Scan and status
 
@@ -102,12 +105,14 @@ node packages/agent/dist/src/local-cli.js status --db examples/.assurance-cache/
 | Field | Meaning |
 |---|---|
 | `workspace`, `snapshot` | Index identity and latest committed local scan number |
+| `schemaVersion`, `reviewRevision` | Local schema version (2) and annotation revision; append or permanent invalidation advances the latter |
+| `searchPolicyDigest` | Digest of compiled search policy, matched against the policy used to build stored search metadata |
 | `facts`, `opportunities` | Total current facts and currently emitted candidates |
 | `components` | Up to 200 components, sorted by ID; each includes root, snapshot, source revision, coverage, analyzer, rules, configuration/environment digests, `candidatePolicyDigest`, `factCount` and `findingCount` |
 | `componentsTruncated` | More than 200 components exist; this flag does not mean their facts were omitted from scanning |
 | `authority` | `LOCAL_INVESTIGATION_ONLY` |
 | `freshness` | `AS_OF_SCAN; rescan before editing or relying on absence` |
-| `history` | Retention reminder: drift history grows until the disposable index is rotated |
+| `history` | Retention reminder: source metadata is rebuildable, but local review history must be preserved before database replacement |
 
 Counts and paths depend on your checkout. This is an illustrative excerpt, with the component details omitted:
 
@@ -115,6 +120,8 @@ Counts and paths depend on your checkout. This is an illustrative excerpt, with 
 {
   "workspace": "payments",
   "snapshot": 2,
+  "schemaVersion": 2,
+  "reviewRevision": 0,
   "facts": 1200,
   "opportunities": 43,
   "componentsTruncated": false,
@@ -123,7 +130,11 @@ Counts and paths depend on your checkout. This is an illustrative excerpt, with 
 }
 ```
 
-The database uses SQLite WAL and a 5-second busy timeout. A workspace scan begins one write transaction before extraction, ingests components in sorted ID order and commits them together. Queries can continue reading the prior committed state. Errors roll back facts, candidates, drift and snapshot metadata together. All previously indexed components must still be present and rescanned. To remove a component from the inventory or change its root, create a fresh index; a new component ID alone does not permit silently dropping the old component.
+Version 1.2.0 uses local schema 2. CLI `scan` validates its configuration before opening writable storage. Schema-1 migration adds append-only review storage and rebuilds normalized search metadata, then commits together with the first successful scan. If that scan fails, the previous schema and source snapshot remain intact. Read-only queries and MCP reject older/uninitialized indexes with an instruction to run `scan`; `review` also requires that migration first. Schema versions newer than 2 are rejected.
+
+The index also records `searchPolicyDigest`, a digest of compiled `local-search.js`. If the tool's search policy changes, read-only access (including `status` and MCP) and review append reject the old projection until a successful `scan` rebuilds search metadata, even when source facts are unchanged. Rebuild and restart tool processes after code changes; the digest is computed on module load. Read-only queries check stored metadata without extracting source or rebuilding search. A search-only rebuild does not itself change source/review revisions, produce source/context drift or invalidate reviews; the accompanying CLI scan still creates a new snapshot and checks ordinary source/context applicability.
+
+The database uses SQLite WAL and a 5-second busy timeout. A workspace scan begins one write transaction before extraction, ingests components in sorted ID order and commits them together. Readers retain the prior committed state, subject to schema/search-policy compatibility. Errors roll back pending migration, search metadata, facts, candidates, review invalidations, drift and snapshot metadata together. All previously indexed components must still be present and rescanned. To remove a component from the inventory or change its root, use a new index after preserving the old database and its review history with a SQLite-consistent backup. A new component ID alone does not permit silently dropping an old component.
 
 ## Search
 
@@ -131,11 +142,29 @@ The database uses SQLite WAL and a 5-second busy timeout. A workspace scan begin
 node packages/agent/dist/src/local-cli.js search "payment retry" --db examples/.assurance-cache/index.sqlite --limit 10
 ```
 
-Search indexes **locators, tags and effects**, not raw source bodies, comments, finding messages or embeddings. Input is limited to 500 characters. The first 20 letter/number/underscore tokens are quoted and joined with `AND` for FTS5. Punctuation-only input returns no matches. Supplying FTS syntax does not enable OR, prefix, phrase or wildcard queries. For example, `payment retry` requires both indexed tokens but does not require adjacency.
+Search indexes **locators, tags and effects**, plus their normalized tokens. It does not index raw source bodies, comments, finding messages, review text or embeddings. Normalization splits camelCase/acronym boundaries and punctuation/underscores, lowercases words, and applies a small explicit alias map: for example, `disposal` → `dispose`, `hydration` → `hydrate`, `cancellation` → `cancel`, and `retries` → `retry`. This is lexical normalization, not general stemming or semantic search; the complete map lives in [local-search.ts](../packages/agent/src/local-search.ts).
 
-Response: `{snapshot, items, limited: true}`. Items are facts with `component` and an FTS5 `rank`; lower rank values sort first, with subject ID as the tie-breaker. `limited` is always true because search returns a bounded top set, even when no match exists. It is not a detected truncation flag, and search has no continuation cursor. Use more specific tokens and read the cited source.
+Input is limited to 500 characters and **at most 20 distinct normalized terms**. Exceeding either limit fails instead of dropping terms. Terms are quoted for FTS5, so user-supplied FTS syntax does not enable wildcard, prefix or phrase queries. All terms are tried with `AND` first. Only when that yields zero rows and there is more than one term does the query broaden to `OR`.
 
-A fact contains:
+Response fields:
+
+| Field | Meaning |
+|---|---|
+| `snapshot`, `items` | Scan number and bounded fact results |
+| `matchMode` | `ALL_TERMS`, `ANY_TERM` for the explicit broader fallback, or `EMPTY` for input without searchable terms |
+| `terms` | Distinct normalized query terms actually used |
+| `limited` | Always `true`: search returns a bounded top set and has no continuation cursor |
+| `hasMore` | More results exist beyond the returned page or the reranking pool was exhausted |
+| `candidatePoolLimit` | Lexical pool ceiling `max(200, limit × 5)`: 200–1,000 rows, plus the separately bounded exact-symbol/file-owner lookups below |
+| `candidatePoolTruncated` | The lexical pool, exact-symbol lookup or file-seed limit was exceeded |
+| `ownerExpansionFileLimit`, `ownerExpansionPerFileLimit` | Expand at most five matching seed files, reading at most `limit + 1` overview/named-function rows per file |
+| `meaning` | Interpretation of the match mode and its limits |
+
+For `EMPTY`, the response has empty `items`/`terms`, `hasMore: false` and no pool/meaning fields. `ANY_TERM` may also return no rows. The fallback is reported so partial lexical overlap cannot be mistaken for an all-term match.
+
+The lexical pool is read in native FTS5 rank order. An indexed exact-symbol lookup considers the lowercase query and its compact spelling, with at most `limit + 1` matches. Matching lexical file seeds also receive the bounded owner expansion above. The union is deduplicated and reranked, so total metadata considered can exceed `candidatePoolLimit`; before deduplication its upper bound is that pool plus `6 × (limit + 1)` lookup rows. Exact symbol/file matches receive explicit boosts; file matches favor the overview and named top-level functions, and test-source metadata gets a small retrieval penalty. Items expose `matchedTerms`, `rankingReasons`, reranked `rank` and `lexicalRank` (0 where an added lookup row carries no FTS rank). Lower `rank` sorts first, then lower `lexicalRank`, then subject ID. These search ranks are separate from backlog scores and are not calibrated confidence. Pool exhaustion prevents an exhaustive ranking claim; narrow the query and read the source.
+
+A fact result includes fields such as:
 
 ```json
 {
@@ -151,11 +180,14 @@ A fact contains:
   "effects": ["RETRY"],
   "metrics": { "lines": 12, "guards": 1, "assertions": 0 },
   "line": 8,
-  "rank": -1.2
+  "matchedTerms": ["charge"],
+  "rankingReasons": ["EXACT_SYMBOL"],
+  "rank": -10100,
+  "lexicalRank": 0
 }
 ```
 
-This and later examples use explicit placeholder digests. Obtain real IDs from search/backlog; paths and line numbers are relative to the component's recorded root and scan.
+The numbers are illustrative. Obtain real IDs from search/backlog; paths and line numbers are relative to the component's recorded root and scan.
 
 ## Backlog and pagination
 
@@ -164,13 +196,14 @@ node packages/agent/dist/src/local-cli.js backlog --db examples/.assurance-cache
 node packages/agent/dist/src/local-cli.js backlog --db examples/.assurance-cache/index.sqlite --category SIMPLIFICATION --limit 10 --after '<returned next value>'
 ```
 
-Response: `{snapshot, items, hasMore, next}`. Candidates sort by score descending, then ID ascending. Scores are severity priorities with a boundary bonus; they do not estimate debt cost or failure probability. [Candidate rules](EXTENDING.md#candidate-classification-and-scoring) describe the exact mapping.
+Response: `{snapshot, reviewRevision, items, hasMore, next}`. Candidates sort by effective `score` descending, then ID ascending. `baseScore` retains severity priority plus the boundary bonus. `score` subtracts 25 for `TEST`-source `RELIABILITY` candidates and another 20 when the latest local review is `CURRENT` `COUNTEREVIDENCE`. Discounts retain every candidate and its original severity; they do not estimate debt cost or failure probability. `sourceRole`, `rankingReasons` and a `review` summary (or null) explain the result. [Candidate rules](EXTENDING.md#candidate-classification-and-scoring) describe the exact mapping.
 
-An illustrative one-item page:
+An illustrative one-item page, with only selected ranking explanations shown:
 
 ```json
 {
   "snapshot": 2,
+  "reviewRevision": 0,
   "items": [
     {
       "id": "<candidate digest>",
@@ -179,7 +212,15 @@ An illustrative one-item page:
       "ruleId": "DESIGN_BRANCH_CONCENTRATION",
       "category": "SIMPLIFICATION",
       "severity": "MEDIUM",
+      "baseScore": 60,
       "score": 60,
+      "sourceRole": "PRODUCTION",
+      "rankingReasons": [
+        "Severity MEDIUM contributes 50 investigation priority points.",
+        "Boundary tag adds 10 investigation priority points.",
+        "Branch count alone does not justify a refactor; establish a concrete change scenario and duplicated or scattered policy first."
+      ],
+      "review": null,
       "firstSeen": 1,
       "lastSeen": 2,
       "resolved": null,
@@ -200,7 +241,7 @@ An illustrative one-item page:
 }
 ```
 
-The opaque cursor pins the snapshot, category, last score and last ID. Continue with the same category and returned cursor while `hasMore` is true. Page size may change. A new successful scan, including an unchanged scan, or changing the category causes `Index changed; restart backlog pagination`. Restart at the first page; do not manufacture or edit cursors. On the final page `next` is null.
+The opaque cursor pins the scan snapshot, `reviewRevision`, category, last effective score and last ID. Continue with the same category and returned cursor while `hasMore` is true. Page size may change. A new successful scan (including an unchanged scan), an appended/invalidated review, or changing the category causes `Index changed; restart backlog pagination`. Restart at the first page; do not manufacture or edit cursors. On the final page `next` is null.
 
 Candidate identity is SHA-256 of `subjectId + ':' + ruleId`. Multiple sites of the same rule on one subject collapse to one candidate. `firstSeen` survives disappearance and reappearance; `lastSeen` records its latest emitted scan. Internally `resolved` records the scan in which it stopped being emitted. The backlog only returns unresolved rows, so its `resolved` is null. This lifecycle is detector bookkeeping, **not reviewed debt closure**. There is currently no CLI query for historical resolved candidates.
 
@@ -210,11 +251,62 @@ Candidate identity is SHA-256 of `subjectId + ':' + ruleId`. Multiple sites of t
 node packages/agent/dist/src/local-cli.js context '<subject ID>' --db examples/.assurance-cache/index.sqlite --limit 20
 ```
 
-Response: `{snapshot, subject, component, neighbors, opportunities, truncated, trust, coverage, nextStep}`.
+The response includes `snapshot`, `reviewRevision`, `subject`, `component`, `metadataDetail`, `neighbors`, `owners`, `localSymbols`, `symbolsTruncated`, `symbolMeaning`, `opportunities`, `truncated`, `trust`, `coverage` and `nextStep`.
 
-`subject` is the selected fact; `component` is its scan metadata. `opportunities` contains currently emitted candidates attached to that exact subject. A function query does not automatically include file-level findings. `neighbors` contains both direct imported and importing files for the subject's containing file. Both arrays are independently limited to `limit`; `truncated` is true if either has additional rows. There is no context pagination cursor.
+- `subject` is the selected fact. `component` is compact scan metadata: it omits `environment` and `rulesExecuted`, and includes at most eight `coverage.limitations` with `limitationCount` and `limitationsTruncated`. Use `status` for the full component metadata and limitation list; this reduction does not narrow the recorded scan.
+- `opportunities` contains candidates attached to that exact subject, with local review summaries and effective scores. A function query does not automatically include file-level findings.
+- `neighbors` contains direct imported/importing files for the subject's containing file.
+- `owners` uses matching locator prefixes for lexical containment. `localSymbols` lists nearby same-file declarations, preferring named units. Their brief records include identity, location, kind, effects and metrics. Neither field represents callers, resolved data flow or behavioral dependencies.
 
-The context is a navigation aid. It has no raw source, exhaustive caller analysis or mandatory assurance obligation set. `trust` identifies source-derived content as untrusted; `nextStep` directs source inspection and service `plans.prepare` when approved obligations are needed. Unknown subject IDs fail with `Unknown subject ID; search first`.
+Each result collection is bounded by `limit`. `symbolsTruncated` reports incomplete symbol navigation; `truncated` is true if neighbors, candidates or symbol navigation exceed their bounds. The separate `component.coverage.limitationsTruncated` flag reports compacted diagnostic text. There is no context pagination cursor.
+
+Context is a navigation aid with no raw source or mandatory assurance obligation set. Source, finding and review text remain untrusted. Read the cited implementation and use service `plans.prepare` when approved obligations are needed. Unknown subject IDs fail with `Unknown subject ID; search first`.
+
+## Local reviews and counterevidence
+
+Local reviews preserve a source-bound investigation note and influence triage. They are **user-reported, untrusted annotations**, not independently checked evidence, approved requirements, or debt resolution. `author` is supplied text, not an authenticated identity; `reason` and `evidence` are stored text, not instructions to execute or URLs the tool follows.
+
+Create `review.json` using a candidate ID and scan number returned by backlog/context:
+
+```json
+{
+  "candidateId": "<candidate digest>",
+  "expectedSnapshot": 2,
+  "disposition": "COUNTEREVIDENCE",
+  "author": "reviewer",
+  "reason": "The caught cleanup failure is intentional under the release contract.",
+  "evidence": "Source inspection and the throwing-cleanup test show that credentials and timers still clear.",
+  "factIds": ["<supporting source fact digest>"]
+}
+```
+
+```sh
+node packages/agent/dist/src/local-cli.js review --input review.json --db examples/.assurance-cache/index.sqlite
+node packages/agent/dist/src/local-cli.js reviews '<candidate ID>' --db examples/.assurance-cache/index.sqlite --limit 10
+```
+
+| Input | Contract |
+|---|---|
+| JSON file | One object, at most 65,536 bytes; unknown fields are rejected |
+| `candidateId` | Required nonempty string, at most 200 characters; candidate must currently be emitted |
+| `expectedSnapshot` | Required positive safe integer equal to the current scan; stale input fails rather than rebinding |
+| `disposition` | Exactly `COUNTEREVIDENCE` or `INVESTIGATE` |
+| `author`, `reason`, `evidence` | Required nonempty strings, at most 200, 2,000 and 8,000 characters respectively; NUL is rejected |
+| `factIds` | Optional array of at most 32 additional source IDs, each at most 200 characters; every cited fact must exist; the primary source is always included |
+
+`review` appends in a write transaction and returns `{review, reviewRevision}`. History is append-only: correct an earlier note by appending a new one. The latest review controls the ranking adjustment. A current `COUNTEREVIDENCE` note subtracts 20 from the existing source-adjusted score; a latest `INVESTIGATE` note makes no review discount. Multiple historical notes do not stack discounts, and no disposition removes the candidate.
+
+Each record stores the candidate, primary/cited source facts, containing file facts, fingerprints/counts of all direct imports and importers, and component context. Scan reconciliation permanently invalidates a record after a captured source/file, cited fact, direct dependency content or membership, candidate, context or ranking-policy change. This includes newly added direct dependencies. A truly unchanged scan preserves applicability, although its new scan number still invalidates pagination cursors. These pins cover the stored direct import projection, not every runtime dependency.
+
+| `state` | Meaning |
+|---|---|
+| `CURRENT` | The annotation still matches its captured indexed source/context |
+| `STALE` | Its capture changed or it was permanently invalidated; no ranking discount |
+| `CANDIDATE_ABSENT` | The candidate is no longer currently emitted; history remains available |
+
+Invalidation is append-only and prevents resurrection: reverting source or reintroducing a candidate does not make an invalidated note current again. Inspect the new snapshot and append a fresh review if the reasoning still applies. This does not establish the truth of a `CURRENT` note; applicability and evidence quality are separate.
+
+`reviews` returns `{snapshot, reviewRevision, items, hasMore, next}`, newest record first. Each item includes the source capture, `fingerprint`, `state`, `invalidation` (or null), `authority: USER_REPORTED_LOCAL_ANNOTATION` and `freshness: AS_OF_SCAN`. Continue with the returned opaque `next` while `hasMore`; the cursor pins scan, review revision and candidate ID. A change to any pin produces `Index changed; restart review pagination`. Page size may change. Review append is CLI-only; local MCP exposes history reads, not a write tool.
 
 ## Import impact
 
@@ -260,7 +352,7 @@ Response: `{items, hasMore, next}`. Unlike the other local read responses, drift
 
 Fact changes compare `contentHash`, `signatureHash`, `tags`, `effects`, `metrics`, `path`, `locator`, `kind` and `language`. A line-number-only change updates stored metadata but is not itself a `CHANGED` row. A locator/identity change commonly appears as removal plus addition. Context drift compares configuration digest, environment, analyzer, coverage and the compiled investigation policy's `candidatePolicyDigest`. Rebuild and restart scanner processes after changing that policy; its digest is computed on module load. A source revision label alone does not create context drift. Changing findings alone does not create fact drift.
 
-## Six local MCP tools
+## Seven local MCP tools
 
 Set `ASSURANCE_LOCAL_DB` to select local mode before launching the existing bridge:
 
@@ -288,10 +380,11 @@ The outer client configuration may differ; this is a conventional server declara
 | `assurance_local_context` | `id` string | `limit` | Same as CLI `context` |
 | `assurance_local_impact` | `id` string | `limit` | Same as CLI `impact` |
 | `assurance_local_drift` | `snapshot` integer, at least 1 | `after` integer, at least 0; `limit` | Same as CLI `drift` |
+| `assurance_local_reviews` | Candidate `id` string | `after` opaque string, `limit` | Same as CLI `reviews` |
 
 All local limits default to 20 and accept 1–200. The same `localQuery` function implements CLI and MCP reads. The MCP schemas advertise bounded strings for IDs; the shared local query layer further limits strings to 2,000 characters. Valid subject IDs are the returned 64-character digests. Tool arguments must be objects, including `{}` for status. Unknown or missing properties are rejected.
 
-Local mode exposes exactly these six tools, all annotated read-only. It opens the database read-only, does not scan and does not expose remote proposal, approval, evidence or lease operations. A failed local open does not fall back to remote mode. Remove `ASSURANCE_LOCAL_DB` and configure service credentials to use the separate [service tool surface](AGENT_PROTOCOL.md).
+Local mode exposes exactly these seven tools, all annotated read-only. It opens the database read-only, does not scan or append reviews, and does not expose remote proposal, approval, evidence or lease operations. Use CLI `scan` for schema migration and CLI `review` to append an annotation. A failed local open does not fall back to remote mode. Remove `ASSURANCE_LOCAL_DB` and configure service credentials to use the separate [service tool surface](AGENT_PROTOCOL.md).
 
 The bridge uses newline-delimited JSON-RPC over stdio and protocol version `2025-06-18`. Initialize before `tools/list` or `tools/call`. A request example:
 
@@ -304,9 +397,13 @@ Successful calls return both JSON as `result.structuredContent` and the same ser
 
 ## Snapshot and retention rules
 
-Each local read uses one SQLite read transaction for its revision and rows. Separate calls can observe different committed scans, so compare their `snapshot` values before combining results. A backlog cursor pins cross-call pagination; other current-state queries have no historical snapshot selector. Drift provides historical changes, not arbitrary historical search/context. The source itself is outside this SQLite transaction: rescan a changed checkout before relying on its metadata.
+Each local read uses one SQLite read transaction for its revision and rows. Separate calls can observe different committed scans, so compare their `snapshot` values before combining results. Backlog and review-history cursors pin both scan and annotation revisions across calls; other current-state queries have no historical snapshot selector. Compare `reviewRevision` as well when combining candidate or review results. Drift provides historical changes, not arbitrary historical search/context. The source itself is outside this SQLite transaction: rescan a changed checkout before relying on its metadata.
 
-The index stores metadata and before/after drift facts, not full source bodies. Absolute roots, symbols, source paths, revision identifiers and findings may still disclose repository information. Keep it within the repository's normal access boundary and exclude it from Git. History has no automatic compaction or retention. To rotate it, stop readers/writers, choose a new database path, scan fully, then point clients to the new index. Historical local snapshot numbers and cursors belong to their original database and do not transfer. Durable evidence/decision records belong in the service.
+The scanner stores metadata and before/after drift facts, not full source bodies. Local review reason/evidence text is stored as supplied and may include excerpts. Absolute roots, symbols, paths, revisions, findings and review text may disclose repository information. Keep the database within the repository's normal access boundary and exclude it from Git.
+
+Source projections can be rebuilt, but the SQLite database may hold the **only copy of local review records and their invalidation history**. Do not delete or replace it as disposable cache once annotations exist. Before moving to a new inventory or replacing an index, preserve the old database using SQLite-consistent backup tooling, such as the SQLite backup API, and retain that backup. Copying only a live main file can omit committed WAL data.
+
+History has no automatic compaction or retention. If a new index is needed, keep the preserved old database available for review-history lookup; snapshot numbers, review IDs and cursors belong to their original database and do not transfer. No review import/merge protocol is provided. Durable authoritative evidence and decisions remain in the separate service; that service does not automatically back up local annotations.
 
 ## Separate service CLI
 
@@ -329,4 +426,4 @@ For `--json -`, stdin JSON is limited to 8,000,000 bytes. Service operation payl
 
 ## Implementation map
 
-The behavior above is implemented by [local-cli.ts](../packages/agent/src/local-cli.ts), [local-query.ts](../packages/agent/src/local-query.ts), [local-index.ts](../packages/agent/src/local-index.ts), [scan.ts](../packages/agent/src/scan.ts) and [mcp.ts](../packages/agent/src/mcp.ts). The [local tests](../packages/agent/test/local.test.ts) exercise rollback, drift, invalidation, cursor consistency, candidate lifecycle, import cycles and the MCP process boundary.
+Search normalization and lexical context live in [local-search.ts](../packages/agent/src/local-search.ts); append-only review captures and invalidation live in [local-review.ts](../packages/agent/src/local-review.ts). The command/query behavior above is implemented by [local-cli.ts](../packages/agent/src/local-cli.ts), [local-query.ts](../packages/agent/src/local-query.ts), [local-index.ts](../packages/agent/src/local-index.ts), [scan.ts](../packages/agent/src/scan.ts) and [mcp.ts](../packages/agent/src/mcp.ts). The [local tests](../packages/agent/test/local.test.ts) exercise rollback, drift, invalidation, cursor consistency, candidate lifecycle, import cycles and the MCP process boundary.

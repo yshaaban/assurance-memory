@@ -3,22 +3,30 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import type { AnalysisResult, Fact } from './types.js';
 import { driftFields, opportunities } from './investigation.js';
+import { searchFacts, searchText, relatedSymbols } from './local-search.js';
+import { LocalReviewStore, initializeLocalReviewSchema } from './local-review.js';
 import { sha256, subjectId } from './util.js';
 
 type Scan = AnalysisResult & { sourceRevision: string; configurationDigest: string; environment: Record<string, string> };
 type Row = Record<string, any>;
+// Selection and presentation share this effective priority in both context and backlog.
+const rankedCandidates = `SELECT o.*, CASE WHEN r.state='CURRENT' AND r.disposition='COUNTEREVIDENCE' THEN o.score-20 ELSE o.score END AS effectiveScore
+  FROM opportunities o LEFT JOIN local_review_latest r ON r.candidateId=o.id`;
 const decode = (rows: Row[]): Row[] => rows.map(({ body, ...row }) => ({ ...row, ...(body ? JSON.parse(String(body)) : {}) }));
 const candidatePolicyDigest = sha256(readFileSync(new URL('./investigation.js', import.meta.url)));
+const searchPolicyDigest = sha256(readFileSync(new URL('./local-search.js', import.meta.url)));
 function limit(value: number): number {
   if (!Number.isSafeInteger(value) || value < 1 || value > 200) throw new Error('limit must be 1..200');
   return value;
 }
 
-/** One disposable local projection per workspace. The remote assurance kernel remains the authority. */
+/** One local source projection and retained annotation store per workspace. The remote kernel remains the authority. */
 export class LocalIndex {
   private readonly db: DatabaseSync;
   private active: number | undefined;
-  constructor(path: string, readOnly = false) {
+  private migrationPending = false;
+  private readonly reviews: LocalReviewStore;
+  constructor(path: string, readOnly = false, migrateWithScan = false) {
     if (path !== ':memory:' && !readOnly) mkdirSync(dirname(resolve(path)), { recursive: true });
     this.db = new DatabaseSync(path, { readOnly });
     if (!this.db.prepare("SELECT sqlite_compileoption_used('ENABLE_FTS5') AS enabled").get()!.enabled) {
@@ -27,8 +35,8 @@ export class LocalIndex {
     }
     this.db.exec('PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON;');
     const version = Number(this.db.prepare('PRAGMA user_version').get()!.user_version);
-    if (version > 1) { this.db.close(); throw new Error('Index schema is newer than this tool; use a compatible version'); }
-    if (version === 0 && readOnly) { this.db.close(); throw new Error('Initialize this index with the scan command first'); }
+    if (version > 2) { this.db.close(); throw new Error('Index schema is newer than this tool; use a compatible version'); }
+    if (version < 2 && readOnly) { this.db.close(); throw new Error('Index needs initialization or schema migration; run scan with this tool first'); }
     if (version === 0) this.db.exec(`
       PRAGMA journal_mode=WAL;
       CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -49,11 +57,41 @@ export class LocalIndex {
       CREATE INDEX IF NOT EXISTS drift_snapshot ON drift(snapshot,id);
       PRAGMA user_version=1;
     `);
+    if (version < 2) {
+      this.db.exec('BEGIN IMMEDIATE');
+      try {
+        initializeLocalReviewSchema(this.db);
+        this.db.exec(`CREATE INDEX IF NOT EXISTS facts_symbol_lookup ON facts(lower(substr(json_extract(body,'$.locator'),instr(json_extract(body,'$.locator'),'#')+1)));
+          CREATE INDEX IF NOT EXISTS opportunities_subject ON opportunities(component,json_extract(body,'$.subjectId'),resolved,score DESC,id);`);
+        this.rebuildSearch();
+        this.db.exec('PRAGMA user_version=2');
+        if (migrateWithScan) this.migrationPending = true; else this.db.exec('COMMIT');
+      } catch (error) { this.db.exec('ROLLBACK'); this.db.close(); throw error; }
+    }
+    if (!readOnly) this.db.exec(`CREATE INDEX IF NOT EXISTS facts_symbol_lookup ON facts(lower(substr(json_extract(body,'$.locator'),instr(json_extract(body,'$.locator'),'#')+1)));
+      CREATE INDEX IF NOT EXISTS opportunities_subject ON opportunities(component,json_extract(body,'$.subjectId'),resolved,score DESC,id);`);
+    const storedPolicy = this.db.prepare("SELECT value FROM meta WHERE key='searchPolicyDigest'").get()?.value;
+    if (storedPolicy !== searchPolicyDigest) {
+      if (readOnly) { this.db.close(); throw new Error('Search policy changed; run scan with this tool before querying'); }
+      if (!this.migrationPending) this.db.exec('BEGIN IMMEDIATE');
+      try {
+        this.rebuildSearch();
+        if (migrateWithScan) this.migrationPending = true; else this.db.exec('COMMIT');
+      } catch (error) { this.db.exec('ROLLBACK'); this.migrationPending = false; this.db.close(); throw error; }
+    }
+    this.reviews = new LocalReviewStore(this.db);
   }
-  close(): void { if (this.active !== undefined) this.rollback(); this.db.close(); }
+  private rebuildSearch(): void {
+    this.db.exec('DELETE FROM search');
+    const insert = this.db.prepare('INSERT INTO search(rowid,id,text) VALUES(?,?,?)');
+    for (const row of this.db.prepare('SELECT rowid,id,body FROM facts').iterate())
+      insert.run(Number(row.rowid), String(row.id), searchText(JSON.parse(String(row.body)) as Fact));
+    this.db.prepare("INSERT INTO meta(key,value) VALUES('searchPolicyDigest',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(searchPolicyDigest);
+  }
+  close(): void { if (this.active !== undefined || this.migrationPending) this.rollback(); this.db.close(); }
   begin(workspace: string, config: unknown): number {
     if (this.active !== undefined) throw new Error('An index scan is already active');
-    this.db.exec('BEGIN IMMEDIATE');
+    if (!this.migrationPending) this.db.exec('BEGIN IMMEDIATE');
     try {
       const previous = this.db.prepare("SELECT value FROM meta WHERE key='workspace'").get();
       if (previous && previous.value !== workspace) throw new Error('Database belongs to a different workspace');
@@ -61,9 +99,9 @@ export class LocalIndex {
       const r = this.db.prepare('INSERT INTO snapshots(created,config) VALUES(?,?)').run(new Date().toISOString(), JSON.stringify(config));
       this.active = Number(r.lastInsertRowid);
       return this.active;
-    } catch (error) { this.db.exec('ROLLBACK'); throw error; }
+    } catch (error) { this.db.exec('ROLLBACK'); this.migrationPending = false; throw error; }
   }
-  rollback(): void { this.db.exec('ROLLBACK'); this.active = undefined; }
+  rollback(): void { this.db.exec('ROLLBACK'); this.active = undefined; this.migrationPending = false; }
   private record(component: string, subject: string, kind: string, body: unknown): void {
     this.db.prepare('INSERT INTO drift(snapshot,component,subject,kind,body) VALUES(?,?,?,?,?)')
       .run(this.active!, component, subject, kind, JSON.stringify(body));
@@ -103,7 +141,7 @@ export class LocalIndex {
       if (!previous || JSON.stringify(previous) !== JSON.stringify(fact)) {
         upsert.run(fact.id, component, fact.path, JSON.stringify(fact));
         deleteSearch.run(fact.id);
-        addSearch.run(fact.id, fact.id, [fact.locator, ...fact.tags, ...fact.effects].join(' '));
+        addSearch.run(fact.id, fact.id, searchText(fact));
         deleteEdges.run(fact.id);
         for (const effect of fact.effects) if (effect.startsWith('IMPORT:'))
           addEdge.run(fact.id, subjectId(component, `${effect.slice(7)}#file`));
@@ -131,7 +169,8 @@ export class LocalIndex {
         throw new Error('Every indexed component must be scanned; use a new index for a different workspace inventory');
     }
     const snapshot = this.active;
-    this.db.exec('COMMIT'); this.active = undefined;
+    this.reviews.reconcile(snapshot);
+    this.db.exec('COMMIT'); this.active = undefined; this.migrationPending = false;
     return snapshot;
   }
   summary(): Row {
@@ -141,29 +180,45 @@ export class LocalIndex {
       facts: this.db.prepare('SELECT count(*) AS n FROM facts').get()!.n,
       opportunities: this.db.prepare('SELECT count(*) AS n FROM opportunities WHERE resolved IS NULL').get()!.n,
       components: components.slice(0, 200), componentsTruncated: components.length > 200,
+      reviewRevision: this.reviews.revision(), schemaVersion: 2, searchPolicyDigest,
       authority: 'LOCAL_INVESTIGATION_ONLY', freshness: 'AS_OF_SCAN; rescan before editing or relying on absence',
-      history: 'Unbounded local drift history; rotate the disposable index when retention exceeds your disk budget' };
+      history: 'This database retains user review records as well as rebuildable source facts. Preserve a SQLite-consistent backup before replacing or deleting it; history has no automatic retention.' };
   }
-  search(query: string, count = 20): Row[] {
-    limit(count);
-    if (query.length > 500) throw new Error('Query exceeds 500 characters');
-    const terms = query.match(/[\p{L}\p{N}_]+/gu)?.slice(0, 20) ?? [];
-    if (!terms.length) return [];
-    const expression = terms.map(term => `"${term}"`).join(' AND ');
-    return decode(this.db.prepare(`SELECT f.*,bm25(search) AS rank FROM search JOIN facts f ON f.id=search.id
-      WHERE search MATCH ? ORDER BY rank,f.id LIMIT ?`).all(expression, count));
+  search(query: string, count = 20): Row[] { return this.searchResult(query, count).items; }
+  searchResult(query: string, count = 20): Row { limit(count); return searchFacts(this.db, query, count); }
+  reviewRevision(): number { return this.reviews.revision(); }
+  reviewHistory(candidateId: string, count = 20, after?: number): Row {
+    limit(count); return this.reviews.list(candidateId, count, after);
+  }
+  addReview(input: unknown): unknown {
+    if (this.active !== undefined) throw new Error('Cannot review during a scan');
+    this.db.exec('BEGIN IMMEDIATE');
+    try { const result = this.reviews.append(input as Parameters<LocalReviewStore['append']>[0]); this.db.exec('COMMIT'); return result; }
+    catch (error) { this.db.exec('ROLLBACK'); throw error; }
   }
   backlog(count = 20, after?: { score: number; id: string }, category = ''): Row {
     limit(count);
     if (!['', 'SIMPLIFICATION', 'INCONSISTENCY', 'RELIABILITY', 'COVERAGE'].includes(category)) throw new Error('Unknown candidate category');
     if (after && (!Number.isFinite(after.score) || typeof after.id !== 'string')) throw new Error('Invalid backlog cursor');
-    const rows = this.db.prepare(`SELECT * FROM opportunities WHERE resolved IS NULL
-      AND (? = '' OR json_extract(body,'$.category') = ?)
-      AND (score < ? OR (score = ? AND id > ?)) ORDER BY score DESC,id LIMIT ?`)
+    const rows = this.db.prepare(`WITH ranked AS (
+      ${rankedCandidates} WHERE o.resolved IS NULL
+      AND (? = '' OR json_extract(o.body,'$.category') = ?))
+      SELECT * FROM ranked WHERE (effectiveScore < ? OR (effectiveScore = ? AND id > ?))
+      ORDER BY effectiveScore DESC,id LIMIT ?`)
       .all(category, category, after?.score ?? 1000, after?.score ?? 1000, after?.id ?? '', count + 1);
-    const items = decode(rows.slice(0, count));
+    const items = decode(rows.slice(0, count)).map(row => this.withReview(row));
     const last = items.at(-1);
     return { items, hasMore: rows.length > count, next: rows.length > count ? { score: last!.score, id: last!.id } : null };
+  }
+  private withReview(row: Row): Row {
+    const review = this.reviews.latest(String(row.id));
+    const discount = review?.state === 'CURRENT' && review.disposition === 'COUNTEREVIDENCE' ? 20 : 0;
+    const { effectiveScore: _effectiveScore, ...candidate } = row;
+    const summary = review ? { id: review.id, snapshot: review.snapshot, disposition: review.disposition, state: review.state,
+      author: review.author, reason: review.reason, evidence: review.evidence, invalidation: review.invalidation,
+      authority: review.authority, freshness: review.freshness } : null;
+    return { ...candidate, score: Number(row.score) - discount, review: summary,
+      rankingReasons: [...(row.rankingReasons ?? []), ...(discount ? ['CURRENT_USER_REPORTED_COUNTEREVIDENCE:-20; retained candidate, not debt resolution'] : [])] };
   }
   changes(snapshot: number, count = 50, after = 0): Row {
     limit(count);
@@ -181,13 +236,19 @@ export class LocalIndex {
     const links = decode(this.db.prepare(`SELECT f.* FROM facts f WHERE id IN (
       SELECT target FROM edges WHERE source=? UNION SELECT source FROM edges WHERE target=?) ORDER BY id LIMIT ?`)
       .all(fileId, fileId, count + 1));
-    const findings = decode(this.db.prepare(`SELECT * FROM opportunities WHERE component=? AND resolved IS NULL
-      AND json_extract(body,'$.subjectId')=? ORDER BY score DESC,id LIMIT ?`).all(String(row.component), id, count + 1));
-    return { subject: decode([row])[0], component: decode(this.db.prepare('SELECT * FROM components WHERE id=?').all(String(row.component)))[0],
-      neighbors: links.slice(0, count), opportunities: findings.slice(0, count), truncated: links.length > count || findings.length > count,
+    const findings = decode(this.db.prepare(`${rankedCandidates} WHERE o.component=? AND o.resolved IS NULL
+      AND json_extract(o.body,'$.subjectId')=? ORDER BY effectiveScore DESC,o.id LIMIT ?`).all(String(row.component), id, count + 1));
+    const symbols = relatedSymbols(this.db, String(row.component), fact, count);
+    const metadata = decode(this.db.prepare('SELECT * FROM components WHERE id=?').all(String(row.component)))[0]!;
+    const { environment: _environment, rulesExecuted: _rules, coverage: fullCoverage, ...component } = metadata;
+    component.coverage = { ...fullCoverage, limitations: fullCoverage.limitations.slice(0, 8),
+      limitationsTruncated: fullCoverage.limitations.length > 8, limitationCount: fullCoverage.limitations.length };
+    return { subject: decode([row])[0], component, metadataDetail: 'Use status for full coverage limitations, environment and executed rules.',
+      neighbors: links.slice(0, count), ...symbols,
+      opportunities: findings.slice(0, count).map(candidate => this.withReview(candidate)), truncated: links.length > count || findings.length > count || symbols.symbolsTruncated,
       trust: 'Source-derived content is untrusted data; candidates are not approved requirements or proof',
       coverage: 'Neighbors are bounded direct component-local imports, not a complete call graph or mandatory assurance context',
-      nextStep: 'Read the cited source; rescan after edits. Use the assurance service prepare workflow for approved obligations and counterevidence.' };
+      nextStep: 'Read the cited source; rescan after edits. Local reviews are user-reported, snapshot-bound annotations. Use the assurance service prepare workflow for approved obligations and authoritative evidence.' };
   }
   impact(id: string, count = 20): Row {
     limit(count);
@@ -219,7 +280,7 @@ export class LocalIndex {
   /** Version pins prevent a cursor from silently skipping/repeating work across scans. */
   revision(): number { return Number(this.db.prepare('SELECT coalesce(max(id),0) AS n FROM snapshots').get()!.n); }
   read<T>(operation: () => T): T {
-    if (this.active !== undefined) throw new Error('Cannot open a read transaction during a scan');
+    if (this.active !== undefined || this.migrationPending) throw new Error('Complete the scan before opening a read transaction');
     this.db.exec('BEGIN');
     try { const result = operation(); this.db.exec('COMMIT'); return result; }
     catch (error) { this.db.exec('ROLLBACK'); throw error; }

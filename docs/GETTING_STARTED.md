@@ -159,7 +159,7 @@ node packages/agent/dist/src/local-cli.js drift 2 --db .assurance-cache/payments
 
 Replace `125` with the returned row cursor. An unchanged scan can have no drift. A candidate that disappears was not detected in the new snapshot; that does not establish behavior correctness or repay a reviewed debt obligation.
 
-Failed scans leave the previous committed snapshot intact. The index is disposable metadata and currently retains drift history without automatic compaction. Keep it local, exclude it from Git, and use a new database path when you deliberately reset history or partitioning.
+Failed scans leave the previous committed snapshot intact. Source facts are rebuildable, but the index also retains user review records and drift history without automatic compaction. Keep it local and exclude it from Git. Preserve a SQLite-consistent backup of any reviewed database before choosing a new path or resetting history/partitioning.
 
 ## 7. Connect a coding agent through MCP
 
@@ -179,7 +179,7 @@ Build the tools, create the index with the CLI, and configure your client's stdi
 }
 ```
 
-Use absolute paths and ensure the client launches Node 24.16+. Local mode exposes six read-only tools: `assurance_local_status`, `assurance_local_search`, `assurance_local_backlog`, `assurance_local_context`, `assurance_local_impact`, and `assurance_local_drift`. It does not require a service token and does not scan or write the index.
+Use absolute paths and ensure the client launches Node 24.16+. Local mode exposes seven read-only tools: `assurance_local_status`, `assurance_local_search`, `assurance_local_backlog`, `assurance_local_context`, `assurance_local_impact`, `assurance_local_drift`, and `assurance_local_reviews`. It does not require a service token and does not scan or write the index.
 
 A useful initial agent instruction is:
 
@@ -223,6 +223,6 @@ export ASSURANCE_AUTH_FILE=/absolute/operator/path/auth.json
 java -jar services/server/target/assurance-server-1.0.0.jar
 ```
 
-Provision the PostgreSQL database and authentication file first. The Maven modules retain their `1.0.0` artifact version while the agent package is `1.1.0`, so the JAR filename above is intentional. The service requires explicit credentials and database access. Read [security](SECURITY.md) before exposure beyond a trusted environment, and use the [contributor test matrix](../CONTRIBUTING.md#test-matrix) to verify PostgreSQL and restart persistence.
+Provision the PostgreSQL database and authentication file first. The Maven modules retain their `1.0.0` artifact version while the agent package is `1.2.0`, so the JAR filename above is intentional. The service requires explicit credentials and database access. Read [security](SECURITY.md) before exposure beyond a trusted environment, and use the [contributor test matrix](../CONTRIBUTING.md#test-matrix) to verify PostgreSQL and restart persistence.
 
 Next, follow the [agent protocol](AGENT_PROTOCOL.md) for reviewed requirements, plans, leases, checker results, and debt repayment. The [pilot plan](PILOT_PLAN.md) describes how to evaluate these workflows on a representative large project.

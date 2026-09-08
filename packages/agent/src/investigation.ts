@@ -7,7 +7,10 @@ export interface Opportunity {
   ruleId: string;
   category: 'SIMPLIFICATION' | 'INCONSISTENCY' | 'RELIABILITY' | 'COVERAGE';
   severity: Finding['severity'];
+  baseScore: number;
   score: number;
+  sourceRole: 'TEST' | 'PRODUCTION' | 'CONFIGURATION';
+  rankingReasons: string[];
   path: string;
   line: number;
   message: string;
@@ -16,7 +19,16 @@ export interface Opportunity {
   confidence: 'STATIC_CANDIDATE';
 }
 
-/** Priorities order investigation; they never estimate money or establish a violated contract. */
+export function classifySourceRole(fact: Fact): { role: Opportunity['sourceRole']; reason: string } {
+  if (fact.tags.includes('tests')) return { role: 'TEST', reason: 'TEST source role inferred from the tests tag.' };
+  const path = fact.path.replace(/\\/g, '/');
+  if (/(?:^|\/)(?:__tests__|test|tests)(?:\/|$)|\.(?:spec|test)\.[cm]?[jt]sx?$/.test(path))
+    return { role: 'TEST', reason: 'TEST source role inferred from a conventional test path.' };
+  if (fact.language === 'CONFIG') return { role: 'CONFIGURATION', reason: 'CONFIGURATION source role follows the adapter language.' };
+  return { role: 'PRODUCTION', reason: 'PRODUCTION source role is the default for code without test tags or a conventional test path.' };
+}
+
+/** Priorities order investigation; they are not defect probabilities, valuations or proof. */
 export function opportunities(result: AnalysisResult): Opportunity[] {
   const facts = new Map(result.facts.map(f => [f.id, f]));
   const findings = [...result.findings];
@@ -36,8 +48,19 @@ export function opportunities(result: AnalysisResult): Opportunity[] {
       : /LAYER_|CONTEXT|ABORT_NOT_FORWARDED/.test(finding.ruleId) ? 'INCONSISTENCY'
       : /TYPE_|ANY_|TEST_|DYNAMIC/.test(finding.ruleId) ? 'COVERAGE' : 'RELIABILITY';
     const id = sha256(`${finding.subjectId}:${finding.ruleId}`);
+    const severityScore = ({ HIGH: 80, MEDIUM: 50, LOW: 20 })[finding.severity];
+    const boundaryScore = fact.tags.includes('boundaries') ? 10 : 0;
+    const baseScore = severityScore + boundaryScore;
+    const source = classifySourceRole(fact);
+    const testDiscount = source.role === 'TEST' && category === 'RELIABILITY' ? 25 : 0;
+    const rankingReasons = [`Severity ${finding.severity} contributes ${severityScore} investigation priority points.`,
+      ...(boundaryScore ? ['Boundary tag adds 10 investigation priority points.'] : []), source.reason,
+      ...(testDiscount ? ['Test-source reliability candidate: subtract 25 priority points; retain the warning because intentional test behavior is not established.'] : []),
+      'Priority is a triage policy, not a calibrated defect probability or evidence of a violated contract.'];
+    if (finding.ruleId === 'DESIGN_BRANCH_CONCENTRATION')
+      rankingReasons.push('Branch count alone does not justify a refactor; establish a concrete change scenario and duplicated or scattered policy first.');
     unique.set(id, { ...finding, id, category, path: fact.path, confidence: 'STATIC_CANDIDATE',
-      score: ({ HIGH: 80, MEDIUM: 50, LOW: 20 })[finding.severity] + (fact.tags.includes('boundaries') ? 10 : 0),
+      baseScore, score: baseScore - testDiscount, sourceRole: source.role, rankingReasons,
       nextStep: category === 'SIMPLIFICATION'
         ? 'Name a likely feature or policy change, inspect callers and ownership, and compare its current change surface with one simpler design.'
         : 'Read the source and its callers, identify the intended contract, and seek a counterexample before proposing a change.',
