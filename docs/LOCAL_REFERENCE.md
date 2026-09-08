@@ -1,6 +1,6 @@
 # Local CLI and MCP reference
 
-This reference describes the implementation in version 1.3.0. Start with the [local workflow](LOCAL_WORKFLOW.md) for a walkthrough, [concepts](CONCEPTS.md) for the authority model, and [extension guide](EXTENDING.md) for detector behavior. The local index is an optional SQLite projection; the assurance service is a separate, authoritative workflow.
+This reference describes the implementation in version 1.4.0. Start with the [local workflow](LOCAL_WORKFLOW.md) for a walkthrough, [concepts](CONCEPTS.md) for the authority model, and [extension guide](EXTENDING.md) for detector behavior. The local index is an optional SQLite projection; the assurance service is a separate, authoritative workflow.
 
 ## Executables and prerequisites
 
@@ -138,7 +138,7 @@ Counts and paths depend on your checkout. This is an illustrative excerpt, with 
 }
 ```
 
-Version 1.3.0 uses local schema 3. CLI `scan` validates configuration before writable open and commits schema-1/2 migration, normalized search rebuild and source publication together. Schema 3 preserves archive provenance and the precedence of locally submitted reviews. A failed upgrade scan retains the previous schema and source snapshot. Read-only queries, MCP and `review-export` reject older indexes; review append and imports into an existing index also require migration first. Schema versions newer than 3 are rejected.
+Version 1.4.0 uses local schema 3. CLI `scan` validates configuration before writable open and commits schema-1/2 migration, normalized search rebuild and source publication together. Schema 3 preserves archive provenance and the precedence of locally submitted reviews. A failed upgrade scan retains the previous schema and source snapshot. Read-only queries, MCP and `review-export` reject older indexes; review append and imports into an existing index also require migration first. Schema versions newer than 3 are rejected.
 
 In particular, `review-export` cannot recover directly from schema 2. Preserve a SQLite-consistent backup before migration. If the original source inventory cannot be scanned successfully, retain that database and a compatible historical tool for reading its history; this version supplies no archive-only migration or manual schema-version bypass. A missing destination may be initialized by `review-import` before its first source scan, with restored candidates initially absent.
 

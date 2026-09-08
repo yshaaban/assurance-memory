@@ -1,4 +1,4 @@
-> Reference guide imported from 1.0.0. Commands run from the repository root. Original validation/version statements are historical; consult [1.3 validation](VALIDATION_1_3.md) for current results.
+> Reference guide imported from 1.0.0. Commands run from the repository root. Original validation/version statements are historical; consult [1.4 validation](VALIDATION_1_4.md) for current results.
 
 # Assurance Memory
 

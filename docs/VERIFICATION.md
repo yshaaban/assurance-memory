@@ -1,4 +1,4 @@
-> Historical 1.0.0 authoring report. Some download-era `.log` files mentioned below are not included in Git. Commands, runtime requirements and counts below describe that original environment. For the current checked-in release, use [1.3 validation](VALIDATION_1_3.md) and [getting started](GETTING_STARTED.md).
+> Historical 1.0.0 authoring report. Some download-era `.log` files mentioned below are not included in Git. Commands, runtime requirements and counts below describe that original environment. For the current checked-in release, use [1.4 validation](VALIDATION_1_4.md) and [getting started](GETTING_STARTED.md).
 
 # Verification report
 

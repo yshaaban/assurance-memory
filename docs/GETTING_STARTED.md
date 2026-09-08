@@ -234,6 +234,6 @@ export ASSURANCE_AUTH_FILE=/absolute/operator/path/auth.json
 java -jar services/server/target/assurance-server-1.0.0.jar
 ```
 
-Provision the PostgreSQL database and authentication file first. The Maven modules retain their `1.0.0` artifact version while the agent package is `1.3.0`, so the JAR filename above is intentional. The service requires explicit credentials and database access. Read [security](SECURITY.md) before exposure beyond a trusted environment, and use the [contributor test matrix](../CONTRIBUTING.md#test-matrix) to verify PostgreSQL and restart persistence.
+Provision the PostgreSQL database and authentication file first. The Maven modules retain their `1.0.0` artifact version while the agent package is `1.4.0`, so the JAR filename above is intentional. The service requires explicit credentials and database access. Read [security](SECURITY.md) before exposure beyond a trusted environment, and use the [contributor test matrix](../CONTRIBUTING.md#test-matrix) to verify PostgreSQL and restart persistence.
 
 Next, follow the [agent protocol](AGENT_PROTOCOL.md) for reviewed requirements, plans, leases, checker results, and debt repayment. The [pilot plan](PILOT_PLAN.md) describes how to evaluate these workflows on a representative large project.

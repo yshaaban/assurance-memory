@@ -1,5 +1,14 @@
 # Changelog
 
+## Node tooling 1.4.0 — successive maintenance tasks
+
+- Added `npm run task-context -- ...` to refresh source and deliver a bounded task brief, explicit scan changes and exact unverified prior notes. New output files are exclusive; invalid inputs fail before scanning.
+- Added explicit `--review-archive` transfer into a new per-checkout index. Archives are completely validated before writes; original captures survive and restored reviews remain stale or absent. Root bindings stay enforced, and unavailable cross-checkout source drift is labeled.
+- Added a provider-neutral longitudinal runner with at most twelve assigned stages, separate source and note histories, protected evaluation, immutable review gates and verified resumption. Failed stages block their descendants; no replacement trials are hidden in the denominator.
+- Added optional end-of-task finalization for explicit review export before retained-state sealing, with separate timing, write-boundary checks and failure accounting. Noncanonical retained paths fail validation before a study starts.
+- Completed the bounded two-project study: eight accepted submissions, two preparation failures before provider launch and two blocked descendants. The copied-index adapter failed across fresh checkout roots. Provider-free controls validate the portability correction separately; the incomplete comparison establishes no maintenance-speed benefit.
+- Documented task integration, review-subject gaps, effort accounting, intentional no-change outcomes and detector gates. Local schema remains 3; Java modules remain 1.0.0. See [1.4 validation](docs/VALIDATION_1_4.md) for exercised behavior, frozen study revisions and limitations.
+
 ## Node tooling 1.3.0 — task investigation and retained recovery
 
 - Added `investigate TASK` and the eighth read-only local MCP tool, composing source matches, lexical owners, candidates, retained reviews and coverage in one snapshot. File, byte, term and subject limits disclose omissions; the result is an investigation starting point.
