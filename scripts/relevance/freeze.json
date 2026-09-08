@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "frozenAt": "2026-09-08T19:51:24.049888+00:00",
+  "baselineCommit": "dbf32a4",
+  "protocol": {
+    "limit": 5,
+    "maxBytes": 24000,
+    "latencyRepetitions": 7,
+    "heldOutPolicy": "Held-out scoring opens once after development tuning stops. Tasks and labels authored by the implementation engineer; not independently blinded. All scored failures remain published.",
+    "substantive": "Exact fact locator in source, matches, owners, nearbySymbols or source-bearing search snippet. A filename, import neighbor, warning or unrelated same-file symbol is not a hit.",
+    "groups": "Any exact locator within one predeclared group counts once; owners, consumers and intentional-difference counterexamples have separate denominators.",
+    "ordinarySearch": "Case-insensitive literal rg OR over task words, two context lines, first five matching files in sorted path order, same complete-response byte cap. This fixed scripted baseline is not an adaptive human/agent search session.",
+    "syntheticLimits": "Public hand-authored retrieval fixture, not production scale or observed user incidents."
+  },
+  "files": {
+    "baseline-1.4.mjs": "f6fda884468d2486c8e575c64792b464e6a322d0cc994c8aabaa3fe79c994021",
+    "development.json": "9ba776dbf052c1e919878690f52cf8992ac465cf41212d9e1f9142a2800b5caf",
+    "fixture/async/session.ts": "752644f17165f95cc2bcf3736d33a9da7c61b782e1330a31fa2ceba46e3d4fea",
+    "fixture/async/subscriber.ts": "114deff3219271e9e8a3f10ad9dfb39ea2f5c54b0f1fbbf225b147124674ec98",
+    "fixture/cache/displayLabel.ts": "0b57933720541fe99911b572e86a41f094c62c6ee40d050419a9c949e6039e58",
+    "fixture/cache/requestPanel.ts": "ae94ad90b84c456befbb08240abd2c25828154c5eabc85797269c09036b19755",
+    "fixture/cache/resourceRegistry.ts": "8832dd1f9ddb0597cfb220909d3e64596dc1a2aa24b094f5beaac6ef2a855089",
+    "fixture/crypto/auditLabel.ts": "3852c3e6357c0186689ca3d355a9349de898ecc62a6a76360923da94472eb3fe",
+    "fixture/crypto/encryptPayload.ts": "f0f17aec87dbd9dc3fd85970491e3856806042a9040eeba21799d1cde99d8914",
+    "fixture/crypto/tenantKey.ts": "32c2c49c138256520dca5ce7e355f2c79b399ae04a57d6c373e3776b89302055",
+    "fixture/format/csvWriter.ts": "f663e2dbaf46ee3d2c7e68fc41841d38da38c8466b32326662fdd44db1fbbf40",
+    "fixture/format/displayText.ts": "b6654a7adc5f4743b8983bd19e350e687302f4460c6472002dd5c810fc061ff2",
+    "fixture/format/exportTable.ts": "bd635a5d2b14a0d57516429cdf9d6db6d155a030e44948db79b93073bc164d64",
+    "fixture/io/exportController.ts": "50a651ae076c118e54c0cd5a119a026305d6d10dbde17acfbdf83966794fe5f9",
+    "fixture/io/transactionWriter.ts": "08ce9843344b1caa37d55e3ba0a0a20fc5d43e60cecb03b88af2b17ec7c01083",
+    "fixture/noise/formatNotes.ts": "29d8669391f533256d3f22cb06c8231c74f67e19e6b972cadef1b05e49babe26",
+    "fixture/noise/operationNotes.ts": "ed4e23814a6d3662fde447d7f8c23555db5a15c61d345545b79b27b306a18586",
+    "fixture/queue/displayStatus.ts": "de74defc90f1420aeef40a1a13875b8eecada1c61abea7ec439f5ed4a5455b41",
+    "fixture/queue/leaseOwner.ts": "2dca63271da407bf2f054d098cc956730929d828cca1ffa9346e29edc6bb5b33",
+    "fixture/queue/worker.ts": "59d509b12e82152971f91c5e79ed7bd2f9998ec1f0de7790301b9518a8f4774f",
+    "held-out.json": "9a909ac33d55e7c3dcf082c0513ca2a9736288ffbc732063499da1d1be2184fe"
+  }
+}

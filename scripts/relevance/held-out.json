@@ -1,0 +1,92 @@
+[
+  {
+    "id": "lease-late-owner",
+    "task": "Please investigate the issue carefully considering reproduction logs environment configuration observed behavior performance maintainability previous discussion implementation details and preserve existing contracts.  Inspect `renewLease` and acknowledgeJob after lease expiry.",
+    "owners": [
+      [
+        "queue/leaseOwner.ts#renewLease"
+      ]
+    ],
+    "consumers": [
+      [
+        "queue/worker.ts#acknowledgeJob"
+      ]
+    ],
+    "counterexamples": []
+  },
+  {
+    "id": "csv-boundary",
+    "task": "CSV quote escaping in escapeCsvCell must reach writeCsvRow and exportTable.",
+    "owners": [
+      [
+        "format/csvWriter.ts#escapeCsvCell"
+      ]
+    ],
+    "consumers": [
+      [
+        "format/csvWriter.ts#writeCsvRow"
+      ],
+      [
+        "format/exportTable.ts#exportTable"
+      ]
+    ],
+    "counterexamples": []
+  },
+  {
+    "id": "tenant-key",
+    "task": "selectTenantKey must keep encryptPayload scoped to the tenant.",
+    "owners": [
+      [
+        "crypto/tenantKey.ts#selectTenantKey"
+      ]
+    ],
+    "consumers": [
+      [
+        "crypto/encryptPayload.ts#encryptPayload"
+      ]
+    ],
+    "counterexamples": []
+  },
+  {
+    "id": "csv-counterexample",
+    "task": "Unify displayText with escapeCsvCell? Investigate the intentional difference in formatting.",
+    "owners": [
+      [
+        "format/csvWriter.ts#escapeCsvCell"
+      ]
+    ],
+    "consumers": [],
+    "counterexamples": [
+      [
+        "format/displayText.ts#displayText"
+      ]
+    ]
+  },
+  {
+    "id": "ambiguous-status",
+    "task": "Investigate lease status.",
+    "owners": [],
+    "consumers": [],
+    "counterexamples": [],
+    "ambiguous": true,
+    "acceptable": [
+      "queue/leaseOwner.ts",
+      "queue/worker.ts",
+      "queue/displayStatus.ts"
+    ]
+  },
+  {
+    "id": "negative-syntax",
+    "task": "!!! ???",
+    "owners": [],
+    "consumers": [],
+    "counterexamples": []
+  },
+  {
+    "id": "long-unknown-tail",
+    "task": "Please investigate the issue carefully considering reproduction logs environment configuration observed behavior performance maintainability previous discussion implementation details and preserve existing contracts. unexpectedTerrainXYZ unidentifiedMonadABC nonexistentFutureDEF",
+    "owners": [],
+    "consumers": [],
+    "counterexamples": []
+  }
+]
