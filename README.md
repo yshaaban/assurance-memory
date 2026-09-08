@@ -46,6 +46,7 @@ The [getting started guide](docs/GETTING_STARTED.md) walks through your own TS/J
 | Candidate backlog | Ranked simplification, inconsistency, reliability, and coverage candidates with provenance and suggested checks | A candidate is a hypothesis, not a confirmed defect or a debt valuation |
 | Source search | Normalized SQLite FTS5, exact-symbol lookup and explained bounded reranking | Raw source bodies and embeddings are not indexed |
 | Task investigation | One bounded brief with source matches, owners, coverage, candidates and retained reviews | Explicit lexical selection; omitted subjects and entries remain visible |
+| Task-start delivery | Refresh the index and deliver a task packet with source changes and exact prior notes | Prose remains unverified; delivery is not evidence of useful contribution |
 | Context and impact | Lexical owners, nearby symbols, direct import neighbors and transitive reverse imports with predecessor witnesses | Import navigation currently covers component-local TS/JS imports; it is not a complete call graph |
 | Drift | Added/removed subjects, changed signatures/effects, compiler inputs, and environment context | Results describe the most recent committed scan, not live filesystem state |
 | Local MCP | Eight read-only investigation, status, search, backlog, context, impact, drift and review-history tools | Scanning, review append and archive operations remain explicit CLI actions |
@@ -83,7 +84,9 @@ The [1.3 design decision](docs/decisions/003-task-investigation.md) records the 
 
 ## Evidence and scale
 
-Node tooling is **1.3.0**, with local schema **3**; Java modules remain **1.0.0**. The [investigation scale report](docs/INVESTIGATION_SCALE.md) separates synthetic query/review costs from real component extraction. TypeScript analysis dominated the measured unchanged scans; no incremental extraction benefit is established.
+Node tooling is **1.4.0**, with local schema **3**; Java modules remain **1.0.0**. The [task workflow](docs/TASK_WORKFLOW.md) delivers context at task start, and the [longitudinal harness](docs/LONGITUDINAL_PILOTS.md) evaluates successive changes with separate source and notes histories. The [investigation scale report](docs/INVESTIGATION_SCALE.md) separates synthetic query/review costs from real component extraction. TypeScript analysis dominated the measured unchanged scans; no incremental extraction benefit is established.
+
+The [1.4 validation report](docs/VALIDATION_1_4.md) retains all twelve longitudinal assignments: eight accepted submissions, two preparation failures and two blocked descendants. Copying checkout-bound indexes caused the structured arm's second-cycle failures. The portable archive workflow was corrected and checked separately; the incomplete paired comparison establishes no maintenance-speed benefit.
 
 The [1.3 validation report](docs/VALIDATION_1_3.md) records regression, durable-service, archive, task-brief and lifecycle/reuse checks with their measured scope. Agent outcome evidence is reported separately for the frozen tool revision actually used in the study.
 

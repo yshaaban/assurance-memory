@@ -35,12 +35,16 @@ Each proposal must retain source provenance, state missing facts explicitly, and
 
 ## Divergent normalization at entry points
 
-- **Hypothesis:** Multiple restore/import paths normalize the same durable model independently, so adding or changing a common field creates inconsistent canonical state.
-- **Required facts:** Model and field identity; normalization operations; caller and trust boundaries; mutation versus value-return behavior; catalog/default provenance; persisted versus trusted capability fields.
-- **Intentional negative control:** A trusted catalog and untrusted persisted input deliberately apply different capability rules; transport-specific decoding delegates to a common canonical normalizer.
+- **Hypothesis:** Entry paths apply inconsistent admission or canonicalization to the same semantic domain, or independently normalize the same durable model, so a common policy change produces divergent state or request identity.
+- **Required facts:** Model, field or request-domain identity; normalization operations; caller and trust boundaries; mutation versus value-return behavior; catalog/default provenance; persisted versus trusted capability fields. Similar path syntax does not establish the same contract.
+- **Intentional negative control:** A trusted catalog and untrusted persisted input deliberately apply different capability rules; transport-specific decoding delegates to a common canonical normalizer; presentation or identity fallback deliberately differs from request admission.
 - **Validation:** Introduce one representative common-field change and exercise each entry path. Compare canonical output, object identity requirements and rejection of untrusted capabilities. Demonstrate the edit surface before proposing consolidation.
 - **Graduation criteria:** Positives show the same semantic field contract and a reproducible divergence or duplicated change obligation; negative controls preserve trust-specific behavior. A common helper is not automatically better unless the named change becomes local.
 - **Dependencies:** Resolved types/fields, caller provenance and explicit trust contracts; representative restore/import behavior tests.
+
+**1.4 pre-study investigation:** Preparation in two private projects identified path admission or canonicalization inconsistencies suitable for bounded maintenance checks. Source, task details and reference changes remain private. This supports investigating the hypothesis with exact-domain positive and intentional-negative controls; it does not graduate a detector or establish an exploit. Validate behavior and actual policy-change locality before proposing consolidation. The [longitudinal-maintenance decision](decisions/004-longitudinal-maintenance.md) defines the study and evidence limits. The [completed results](VALIDATION_1_4.md) retain integration failures and the resulting incomplete paired comparison; no detector graduated.
+
+The preparation also exposed a retention gap: relevant reasoning may concern a source owner with no local candidate, while local reviews currently attach to candidates. Do not create a finding to obtain note storage. Keep such handoffs explicitly unverified, preserve them alongside visible scan drift, and evaluate their usefulness before extending review subjects. Any future extension must reuse source/context capture and invalidation; approved claims remain the assurance kernel's responsibility.
 
 ## Error observation across detached work
 

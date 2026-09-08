@@ -4,15 +4,15 @@ The repository is distributed as source. npm workspaces remain `private: true`; 
 
 ## Version boundaries
 
-The Node tooling is version 1.3.0. The retained Java Maven modules and JAR filenames are version 1.0.0. This distinction is intentional for the current source release; the Java API gained a read-only frontier operation without changing its existing authority semantics. Treat a future synchronized package release as a separate versioning decision. No compatibility is implied between arbitrary extractor/index revisions.
+The Node tooling is version 1.4.0. The retained Java Maven modules and JAR filenames are version 1.0.0. These versions are intentionally separate; this revision does not change the Java API or its authority semantics. Treat a future synchronized package release as a separate versioning decision. No compatibility is implied between arbitrary extractor/index revisions.
 
-The local index schema is 3, recorded with SQLite `user_version`; unsupported newer schemas are rejected. CLI scan upgrades schema-1/2 indexes atomically with source publication; 1.3 read-only export cannot migrate an old index. Preserve a SQLite-consistent backup before upgrading. Scanner implementation changes may stale retained notes even when application source is unchanged; history must remain available. Context fingerprints cover source/compiler assumptions and local candidate-policy implementation. Any identity or detector change must document its effect on drift and evidence reuse.
+The local index schema is 3, recorded with SQLite `user_version`; unsupported newer schemas are rejected. CLI scan upgrades schema-1/2 indexes atomically with source publication; read-only export cannot migrate an old index. Preserve a SQLite-consistent backup before upgrading. Scanner implementation changes may stale retained notes even when application source is unchanged; history must remain available. Context fingerprints cover source/compiler assumptions and local candidate-policy implementation. Any identity or detector change must document its effect on drift and evidence reuse.
 
 ## Before publishing a change
 
 1. Follow [contributing](../CONTRIBUTING.md), run the appropriate tests and check links/examples.
 2. Keep local indexes, private task banks, source reports, credentials and generated build artifacts outside Git. Check the actual history being pushed, not only the working tree.
-3. Compare README claims with [1.3 validation](VALIDATION_1_3.md) and checks executed on the final source revision. The [1.2 report](VALIDATION_1_2.md) is historical; [scale diagnostics](INVESTIGATION_SCALE.md) are workload measurements. Keep pilot outcomes bound to their frozen tool revision and mark unexecuted checks explicitly.
+3. Compare README claims with [1.4 validation](VALIDATION_1_4.md) and checks executed on the final source revision. The [1.3 report](VALIDATION_1_3.md) retains earlier service evidence; [scale diagnostics](INVESTIGATION_SCALE.md) are workload measurements. Keep pilot outcomes bound to their frozen tool revision and mark unexecuted checks explicitly.
 4. Confirm the lockfile, supported Node/JDK versions and executable examples agree with CI.
 5. Describe user-visible behavior, migration requirements, measured limits and unresolved risks in the changelog.
 6. Push only reviewed branches. Check both GitHub Actions jobs after publication.

@@ -132,7 +132,7 @@ The result distinguishes local evidence/repair work, missing reviewed decomposit
 
 ## Persistence and limits
 
-Version 1.3.0 uses schema 3. CLI `scan` validates configuration before writable open, then commits schema-1/2 migration and search rebuild with the first successful scan. A failed upgrade scan retains the previous schema and snapshot. Queries/MCP, archive export, review append and imports into existing indexes require the compatible schema. Preserve a SQLite-consistent backup first: schema-2 export cannot bypass migration if the original source inventory is unavailable.
+Version 1.4.0 uses schema 3. CLI `scan` validates configuration before writable open, then commits schema-1/2 migration and search rebuild with the first successful scan. A failed upgrade scan retains the previous schema and snapshot. Queries/MCP, archive export, review append and imports into existing indexes require the compatible schema. Preserve a SQLite-consistent backup first: schema-2 export cannot bypass migration if the original source inventory is unavailable.
 
 An upgrade can change the scanner implementation digest and make existing reviews stale despite unchanged application source. History survives; current applicability across tool versions is not promised. Toggling `--profile` with the same scanner build does not change fact or context identities.
 
