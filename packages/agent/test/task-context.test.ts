@@ -242,5 +242,10 @@ test('task packets reject index and sidecar output aliases before SQLite can rep
       assert.notEqual(result.status, 0); assert.match(result.stderr, /separate from the index/);
       for (const sidecar of ['', '-wal', '-shm']) await assert.rejects(access(db + sidecar));
     }
+    const nested = spawnSync(process.execPath, [hook, '--config', join(root, 'workspace.json'),
+      '--db', join(root, 'new/cache/index.sqlite'), '--task', join(root, 'task.txt'),
+      '--output', join(root, 'packet.json')], { encoding: 'utf8' });
+    assert.equal(nested.status, 0, nested.stderr);
+    assert.equal(JSON.parse(await readFile(join(root, 'packet.json'), 'utf8')).investigation.snapshot, 1);
   } finally { await rm(root, { recursive: true, force: true }); }
 });

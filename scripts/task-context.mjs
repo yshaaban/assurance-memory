@@ -40,7 +40,12 @@ export async function taskContext(options) {
   const maxBytes = Number(options['max-bytes'] ?? 24_000);
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 20) throw new Error('--limit must be 1..20 files');
   if (!Number.isSafeInteger(maxBytes) || maxBytes < 4096 || maxBytes > 128_000) throw new Error('--max-bytes must be 4096..128000');
-  const canonicalParentPath = path => join(realpathSync(dirname(resolve(path))), basename(path));
+  const canonicalParentPath = path => {
+    let ancestor = dirname(resolve(path));
+    const missing = [basename(path)];
+    while (!existsSync(ancestor)) { missing.unshift(basename(ancestor)); ancestor = dirname(ancestor); }
+    return join(realpathSync(ancestor), ...missing);
+  };
   const databasePaths = new Set([canonicalParentPath(options.db), ...(existsSync(options.db) ? [realpathSync(options.db)] : [])]);
   const packetPath = canonicalParentPath(options.output);
   if ([...databasePaths].some(path => ['', '-wal', '-shm'].some(suffix => packetPath === path + suffix)))
