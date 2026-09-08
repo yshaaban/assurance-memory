@@ -8,7 +8,8 @@ This guide starts with the local workbench. Commands run from the Assurance Memo
 | --- | --- |
 | Local TypeScript/JavaScript investigation | Official Node.js 24.16+ build, npm, Git |
 | Local attributed Java investigation | The above plus a full JDK 21 available as `java` and `javac` |
-| Complete tests or temporary service demo | Node 24.16+ and full JDK 21 |
+| Complete tests | Node 24.16+, full JDK 21 and Python 3 for the pilot harness |
+| Temporary service demo | Node 24.16+ and full JDK 21 |
 | Durable assurance service | JDK 21, Maven 3.9+, PostgreSQL 17+; Node for agent tools and setup scripts |
 
 ```sh
@@ -38,6 +39,14 @@ Inspect the distinction between `coverage.discovery` and `coverage.semantic`. Co
 
 ## 3. Retrieve and investigate a candidate
 
+For a symptom or intended change, start with a bounded task brief:
+
+```sh
+node packages/agent/dist/src/local-cli.js investigate "callbacks arriving after cancellation" --db examples/.assurance-cache/index.sqlite --limit 5 --max-bytes 24000
+```
+
+The brief groups lexical source matches with owners, coverage and compact candidate/review summaries. It names omitted subjects and entries; read the cited source and use `context` or `reviews` for detail. Defaults are five files and 24,000 compact JSON bytes. This is a starting point, not a complete call graph or a correctness judgment.
+
 Use categories to focus a backlog:
 
 ```sh
@@ -56,7 +65,7 @@ node packages/agent/dist/src/local-cli.js impact SUBJECT_ID --db examples/.assur
 
 `context` returns the subject, its component metadata, matching candidates, and direct import neighbors. `impact` follows reverse imports from the containing file and reports affected files with a `via` predecessor and distance. A `truncated` response requires a larger budget or a narrower investigation. Both queries currently navigate component-local TS/JS import summaries; they do not establish all behavioral dependencies.
 
-Read the actual source at the returned path and line using your editor or ordinary repository tools. Search covers locators, tags, and effect summaries, so use repository text search for arbitrary source strings. A multiword local search requires every token to match; it is neither a raw substring search nor an embedding search.
+Read the actual source at the returned path and line using your editor or ordinary repository tools. Search covers locators, tags and effect summaries, so use repository text search for arbitrary source strings. Multiword search first requires all normalized terms, then labels an any-term fallback if no all-term match exists. It is neither a raw substring search nor an embedding search.
 
 For each candidate, state the behavior that must remain true, the suspected mechanism, and a check that could disprove the suspicion. That gives an agent a useful next action without treating a detector's output as an approved requirement.
 
@@ -69,7 +78,7 @@ node packages/agent/dist/src/local-cli.js backlog --db examples/.assurance-cache
 node packages/agent/dist/src/local-cli.js backlog --db examples/.assurance-cache/index.sqlite --category RELIABILITY --limit 1 --after 'CURSOR_FROM_PREVIOUS_NEXT'
 ```
 
-The second command illustrates a continuation; replace the quoted placeholder with an actual cursor. Do not continue when `hasMore` is false. A new committed scan or a changed category invalidates the cursor; restart from the first page. CLI queries default to 20 results and accept `--limit` from 1 through 200.
+The second command illustrates a continuation; replace the quoted placeholder with an actual cursor. Do not continue when `hasMore` is false. A new scan, review revision or category invalidates the cursor; restart from the first page. Bounded queries other than `investigate` default to 20 results and accept `--limit` from 1 through 200. Investigation accepts 1–20 files and a 4,096–128,000-byte budget.
 
 ## 4. Scan your own TypeScript or JavaScript project
 
@@ -159,7 +168,9 @@ node packages/agent/dist/src/local-cli.js drift 2 --db .assurance-cache/payments
 
 Replace `125` with the returned row cursor. An unchanged scan can have no drift. A candidate that disappears was not detected in the new snapshot; that does not establish behavior correctness or repay a reviewed debt obligation.
 
-Failed scans leave the previous committed snapshot intact. Source facts are rebuildable, but the index also retains user review records and drift history without automatic compaction. Keep it local and exclude it from Git. Preserve a SQLite-consistent backup of any reviewed database before choosing a new path or resetting history/partitioning.
+Failed scans leave the previous committed snapshot intact. Source facts are rebuildable, but the index also retains user review records and drift history without automatic compaction. Keep it local and exclude it from Git. Preserve a SQLite-consistent backup before choosing a new path or resetting history/partitioning. Bounded [review archives](REVIEW_ARCHIVES.md) can also carry originating annotations to another index, where they remain stale or absent until a fresh local review. Version 1.3 requires schema 3; older indexes must complete a scan migration before read-only export. Tool upgrades can stale reviews even with unchanged application source because scanner implementation is captured context.
+
+For slow scans, add `--profile` to the scan command. It reports compiler analysis phases separately from SQLite ingestion and reconciliation plus commit; see [diagnostics and measured limits](INVESTIGATION_SCALE.md).
 
 ## 7. Connect a coding agent through MCP
 
@@ -179,7 +190,7 @@ Build the tools, create the index with the CLI, and configure your client's stdi
 }
 ```
 
-Use absolute paths and ensure the client launches Node 24.16+. Local mode exposes seven read-only tools: `assurance_local_status`, `assurance_local_search`, `assurance_local_backlog`, `assurance_local_context`, `assurance_local_impact`, `assurance_local_drift`, and `assurance_local_reviews`. It does not require a service token and does not scan or write the index.
+Use absolute paths and ensure the client launches Node 24.16+. Local mode exposes eight read-only tools: `assurance_local_investigate`, `assurance_local_status`, `assurance_local_search`, `assurance_local_backlog`, `assurance_local_context`, `assurance_local_impact`, `assurance_local_drift`, and `assurance_local_reviews`. It does not require a service token and does not scan or write the index.
 
 A useful initial agent instruction is:
 
@@ -223,6 +234,6 @@ export ASSURANCE_AUTH_FILE=/absolute/operator/path/auth.json
 java -jar services/server/target/assurance-server-1.0.0.jar
 ```
 
-Provision the PostgreSQL database and authentication file first. The Maven modules retain their `1.0.0` artifact version while the agent package is `1.2.0`, so the JAR filename above is intentional. The service requires explicit credentials and database access. Read [security](SECURITY.md) before exposure beyond a trusted environment, and use the [contributor test matrix](../CONTRIBUTING.md#test-matrix) to verify PostgreSQL and restart persistence.
+Provision the PostgreSQL database and authentication file first. The Maven modules retain their `1.0.0` artifact version while the agent package is `1.3.0`, so the JAR filename above is intentional. The service requires explicit credentials and database access. Read [security](SECURITY.md) before exposure beyond a trusted environment, and use the [contributor test matrix](../CONTRIBUTING.md#test-matrix) to verify PostgreSQL and restart persistence.
 
 Next, follow the [agent protocol](AGENT_PROTOCOL.md) for reviewed requirements, plans, leases, checker results, and debt repayment. The [pilot plan](PILOT_PLAN.md) describes how to evaluate these workflows on a representative large project.

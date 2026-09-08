@@ -6,6 +6,8 @@ target/
 .assurance-cache/
 *.log
 coverage/
+__pycache__/
+*.py[cod]
 
 .local/
 .assurance-secrets/

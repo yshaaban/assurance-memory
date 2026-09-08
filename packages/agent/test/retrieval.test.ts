@@ -98,7 +98,7 @@ test('version-one migration rebuilds normalized search without changing source s
     index = new LocalIndex(path);
     assert.equal(index.revision(), 1);
     assert.equal(index.search('startup hydration')[0]!.id, owner.id);
-    assert.equal(index.summary().schemaVersion, 2);
+    assert.equal(index.summary().schemaVersion, 3);
     assert.equal(index.changes(1).items.length, 1);
   } finally { index?.close(); await rm(dir, { recursive: true }); }
 });
@@ -241,7 +241,7 @@ test('changed search policy requires and rebuilds projection even with unchanged
   const { copyFile, readFile } = await import('node:fs/promises');
   const dir = await mkdtemp(join(tmpdir(), 'assurance-search-policy-'));
   try {
-    for (const name of ['local-index.js', 'local-search.js', 'local-review.js', 'investigation.js', 'util.js'])
+    for (const name of ['local-index.js', 'local-search.js', 'local-review.js', 'local-review-archive.js', 'investigation.js', 'util.js'])
       await copyFile(fileURLToPath(new URL(`../src/${name}`, import.meta.url)), join(dir, name));
     await writeFile(join(dir, 'package.json'), '{"type":"module"}');
     await writeFile(join(dir, 'probe.mjs'), `

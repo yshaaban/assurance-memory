@@ -1,8 +1,9 @@
 import type { LocalIndex } from './local-index.js';
+import { investigate } from './local-investigate.js';
 
 /** All returned rows and cursor pins come from the same SQLite read snapshot. */
 export function localQuery(index: LocalIndex, command: string, args: Record<string, unknown>): Record<string, unknown> {
-  const count = args.limit === undefined ? 20 : args.limit;
+  const count = args.limit === undefined ? command === 'investigate' ? 5 : 20 : args.limit;
   if (typeof count !== 'number' || !Number.isSafeInteger(count) || count < 1 || count > 200) throw new Error('limit must be 1..200');
   const string = (key: string, fallback = ''): string => {
     const value = args[key] ?? fallback;
@@ -22,6 +23,7 @@ export function localQuery(index: LocalIndex, command: string, args: Record<stri
     switch (command) {
       case 'status': return index.summary();
       case 'search': return { snapshot, ...index.searchResult(string('query'), count), limited: true };
+      case 'investigate': return investigate(index, string('task'), count, args.maxBytes === undefined ? 24_000 : args.maxBytes as number);
       case 'impact': return { snapshot, ...index.impact(string('id'), count) };
       case 'context': return { snapshot, reviewRevision, ...index.context(string('id'), count) };
       case 'backlog': {

@@ -14,6 +14,8 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm test
       - run: node scripts/benchmark-local.mjs 10000
+      - run: node scripts/benchmark-investigation.mjs small
+      - run: node examples/lifecycle-lab/run.mjs --summary
   spring-and-postgres:
     runs-on: ubuntu-latest
     services:

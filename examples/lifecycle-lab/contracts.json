@@ -1,0 +1,134 @@
+{
+  "unsafe": {
+    "id": "synthetic-unsafe/1",
+    "protocol": "versioned-cell/1",
+    "release": "ABSORBING",
+    "target": "synthetic versioned cell",
+    "sources": [
+      {
+        "path": "examples/lifecycle-lab/unsafe.mjs",
+        "sha256": "16caed52f045fb182b014713e234d7ef550e483201b9af3b2d0cad026a8038bd",
+        "role": "IMPLEMENTATION"
+      },
+      {
+        "path": "examples/lifecycle-lab/guarded.mjs",
+        "sha256": "2ebabea040127662f7017c0bac17a43bce2155355bdcb6804334247cb78741f6",
+        "role": "IMPLEMENTATION"
+      },
+      {
+        "path": "examples/lifecycle-lab/restartable.mjs",
+        "sha256": "9ef68e8fa1c33218a08fd113f1595c5f8012091c7b4af2dcd0d4aa477b6bd055",
+        "role": "IMPLEMENTATION"
+      },
+      {
+        "path": "examples/lifecycle-lab/adapter.mjs",
+        "sha256": "32e31b7db1be13ad35f2b67c9da77358d327e1a006ba9d6794788527d0c0036b",
+        "role": "ADAPTER"
+      },
+      {
+        "path": "examples/lifecycle-lab/unsafe.mjs",
+        "sha256": "16caed52f045fb182b014713e234d7ef550e483201b9af3b2d0cad026a8038bd",
+        "role": "MUTATION_BOUNDARY"
+      }
+    ],
+    "coverage": {
+      "callbackRoute": "RESOLVED",
+      "mutationOwnership": "RESOLVED",
+      "downstreamAdmission": "RESOLVED"
+    },
+    "assumptions": [
+      "All fixture callbacks are synchronous and retained at subscription capture, including queued readiness and snapshot callbacks.",
+      "The snapshot observes the entire versioned cell and a monotonic count of writes; there are no other mutation routes or targets.",
+      "Owner acquisition is exclusive, generations increase, and data admission requires a ready, unreleased current generation and a newer version.",
+      "The adapter maps to the selected checked-in implementation; all statically imported fixture modules are pinned."
+    ]
+  },
+  "guarded": {
+    "id": "synthetic-guarded/1",
+    "protocol": "versioned-cell/1",
+    "release": "ABSORBING",
+    "target": "synthetic versioned cell",
+    "sources": [
+      {
+        "path": "examples/lifecycle-lab/unsafe.mjs",
+        "sha256": "16caed52f045fb182b014713e234d7ef550e483201b9af3b2d0cad026a8038bd",
+        "role": "IMPLEMENTATION"
+      },
+      {
+        "path": "examples/lifecycle-lab/guarded.mjs",
+        "sha256": "2ebabea040127662f7017c0bac17a43bce2155355bdcb6804334247cb78741f6",
+        "role": "IMPLEMENTATION"
+      },
+      {
+        "path": "examples/lifecycle-lab/restartable.mjs",
+        "sha256": "9ef68e8fa1c33218a08fd113f1595c5f8012091c7b4af2dcd0d4aa477b6bd055",
+        "role": "IMPLEMENTATION"
+      },
+      {
+        "path": "examples/lifecycle-lab/adapter.mjs",
+        "sha256": "32e31b7db1be13ad35f2b67c9da77358d327e1a006ba9d6794788527d0c0036b",
+        "role": "ADAPTER"
+      },
+      {
+        "path": "examples/lifecycle-lab/guarded.mjs",
+        "sha256": "2ebabea040127662f7017c0bac17a43bce2155355bdcb6804334247cb78741f6",
+        "role": "MUTATION_BOUNDARY"
+      }
+    ],
+    "coverage": {
+      "callbackRoute": "RESOLVED",
+      "mutationOwnership": "RESOLVED",
+      "downstreamAdmission": "RESOLVED"
+    },
+    "assumptions": [
+      "All fixture callbacks are synchronous and retained at subscription capture, including queued readiness and snapshot callbacks.",
+      "The snapshot observes the entire versioned cell and a monotonic count of writes; there are no other mutation routes or targets.",
+      "Owner acquisition is exclusive, generations increase, and data admission requires a ready, unreleased current generation and a newer version.",
+      "The adapter maps to the selected checked-in implementation; all statically imported fixture modules are pinned."
+    ]
+  },
+  "restartable": {
+    "id": "synthetic-restartable/1",
+    "protocol": "versioned-cell/1",
+    "release": "RESTARTABLE",
+    "target": "synthetic versioned cell",
+    "sources": [
+      {
+        "path": "examples/lifecycle-lab/unsafe.mjs",
+        "sha256": "16caed52f045fb182b014713e234d7ef550e483201b9af3b2d0cad026a8038bd",
+        "role": "IMPLEMENTATION"
+      },
+      {
+        "path": "examples/lifecycle-lab/guarded.mjs",
+        "sha256": "2ebabea040127662f7017c0bac17a43bce2155355bdcb6804334247cb78741f6",
+        "role": "IMPLEMENTATION"
+      },
+      {
+        "path": "examples/lifecycle-lab/restartable.mjs",
+        "sha256": "9ef68e8fa1c33218a08fd113f1595c5f8012091c7b4af2dcd0d4aa477b6bd055",
+        "role": "IMPLEMENTATION"
+      },
+      {
+        "path": "examples/lifecycle-lab/adapter.mjs",
+        "sha256": "32e31b7db1be13ad35f2b67c9da77358d327e1a006ba9d6794788527d0c0036b",
+        "role": "ADAPTER"
+      },
+      {
+        "path": "examples/lifecycle-lab/guarded.mjs",
+        "sha256": "2ebabea040127662f7017c0bac17a43bce2155355bdcb6804334247cb78741f6",
+        "role": "MUTATION_BOUNDARY"
+      }
+    ],
+    "coverage": {
+      "callbackRoute": "RESOLVED",
+      "mutationOwnership": "RESOLVED",
+      "downstreamAdmission": "RESOLVED"
+    },
+    "assumptions": [
+      "All fixture callbacks are synchronous and retained at subscription capture, including queued readiness and snapshot callbacks.",
+      "The snapshot observes the entire versioned cell and a monotonic count of writes; there are no other mutation routes or targets.",
+      "Owner acquisition is exclusive, generations increase, and data admission requires a ready, unreleased current generation and a newer version.",
+      "The adapter maps to the selected checked-in implementation; all statically imported fixture modules are pinned."
+    ]
+  }
+}

@@ -35,8 +35,8 @@ export class LocalIndex {
     }
     this.db.exec('PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON;');
     const version = Number(this.db.prepare('PRAGMA user_version').get()!.user_version);
-    if (version > 2) { this.db.close(); throw new Error('Index schema is newer than this tool; use a compatible version'); }
-    if (version < 2 && readOnly) { this.db.close(); throw new Error('Index needs initialization or schema migration; run scan with this tool first'); }
+    if (version > 3) { this.db.close(); throw new Error('Index schema is newer than this tool; use a compatible version'); }
+    if (version < 3 && readOnly) { this.db.close(); throw new Error('Index needs initialization or schema migration; run scan with this tool first'); }
     if (version === 0) this.db.exec(`
       PRAGMA journal_mode=WAL;
       CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -57,14 +57,14 @@ export class LocalIndex {
       CREATE INDEX IF NOT EXISTS drift_snapshot ON drift(snapshot,id);
       PRAGMA user_version=1;
     `);
-    if (version < 2) {
+    if (version < 3) {
       this.db.exec('BEGIN IMMEDIATE');
       try {
         initializeLocalReviewSchema(this.db);
         this.db.exec(`CREATE INDEX IF NOT EXISTS facts_symbol_lookup ON facts(lower(substr(json_extract(body,'$.locator'),instr(json_extract(body,'$.locator'),'#')+1)));
           CREATE INDEX IF NOT EXISTS opportunities_subject ON opportunities(component,json_extract(body,'$.subjectId'),resolved,score DESC,id);`);
         this.rebuildSearch();
-        this.db.exec('PRAGMA user_version=2');
+        this.db.exec('PRAGMA user_version=3');
         if (migrateWithScan) this.migrationPending = true; else this.db.exec('COMMIT');
       } catch (error) { this.db.exec('ROLLBACK'); this.db.close(); throw error; }
     }
@@ -180,7 +180,7 @@ export class LocalIndex {
       facts: this.db.prepare('SELECT count(*) AS n FROM facts').get()!.n,
       opportunities: this.db.prepare('SELECT count(*) AS n FROM opportunities WHERE resolved IS NULL').get()!.n,
       components: components.slice(0, 200), componentsTruncated: components.length > 200,
-      reviewRevision: this.reviews.revision(), schemaVersion: 2, searchPolicyDigest,
+      reviewRevision: this.reviews.revision(), schemaVersion: 3, searchPolicyDigest,
       authority: 'LOCAL_INVESTIGATION_ONLY', freshness: 'AS_OF_SCAN; rescan before editing or relying on absence',
       history: 'This database retains user review records as well as rebuildable source facts. Preserve a SQLite-consistent backup before replacing or deleting it; history has no automatic retention.' };
   }
@@ -189,6 +189,13 @@ export class LocalIndex {
   reviewRevision(): number { return this.reviews.revision(); }
   reviewHistory(candidateId: string, count = 20, after?: number): Row {
     limit(count); return this.reviews.list(candidateId, count, after);
+  }
+  exportReviews(): string { return this.read(() => this.reviews.exportArchive()); }
+  importReviews(input: string | Uint8Array): ReturnType<LocalReviewStore['importArchive']> {
+    if (this.active !== undefined || this.migrationPending) throw new Error('Complete the scan before importing review history');
+    this.db.exec('BEGIN IMMEDIATE');
+    try { const result = this.reviews.importArchive(input); this.db.exec('COMMIT'); return result; }
+    catch (error) { this.db.exec('ROLLBACK'); throw error; }
   }
   addReview(input: unknown): unknown {
     if (this.active !== undefined) throw new Error('Cannot review during a scan');
@@ -216,6 +223,7 @@ export class LocalIndex {
     const { effectiveScore: _effectiveScore, ...candidate } = row;
     const summary = review ? { id: review.id, snapshot: review.snapshot, disposition: review.disposition, state: review.state,
       author: review.author, reason: review.reason, evidence: review.evidence, invalidation: review.invalidation,
+      ...(review.archive ? { archive: review.archive } : {}),
       authority: review.authority, freshness: review.freshness } : null;
     return { ...candidate, score: Number(row.score) - discount, review: summary,
       rankingReasons: [...(row.rankingReasons ?? []), ...(discount ? ['CURRENT_USER_REPORTED_COUNTEREVIDENCE:-20; retained candidate, not debt resolution'] : [])] };

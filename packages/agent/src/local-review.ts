@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
 import type { DatabaseSync } from 'node:sqlite';
 import { sha256, subjectId } from './util.js';
+import { archiveCanonical as canonical, archiveRecordDigest, LOCAL_REVIEW_ARCHIVE_LIMITS, parseReviewArchive,
+  serializeReviewArchive, type LocalReviewArchive, type ReviewArchiveProvenance, type ReviewArchiveRecord } from './local-review-archive.js';
 
 export type LocalReviewDisposition = 'COUNTEREVIDENCE' | 'INVESTIGATE';
 export type LocalReviewState = 'CURRENT' | 'STALE' | 'CANDIDATE_ABSENT';
@@ -25,7 +27,7 @@ export interface ReviewSource {
   dependencyCount: number;
 }
 
-interface ReviewCapture {
+export interface ReviewCapture {
   candidate: ObjectValue;
   sources: ReviewSource[];
   contexts: Array<{ component: string; metadata: ObjectValue }>;
@@ -45,6 +47,7 @@ export interface LocalReview extends ReviewCapture {
   invalidation: { snapshot: number; reason: string } | null;
   authority: 'USER_REPORTED_LOCAL_ANNOTATION';
   freshness: 'AS_OF_SCAN';
+  archive?: ReviewArchiveProvenance;
 }
 
 /** The caller migrates user_version and owns the surrounding transaction. */
@@ -59,6 +62,10 @@ export const LOCAL_REVIEW_SCHEMA = `
     fingerprint TEXT NOT NULL
   );
   CREATE INDEX IF NOT EXISTS local_reviews_candidate ON local_reviews(candidateId,id DESC);
+  CREATE INDEX IF NOT EXISTS local_reviews_effective ON local_reviews(candidateId,
+    CASE WHEN json_type(body,'$.archive') IS NULL THEN 0 ELSE 1 END,id DESC);
+  CREATE UNIQUE INDEX IF NOT EXISTS local_reviews_archive_digest ON local_reviews(json_extract(body,'$.archive.recordDigest'))
+    WHERE json_type(body,'$.archive')='object';
   CREATE TABLE IF NOT EXISTS local_review_invalidations(
     reviewId INTEGER PRIMARY KEY,
     snapshot INTEGER NOT NULL,
@@ -89,10 +96,14 @@ export const LOCAL_REVIEW_SCHEMA = `
     FROM local_reviews r
     LEFT JOIN local_review_invalidations i ON i.reviewId=r.id
     LEFT JOIN opportunities o ON o.id=r.candidateId
-    WHERE r.id=(SELECT max(newest.id) FROM local_reviews newest WHERE newest.candidateId=r.candidateId);
+    WHERE r.id=(SELECT newest.id FROM local_reviews newest WHERE newest.candidateId=r.candidateId
+      ORDER BY CASE WHEN json_type(newest.body,'$.archive') IS NULL THEN 0 ELSE 1 END,newest.id DESC LIMIT 1);
 `;
 
-export function initializeLocalReviewSchema(db: DatabaseSync): void { db.exec(LOCAL_REVIEW_SCHEMA); }
+export function initializeLocalReviewSchema(db: DatabaseSync): void {
+  db.exec('DROP VIEW IF EXISTS local_review_latest;');
+  db.exec(LOCAL_REVIEW_SCHEMA);
+}
 
 function boundedString(value: unknown, name: string, maximum: number): string {
   if (typeof value !== 'string' || !value.trim() || value.length > maximum || value.includes('\0'))
@@ -104,15 +115,6 @@ function positiveInteger(value: unknown, name: string): number {
   if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 1)
     throw new Error(`${name} must be a positive safe integer`);
   return value;
-}
-
-function canonical(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
-  if (value !== null && typeof value === 'object') {
-    const record = value as ObjectValue;
-    return `{${Object.keys(record).sort().map(key => `${JSON.stringify(key)}:${canonical(record[key])}`).join(',')}}`;
-  }
-  return JSON.stringify(value) ?? 'null';
 }
 
 function objectBody(value: unknown): ObjectValue {
@@ -250,7 +252,8 @@ export class LocalReviewStore {
 
   latest(candidateId: string): LocalReview | null {
     candidateId = boundedString(candidateId, 'candidateId', 200);
-    const row = this.db.prepare('SELECT * FROM local_reviews WHERE candidateId=? ORDER BY id DESC LIMIT 1').get(candidateId);
+    const row = this.db.prepare(`SELECT * FROM local_reviews WHERE candidateId=?
+      ORDER BY CASE WHEN json_type(body,'$.archive') IS NULL THEN 0 ELSE 1 END,id DESC LIMIT 1`).get(candidateId);
     return row ? this.decode(row) : null;
   }
 
@@ -267,6 +270,89 @@ export class LocalReviewStore {
       .all(candidateId, afterId ?? Number.MAX_SAFE_INTEGER, count + 1);
     const items = rows.slice(0, count).map(row => this.decode(row));
     return { items, hasMore: rows.length > count, next: rows.length > count ? items.at(-1)!.id : null };
+  }
+
+  private workspace(): string | null {
+    const value = this.db.prepare("SELECT value FROM meta WHERE key='workspace'").get()?.value;
+    return value === undefined ? null : String(value);
+  }
+
+  private archiveRecord(row: Record<string, unknown>, workspace: string | null): ReviewArchiveRecord {
+    const review = this.decode(row);
+    const { candidateId, snapshot, disposition, reason, evidence, author, created, fingerprint,
+      invalidation, candidate, sources, contexts } = review;
+    return { origin: review.archive?.origin ?? { workspace, reviewId: review.id },
+      note: { candidateId, snapshot, disposition, reason, evidence, author, created, fingerprint,
+        invalidation: review.archive ? review.archive.originalInvalidation : invalidation, candidate, sources, contexts } };
+  }
+
+  /** All distinct originating records, including absent candidates; caller pins a read transaction. */
+  exportArchive(): string {
+    this.requireTransaction();
+    const workspace = this.workspace();
+    const records: LocalReviewArchive['records'] = [];
+    const seen = new Set<string>();
+    let bytes = 0;
+    // SQLite iterates all rows in the pinned snapshot; history is never a list-page prefix.
+    for (const row of this.db.prepare('SELECT * FROM local_reviews ORDER BY id').iterate()) {
+      const record = this.archiveRecord(row, workspace);
+      const digest = archiveRecordDigest(record);
+      // A local invalidation can later converge with an imported version of its
+      // originating note. Preserve both audit rows while exporting that record once.
+      if (seen.has(digest)) continue;
+      if (records.length >= LOCAL_REVIEW_ARCHIVE_LIMITS.records)
+        throw new Error(`Review archive exceeds ${LOCAL_REVIEW_ARCHIVE_LIMITS.records} records; preserve a SQLite-consistent backup`);
+      seen.add(digest);
+      const entry = { sequence: records.length + 1, digest, record };
+      bytes += Buffer.byteLength(canonical(entry), 'utf8') + 1;
+      if (bytes > LOCAL_REVIEW_ARCHIVE_LIMITS.bytes)
+        throw new Error(`Review archive exceeds ${LOCAL_REVIEW_ARCHIVE_LIMITS.bytes} bytes; preserve a SQLite-consistent backup`);
+      records.push(entry);
+    }
+    return serializeReviewArchive({ format: 'ASSURANCE_MEMORY_LOCAL_REVIEWS', version: 1,
+      authority: 'USER_REPORTED_LOCAL_ANNOTATION', exportedAt: new Date().toISOString(),
+      source: { workspace, snapshot: this.snapshot(), reviewRevision: this.revision() }, records });
+  }
+
+  /** Restore annotations only, preserving original captures and permanently requiring local re-review. */
+  importArchive(input: string | Uint8Array): { imported: number; skipped: number; total: number; reviewRevision: number; digest: string } {
+    this.requireTransaction();
+    const archive = parseReviewArchive(input);
+    const workspace = this.workspace(), snapshot = this.snapshot(), restoredAt = new Date().toISOString();
+    const existingImport = this.db.prepare(`SELECT id FROM local_reviews
+      WHERE json_type(body,'$.archive')='object' AND json_extract(body,'$.archive.recordDigest')=?`);
+    const original = this.db.prepare("SELECT * FROM local_reviews WHERE id=? AND json_type(body,'$.archive') IS NULL");
+    const insert = this.db.prepare(`INSERT INTO local_reviews(candidateId,snapshot,disposition,created,body,fingerprint)
+      VALUES(?,?,?,?,?,?)`);
+    const invalidate = this.db.prepare('INSERT INTO local_review_invalidations(reviewId,snapshot,reason) VALUES(?,?,?)');
+    let imported = 0, skipped = 0;
+    this.db.exec('SAVEPOINT review_archive_import');
+    try {
+      for (const entry of archive.records) {
+        const origin = entry.record.origin;
+        const local = origin.workspace === workspace ? original.get(origin.reviewId) : undefined;
+        if (existingImport.get(entry.digest) || (local && archiveRecordDigest(this.archiveRecord(local, workspace)) === entry.digest)) {
+          skipped++;
+          continue;
+        }
+        const note = entry.record.note;
+        const provenance: ReviewArchiveProvenance = { recordDigest: entry.digest, origin,
+          originalInvalidation: note.invalidation,
+          archiveDigest: archive.digest, restoredAt, targetSnapshot: snapshot };
+        const body = { candidate: note.candidate, sources: note.sources, contexts: note.contexts,
+          reason: note.reason, evidence: note.evidence, author: note.author,
+          authority: 'USER_REPORTED_LOCAL_ANNOTATION', freshness: 'AS_OF_SCAN', archive: provenance };
+        const result = insert.run(note.candidateId, note.snapshot, note.disposition, note.created, JSON.stringify(body), note.fingerprint);
+        // The destination snapshot can be zero when recovering before the first source scan.
+        invalidate.run(result.lastInsertRowid, snapshot, 'ARCHIVE_RESTORE_REQUIRES_REVIEW');
+        imported++;
+      }
+      this.db.exec('RELEASE review_archive_import');
+    } catch (error) {
+      this.db.exec('ROLLBACK TO review_archive_import; RELEASE review_archive_import;');
+      throw error;
+    }
+    return { imported, skipped, total: archive.records.length, reviewRevision: this.revision(), digest: archive.digest };
   }
 
   /** Permanently invalidates old captures within the atomic scan transaction. */

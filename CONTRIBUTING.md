@@ -6,7 +6,7 @@ Read [AGENTS.md](AGENTS.md) before changing code. The [foundation decision](docs
 
 ## Development setup
 
-Use the official Node 24.16+ build, npm, and a full JDK 21. Maven 3.9+ and PostgreSQL 17+ are needed for durable service checks. Docker is optional; local tests do not require it.
+Use the official Node 24.16+ build, npm, a full JDK 21 and Python 3 for the pilot harness tests. Maven 3.9+ and PostgreSQL 17+ are needed for durable service checks. Docker is optional; local tests do not require it.
 
 ```sh
 git clone https://github.com/yshaaban/assurance-memory.git
@@ -18,7 +18,7 @@ npm ci --ignore-scripts
 npm test
 ```
 
-`npm test` compiles the TypeScript package, builds and exercises the dependency-free Java kernel, then runs all Node tests, including HTTP/MCP integration. It does not require PostgreSQL. On machines with multiple Java installations, ensure `java` and `javac` both select JDK 21 before running the suite.
+`npm test` compiles the TypeScript package, builds and exercises the dependency-free Java kernel, runs all Node tests including HTTP/MCP and lifecycle integration, then runs the Python pilot-harness behavior tests. Harness tests use local fixtures and make no provider requests. The suite does not require PostgreSQL. On machines with multiple Java installations, ensure `java` and `javac` both select JDK 21.
 
 Create a focused branch for your change. Keep generated output, SQLite indexes, credentials, private project source, and local scan reports out of commits. Use synthetic fixtures or public inputs with clear provenance in tests.
 
@@ -31,6 +31,9 @@ Create a focused branch for your change. Keep generated output, SQLite indexes, 
 | `packages/agent/src/investigation.ts` | Candidate interpretation, classification, and validation prompts |
 | `packages/agent/src/local-index.ts` | SQLite transactions, indexes, projection history, and import navigation |
 | `packages/agent/src/local-query.ts` | Shared snapshot-consistent CLI/MCP query behavior and cursor validation |
+| `packages/agent/src/local-investigate.ts` | Bounded task-brief composition and disclosed source/candidate coverage |
+| `packages/agent/src/local-review.ts`, `local-review-archive.ts` | Retained review lifecycle, transactional restore and canonical archive validation |
+| `packages/agent/src/lifecycle-lab.ts`, `examples/lifecycle-lab/` | Explicit lifecycle oracle, source-pinned synthetic adapters and reuse example |
 | `packages/agent/src/mcp.ts` | Stdio transport, mode selection, tool definitions, and request/response bounds |
 | `packages/agent/src/client.ts`, `cli.ts`, `runner.ts` | Service SDK/CLI and independent checker execution |
 | `packages/agent/test/` | Node unit, extraction, local persistence, runner, HTTP, and MCP tests |
@@ -48,13 +51,16 @@ Run the smallest useful check during development, then the required checks for t
 | Change or purpose | Command | Prerequisites / coverage |
 | --- | --- | --- |
 | Compile TypeScript | `npm run build` | Node; strict compiler and declaration generation |
-| Local SQLite/query behavior | `npm run test:local` | Node; persistence, scan rollback, drift, cursors, CLI/MCP, and local extraction cases |
+| Local SQLite/query behavior | `npm run test:local` | Node; task briefs, archives, persistence, scan rollback, drift, cursors, CLI/MCP and local extraction |
+| Lifecycle lab and review reuse | `npm run test:lab` | Node; actual synthetic callbacks, independent oracle, source pins and existing review lifecycle |
+| Pilot harness behavior | `npm run test:pilot` | Python 3 standard library; frozen inputs, protected evaluation, timeouts and outcome accounting; no provider calls |
 | TS unit behavior | `npm run test:ts` | Node; analyzer and utility unit suite |
 | Java kernel or adapter | `npm run test:java` | JDK 21; compiles `.build/java` and runs kernel scenarios |
 | Service HTTP/MCP integration | `npm run test:e2e` | Node + JDK 21; temporary loopback service harness |
-| Shared extraction, MCP, or core change | `npm test` | Node + JDK 21; required full regression suite |
+| Shared extraction, MCP, or core change | `npm test` | Node + JDK 21 + Python 3; required full regression suite |
 | Local projection performance | `node scripts/benchmark-local.mjs 10000` | Run `npm run build` first; synthetic SQLite exercise |
 | Larger projection measurement | `node scripts/benchmark-local.mjs 100000` | Run build first; record machine/runtime, memory, and workload limits |
+| Task/review workload diagnostics | `node scripts/benchmark-investigation.mjs small` or `larger` | Build first; run sequentially, check correctness and record synthetic workload limits |
 | PostgreSQL storage/service change | `mvn -B -ntp -Ppostgres-it verify` | Maven + JDK + disposable PostgreSQL; actual database transactions |
 | Durable service restart behavior | `bash scripts/test-spring.sh` | Packaged JAR from Maven; same disposable database and free port 8099 |
 
