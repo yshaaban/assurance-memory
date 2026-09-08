@@ -9,12 +9,12 @@ import { LOCAL_REVIEW_ARCHIVE_LIMITS, parseReviewArchive } from './local-review-
 import { analyzeComponent, loadConfig, type ScanProfile } from './scan.js';
 
 const { positionals, values } = parseArgs({ allowPositionals: true, options: {
-  input: { type: 'string' }, output: { type: 'string' }, profile: { type: 'boolean' }, 'max-bytes': { type: 'string' }, category: { type: 'string' }, config: { type: 'string' }, db: { type: 'string' }, limit: { type: 'string' }, after: { type: 'string' }, help: { type: 'boolean' },
+  kind: { type: 'string' }, input: { type: 'string' }, output: { type: 'string' }, profile: { type: 'boolean' }, 'max-bytes': { type: 'string' }, category: { type: 'string' }, config: { type: 'string' }, db: { type: 'string' }, limit: { type: 'string' }, after: { type: 'string' }, help: { type: 'boolean' },
 } });
 async function main(): Promise<void> {
   const command = positionals[0];
   if (!command || values.help) {
-    process.stdout.write(`Assurance local investigation (Node 24.16+)\n\n  assurance-local scan --config workspace.json [--db index.sqlite] [--profile]\n  assurance-local status --db index.sqlite\n  assurance-local investigate "describe the behavior or change" --db index.sqlite [--limit 5] [--max-bytes 24000]\n  assurance-local search "retry payment" --db index.sqlite [--limit 20]\n  assurance-local backlog --db index.sqlite [--limit 20] [--after CURSOR] [--category SIMPLIFICATION]\n  assurance-local context SUBJECT_ID --db index.sqlite [--limit 20]\n  assurance-local impact SUBJECT_ID --db index.sqlite [--limit 20]\n  assurance-local review --input review.json --db index.sqlite\n  assurance-local reviews CANDIDATE_ID --db index.sqlite [--limit 20] [--after CURSOR]\n  assurance-local review-export --output reviews.json --db index.sqlite\n  assurance-local review-import --input reviews.json --db index.sqlite\n  assurance-local drift SNAPSHOT --db index.sqlite [--limit 20] [--after ROW_ID]\n\nAll output is JSON. Local candidates do not issue assurance or execute repository commands.\n`);
+    process.stdout.write(`Assurance local investigation (Node 24.16+)\n\n  assurance-local scan --config workspace.json [--db index.sqlite] [--profile]\n  assurance-local status --db index.sqlite\n  assurance-local investigate "describe the behavior or change" --db index.sqlite [--limit 5] [--max-bytes 24000]\n  assurance-local search "retry payment" --db index.sqlite [--limit 20]\n  assurance-local backlog --db index.sqlite [--limit 20] [--after CURSOR] [--category SIMPLIFICATION]\n  assurance-local context SUBJECT_ID --db index.sqlite [--limit 20]\n  assurance-local impact SUBJECT_ID --db index.sqlite [--limit 20]\n  assurance-local review --input review.json --db index.sqlite\n  assurance-local reviews ID --db index.sqlite [--kind CANDIDATE|SOURCE] [--limit 20] [--after CURSOR]\n  assurance-local review-export --output reviews.json --db index.sqlite\n  assurance-local review-import --input reviews.json --db index.sqlite\n  assurance-local drift SNAPSHOT --db index.sqlite [--limit 20] [--after ROW_ID]\n\nAll output is JSON. Local candidates do not issue assurance or execute repository commands.\n`);
     return;
   }
   const specification: Record<string, { arguments: number; options: string[] }> = {
@@ -22,7 +22,7 @@ async function main(): Promise<void> {
     search: { arguments: 1, options: ['limit'] }, context: { arguments: 1, options: ['limit'] }, impact: { arguments: 1, options: ['limit'] },
     investigate: { arguments: 1, options: ['limit', 'max-bytes'] },
     backlog: { arguments: 0, options: ['limit', 'category', 'after'] }, drift: { arguments: 1, options: ['limit', 'after'] },
-    review: { arguments: 0, options: ['input'] }, reviews: { arguments: 1, options: ['limit', 'after'] },
+    review: { arguments: 0, options: ['input'] }, reviews: { arguments: 1, options: ['limit', 'after', 'kind'] },
     'review-export': { arguments: 0, options: ['output'] }, 'review-import': { arguments: 0, options: ['input'] },
   };
   const spec = specification[command];
@@ -102,7 +102,7 @@ async function main(): Promise<void> {
       case 'review-import': output = { ...index.importReviews(archiveInput!),
         meaning: 'Restored history is stale and never supersedes local review priority. Inspect source before appending a fresh review.' }; break;
       case 'investigate': case 'reviews': case 'status': case 'search': case 'backlog': case 'context': case 'impact': case 'drift':
-        output = localQuery(index, command, { limit: count, category: values.category, query: positionals[1], task: positionals[1], id: positionals[1],
+        output = localQuery(index, command, { limit: count, kind: values.kind, category: values.category, query: positionals[1], task: positionals[1], id: positionals[1],
           maxBytes: values['max-bytes'] === undefined ? undefined : Number(values['max-bytes']),
           snapshot: Number(positionals[1]), after: command === 'drift' ? Number(values.after ?? 0) : values.after });
         break;

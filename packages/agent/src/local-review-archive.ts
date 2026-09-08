@@ -23,7 +23,7 @@ export interface ReviewArchiveProvenance {
 
 export interface LocalReviewArchive {
   format: 'ASSURANCE_MEMORY_LOCAL_REVIEWS';
-  version: 1;
+  version: 1 | 2;
   authority: 'USER_REPORTED_LOCAL_ANNOTATION';
   exportedAt: string;
   source: { workspace: string | null; snapshot: number; reviewRevision: number };
@@ -97,14 +97,19 @@ function boundedTree(value: unknown): void {
   }
 }
 
-function validateRecord(value: unknown): void {
+function validateRecord(value: unknown, version: 1 | 2): void {
   const record = fields(value, ['origin', 'note'], 'record');
   const origin = fields(record.origin, ['workspace', 'reviewId'], 'origin');
   workspace(origin.workspace);
   integer(origin.reviewId, 'origin reviewId', 1);
-  const note = fields(record.note, ['candidateId', 'snapshot', 'disposition', 'reason', 'evidence', 'author',
+  const raw = object(record.note, 'note');
+  const isSource = version === 2 && Object.hasOwn(raw, 'sourceId');
+  const note = fields(record.note, [...(isSource ? ['sourceId'] : []), 'candidateId', 'snapshot', 'disposition', 'reason', 'evidence', 'author',
     'created', 'fingerprint', 'invalidation', 'candidate', 'sources', 'contexts'], 'note');
-  string(note.candidateId, 'candidateId', 200);
+  if (isSource) {
+    string(note.sourceId, 'sourceId', 200);
+    if (note.candidateId !== null || note.candidate !== null) throw new Error('Archive source observation cannot contain a candidate');
+  } else string(note.candidateId, 'candidateId', 200);
   integer(note.snapshot, 'snapshot', 1);
   if (!['COUNTEREVIDENCE', 'INVESTIGATE'].includes(String(note.disposition))) throw new Error('Invalid archive disposition');
   string(note.reason, 'reason', 2000);
@@ -117,9 +122,10 @@ function validateRecord(value: unknown): void {
     integer(invalidation.snapshot, 'invalidation snapshot', note.snapshot);
     string(invalidation.reason, 'invalidation reason', 2000);
   }
-  const candidate = object(note.candidate, 'candidate');
-  if (candidate.id !== note.candidateId) throw new Error('Archive candidate identity mismatch');
-  string(candidate.subjectId, 'candidate source ID', 200);
+  const candidate = isSource ? null : object(note.candidate, 'candidate');
+  if (candidate && candidate.id !== note.candidateId) throw new Error('Archive candidate identity mismatch');
+  const primaryId = isSource ? note.sourceId : candidate!.subjectId;
+  string(primaryId, 'primary source ID', 200);
   if (!Array.isArray(note.sources) || note.sources.length < 1 || note.sources.length > 33)
     throw new Error('Archive requires 1..33 captured sources');
   const sourceIds = new Set<string>(), components = new Set<string>();
@@ -135,7 +141,7 @@ function validateRecord(value: unknown): void {
     digest(source.dependencyFingerprint, 'dependency');
     integer(source.dependencyCount, 'dependency count');
   }
-  if (!sourceIds.has(candidate.subjectId)) throw new Error('Archive is missing the primary source capture');
+  if (!sourceIds.has(primaryId)) throw new Error('Archive is missing the primary source capture');
   if (!Array.isArray(note.contexts) || note.contexts.length !== components.size)
     throw new Error('Archive context coverage mismatch');
   for (const value of note.contexts) {
@@ -144,7 +150,7 @@ function validateRecord(value: unknown): void {
     object(context.metadata, 'context metadata');
     if (!components.delete(context.component)) throw new Error('Archive context identity mismatch or duplicate');
   }
-  if (note.fingerprint !== sha256(archiveCanonical({ candidate: note.candidate, sources: note.sources, contexts: note.contexts })))
+  if (note.fingerprint !== sha256(archiveCanonical({ candidate: note.candidate, ...(isSource ? { sourceId: note.sourceId } : {}), sources: note.sources, contexts: note.contexts })))
     throw new Error('Archive capture digest mismatch');
 }
 
@@ -167,7 +173,7 @@ export function parseReviewArchive(input: string | Uint8Array): LocalReviewArchi
   try { parsed = JSON.parse(text); } catch { throw new Error('Invalid review archive JSON'); }
   boundedTree(parsed);
   const envelope = fields(parsed, ['format', 'version', 'authority', 'exportedAt', 'source', 'records', 'digest'], 'envelope');
-  if (envelope.format !== 'ASSURANCE_MEMORY_LOCAL_REVIEWS' || envelope.version !== 1 ||
+  if (envelope.format !== 'ASSURANCE_MEMORY_LOCAL_REVIEWS' || (envelope.version !== 1 && envelope.version !== 2) ||
     envelope.authority !== 'USER_REPORTED_LOCAL_ANNOTATION') throw new Error('Unsupported review archive format, version or authority');
   timestamp(envelope.exportedAt, 'exportedAt');
   const source = fields(envelope.source, ['workspace', 'snapshot', 'reviewRevision'], 'source provenance');
@@ -188,7 +194,7 @@ export function parseReviewArchive(input: string | Uint8Array): LocalReviewArchi
     digest(entry.digest, 'record');
     if (seen.has(entry.digest)) throw new Error('Duplicate archive record');
     seen.add(entry.digest);
-    validateRecord(entry.record);
+    validateRecord(entry.record, envelope.version as 1 | 2);
     if (archiveRecordDigest(entry.record as ReviewArchiveRecord) !== entry.digest) throw new Error('Archive record digest mismatch');
   }
   return envelope as unknown as LocalReviewArchive;

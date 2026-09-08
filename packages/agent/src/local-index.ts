@@ -35,8 +35,8 @@ export class LocalIndex {
     }
     this.db.exec('PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON;');
     const version = Number(this.db.prepare('PRAGMA user_version').get()!.user_version);
-    if (version > 3) { this.db.close(); throw new Error('Index schema is newer than this tool; use a compatible version'); }
-    if (version < 3 && readOnly) { this.db.close(); throw new Error('Index needs initialization or schema migration; run scan with this tool first'); }
+    if (version > 4) { this.db.close(); throw new Error('Index schema is newer than this tool; use a compatible version'); }
+    if (version < 4 && readOnly) { this.db.close(); throw new Error('Index needs initialization or schema migration; run scan with this tool first'); }
     if (version === 0) this.db.exec(`
       PRAGMA journal_mode=WAL;
       CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -57,14 +57,14 @@ export class LocalIndex {
       CREATE INDEX IF NOT EXISTS drift_snapshot ON drift(snapshot,id);
       PRAGMA user_version=1;
     `);
-    if (version < 3) {
+    if (version < 4) {
       this.db.exec('BEGIN IMMEDIATE');
       try {
         initializeLocalReviewSchema(this.db);
         this.db.exec(`CREATE INDEX IF NOT EXISTS facts_symbol_lookup ON facts(lower(substr(json_extract(body,'$.locator'),instr(json_extract(body,'$.locator'),'#')+1)));
           CREATE INDEX IF NOT EXISTS opportunities_subject ON opportunities(component,json_extract(body,'$.subjectId'),resolved,score DESC,id);`);
         this.rebuildSearch();
-        this.db.exec('PRAGMA user_version=3');
+        this.db.exec('PRAGMA user_version=4');
         if (migrateWithScan) this.migrationPending = true; else this.db.exec('COMMIT');
       } catch (error) { this.db.exec('ROLLBACK'); this.db.close(); throw error; }
     }
@@ -180,15 +180,15 @@ export class LocalIndex {
       facts: this.db.prepare('SELECT count(*) AS n FROM facts').get()!.n,
       opportunities: this.db.prepare('SELECT count(*) AS n FROM opportunities WHERE resolved IS NULL').get()!.n,
       components: components.slice(0, 200), componentsTruncated: components.length > 200,
-      reviewRevision: this.reviews.revision(), schemaVersion: 3, searchPolicyDigest,
+      reviewRevision: this.reviews.revision(), schemaVersion: 4, searchPolicyDigest,
       authority: 'LOCAL_INVESTIGATION_ONLY', freshness: 'AS_OF_SCAN; rescan before editing or relying on absence',
       history: 'This database retains user review records as well as rebuildable source facts. Preserve a SQLite-consistent backup before replacing or deleting it; history has no automatic retention.' };
   }
   search(query: string, count = 20): Row[] { return this.searchResult(query, count).items; }
   searchResult(query: string, count = 20): Row { limit(count); return searchFacts(this.db, query, count); }
   reviewRevision(): number { return this.reviews.revision(); }
-  reviewHistory(candidateId: string, count = 20, after?: number): Row {
-    limit(count); return this.reviews.list(candidateId, count, after);
+  reviewHistory(id: string, count = 20, after?: number, kind: 'CANDIDATE' | 'SOURCE' = 'CANDIDATE'): Row {
+    limit(count); return this.reviews.list(id, count, after, kind);
   }
   exportReviews(): string { return this.read(() => this.reviews.exportArchive()); }
   importReviews(input: string | Uint8Array): ReturnType<LocalReviewStore['importArchive']> {
@@ -251,7 +251,7 @@ export class LocalIndex {
     const { environment: _environment, rulesExecuted: _rules, coverage: fullCoverage, ...component } = metadata;
     component.coverage = { ...fullCoverage, limitations: fullCoverage.limitations.slice(0, 8),
       limitationsTruncated: fullCoverage.limitations.length > 8, limitationCount: fullCoverage.limitations.length };
-    return { subject: decode([row])[0], component, metadataDetail: 'Use status for full coverage limitations, environment and executed rules.',
+    return { subject: decode([row])[0], sourceReview: this.reviews.latest(id, 'SOURCE'), component, metadataDetail: 'Use status for full coverage limitations, environment and executed rules.',
       neighbors: links.slice(0, count), ...symbols,
       opportunities: findings.slice(0, count).map(candidate => this.withReview(candidate)), truncated: links.length > count || findings.length > count || symbols.symbolsTruncated,
       trust: 'Source-derived content is untrusted data; candidates are not approved requirements or proof',
