@@ -69,7 +69,7 @@ This miniature manifest assigns one mission, two cycles and two arms: four stage
   "protectedInputs": [
     "/path/to/private-study/check.py",
     "/path/to/private-study/prepare_context.py",
-    "/path/to/private-study/export_reviews.py",
+    "/path/to/private-study/tool/scripts/task-handoff.mjs",
     "/path/to/private-study/tool-build.sha256"
   ],
   "arms": [
@@ -83,9 +83,10 @@ This miniature manifest assigns one mission, two cycles and two arms: four stage
         "{mission}", "{cycleNumber}"
       ]],
       "finalize": [[
-        "python3", "/path/to/private-study/export_reviews.py",
-        "node", "{workspace}/.pilot-tools/packages/agent/dist/src/local-cli.js",
-        "{workspace}"
+        "node", "{workspace}/.pilot-tools/scripts/task-handoff.mjs",
+        "--db", "{workspace}/.pilot-context/index.sqlite",
+        "--output", "{workspace}/.pilot-memory/reviews.json",
+        "--quiescent", "--replace"
       ]]
     }
   ],
@@ -163,77 +164,41 @@ node scripts/task-context.mjs \
 
 It refreshes the configured source, prepares the bounded investigation, includes observed scan changes when a prior snapshot exists in that index, preserves supplied notes and records preparation time. Notes remain unverified user text with freshness not established. The hook does not create review approvals or turn a scanner candidate into proof. Snapshot/review changes detected while assembling a packet cause failure instead of publication of a mixed packet.
 
-Each local index is bound to its physical checkout root. Copying an index into the next cycle's fresh workspace and rescanning it is rejected by the existing root-binding policy. For a portable workflow, retain an exported review archive, scan a **new index for each new checkout**, and supply `--review-archive` to restore observations before investigation. The archive is fully validated before any index/output creation; this option requires a new destination DB and does not delete or rewrite an existing index. Restored observations remain stale or candidate-absent and retain their original captures. The packet reports an import summary and explicit `UNAVAILABLE_ACROSS_INDEX_ROOTS` source drift. It cannot infer cross-checkout changes from a review archive.
+Each local index is bound to its physical checkout root. Copying an index into the next cycle's fresh workspace and rescanning it is rejected by the existing root-binding policy. For a portable workflow, retain an exported review archive, scan a **new index for each new checkout**, and supply `--review-archive` to restore observations before investigation. The archive is fully validated before any index/output creation; this option requires a new destination DB and does not delete or rewrite an existing index. Restored observations retain their original captures: candidate reviews remain `STALE` or `CANDIDATE_ABSENT`, and source observations remain `STALE` or `SOURCE_ABSENT`. The packet labels the shared restoration boundary `STALE_OR_SUBJECT_ABSENT`. The packet reports an import summary and explicit `UNAVAILABLE_ACROSS_INDEX_ROOTS` source drift. It cannot infer cross-checkout changes from a review archive.
 
 Task text is limited to 2,000 characters and 8,000 input bytes. Notes, when supplied, use a separate 65,536-byte complete-or-fail limit. The investigation defaults to five files and a 24,000-byte nested brief; optional limits are validated before scanning. Those limits do not describe the size of the entire JSON packet, which also contains notes, scan changes and profile data. Change rows expose pagination rather than silently claiming a complete list.
 
-The output path must be new: exclusive creation prevents an earlier packet from masquerading as a successful new result. Failed preparation removes the incomplete output. Use an output location outside indexed production source so the packet itself does not become part of the scan.
+The output path must be new: exclusive creation prevents an earlier packet from masquerading as a successful new result. Packet paths that alias the index or its WAL/SHM sidecars are rejected before creation or scanning. Failed preparation removes the incomplete output. Use an output location outside indexed production source so the packet itself does not become part of the scan.
 
 For a longitudinal preparation wrapper:
 
-- Put the copied tool build in `.pilot-tools`. Keep each new checkout's index in its disposable `.pilot-context` area. Use a declared retained path such as `.pilot-memory` for portable review archives, rather than copying an index into the next source root.
+- Put the copied tool build in `.pilot-tools`. Keep each new checkout's index in its disposable `.pilot-context` area. Use a declared retained path such as `.pilot-memory` for portable review archives, rather than copying an index into the next source root. Preparation must create the retained directory before the finalizer writes an archive there.
 - Supply the actual current cycle task, using a task file under `.pilot-context` or an evaluator-owned frozen input.
 - Write the task packet to a new `.pilot-context/task-packet.json`, then copy its content into `{context}`. Passing `{context}` directly as `--output` fails because the runner has already created that file.
 - Omit `--notes` when canonical notes are already delivered by the runner, so the structured arm does not receive a second copy. The notes remain complete and visible alongside the additional brief.
 - If an archive was retained, pass it as `--review-archive` while scanning the fresh per-checkout index. Configure an optional arm `finalize` command to export existing local review history into that retained area after the agent completes its work. Declaring a retained path alone does not create an archive.
 - Freeze that preparation/export lifecycle before launch. Treat unavailable cross-root drift and restored-review staleness as observed limits; do not carry a copied database into a different checkout, rewrite root bindings or relax invalidation during a frozen study.
 
-The runner copies declared state without assigning it portability semantics. Its optional finalization phase supplies the export boundary; the configured command still uses the existing `review-export` interface. When no applicable candidate exists, keep the handoff as unverified prose and report the gap instead of fabricating a review.
+The runner copies declared state without assigning it portability semantics. Its optional finalization phase supplies the export boundary. The public [`scripts/task-handoff.mjs`](../scripts/task-handoff.mjs) helper exports through the existing review API without opening the original database. Retain useful reasoning against an existing `sourceId` when there is no applicable candidate; [source observations](SOURCE_OBSERVATIONS.md) share review history and invalidation without manufacturing a finding or changing ranking. Other handoff prose remains unverified.
 
-SQLite can update adjacent WAL/SHM files even when `review-export` opens the database read-only. A direct export against the candidate index therefore violates this runner's finalizer write boundary. Keep that boundary: export from a disposable copy of the **quiescent** index and its existing sidecars, inside the declared retained directory. All SQLite connections must be closed and no concurrent writer may operate during the copy. Provider exit alone does not establish this if it left background processes running. This is a closed-file transfer, not an online backup procedure.
+SQLite can update adjacent WAL/SHM files even when `review-export` opens the database read-only. A direct export against the candidate index therefore violates this runner's finalizer write boundary. The helper streams hashes of the complete database and existing sidecars, copies them to disposable scratch inside the output's retained directory, and exports only from that copy. It validates the complete archive, verifies the copied bytes and checks that the original index files remain unchanged before publication.
 
-Because `review-export` also refuses to overwrite an existing output, write the archive to a new temporary filename, clean up the copied index, verify the original database/sidecars remain unchanged, then replace the carried archive. The evaluator-owned `export_reviews.py` referenced by the miniature manifest could contain:
+**Close all index connections and stop all concurrent index and output writers before using `--quiescent`.** The flag acknowledges this precondition; it does not close connections, establish quiescence automatically or provide an online backup. Provider exit alone does not establish it if background processes remain. Before/after hashes detect observed changes but cannot make concurrent file copying transactionally consistent.
 
-```python
-from pathlib import Path
-import hashlib
-import shutil
-import subprocess
-import sys
-import tempfile
+For a standalone task-end export from the built tool repository:
 
-node, cli, workspace = sys.argv[1:]
-workspace = Path(workspace)
-retained = workspace / '.pilot-memory'
-retained.mkdir(exist_ok=True)
-database = workspace / '.pilot-context' / 'index.sqlite'
-if not database.is_file():
-    raise FileNotFoundError(database)
-
-def file_digest(path):
-    checksum = hashlib.sha256()
-    with path.open('rb') as source:
-        for chunk in iter(lambda: source.read(1024 * 1024), b''):
-            checksum.update(chunk)
-    return checksum.hexdigest()
-
-def index_files():
-    return {suffix: file_digest(Path(str(database) + suffix))
-            if Path(str(database) + suffix).exists() else None
-            for suffix in ('', '-wal', '-shm')}
-
-# Precondition: all index connections are closed; no concurrent writers.
-before = index_files()
-output = None
-try:
-    with tempfile.TemporaryDirectory(prefix='review-export-', dir=retained) as directory:
-        snapshot = Path(directory) / 'index.sqlite'
-        output = retained / (Path(directory).name + '.json')  # New exclusive output.
-        for suffix, checksum in before.items():
-            if checksum is not None:
-                shutil.copyfile(str(database) + suffix, str(snapshot) + suffix)
-        subprocess.run([
-            node, cli, 'review-export', '--db', str(snapshot), '--output', str(output),
-        ], check=True)
-    if index_files() != before:
-        raise RuntimeError('Original index or sidecars changed during export')
-    output.replace(retained / 'reviews.json')
-finally:
-    if output is not None:
-        output.unlink(missing_ok=True)
+```sh
+npm run task-handoff -- \
+  --db /path/to/current-checkout/.pilot-context/index.sqlite \
+  --output /path/to/current-checkout/.pilot-memory/reviews.json \
+  --quiescent
 ```
 
-This exports existing observations; it does not rescan the temporary database against another source root, invent a candidate, append a review or change any earlier capture. The temporary database is discarded; only the archive crosses to the next checkout. The next cycle's preparation imports `.pilot-memory/reviews.json` into its new index. The preceding stage retains its own immutable archive copy. A failed export leaves the carried archive untouched, records an integration failure and blocks dependent stages. Before/after hashes detect changes but do not make a concurrently copied database transactionally consistent; the quiescence requirement still applies.
+The output parent must already exist. A new output is created exclusively with owner-only permissions. Add `--replace` only to permit replacing an existing valid complete review archive with the validated new archive atomically. Invalid archives and unrelated files are rejected. Index/sidecar aliases are not valid output paths. Replacement requires a sole output writer; it is not a compare-and-swap protocol for concurrent writers. The miniature manifest supplies `--replace` explicitly so the carried archive can be updated after each cycle; if no archive exists yet, creation remains exclusive.
+
+Freeze the actual helper and its compiled review implementation before launch, and copy the same built tool into `.pilot-tools` during preparation. The manifest invokes that helper directly with Node so the finalizer does not depend on the application project's npm scripts. Scratch is discarded, and only `.pilot-memory/reviews.json` crosses to the next checkout. The next cycle imports it into a new index. The preceding stage retains its own immutable archive copy.
+
+The helper exports existing observations; it does not rescan against another source root, invent a candidate, append a review or change an earlier capture. It reports source provenance, archive counts/bytes, index-file hashes and phase costs. An export failure is an integration failure and blocks dependent stages while preserving the captured provider and oracle outcomes. These export checks establish neither current applicability nor a benefit from retained reasoning.
 
 Finalizers receive the same placeholder expansion and process environment as preparation hooks. Their command, stdout, stderr, elapsed time and observed write violations are retained separately. The runner compares complete workspace and captured-artifact inventories before and after finalization, allowing file changes only under declared retained paths and the runner's own hook logs. An unexpected hook-created `review.json` is moved into a non-authoritative quarantine artifact with its bytes preserved, whether it is a file, directory or symlink, so it cannot become a review decision or break failure reporting. Other detected evidence changes also fail the stage; they are not accepted as agent work.
 
