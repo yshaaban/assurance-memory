@@ -14,7 +14,7 @@ const aliases: Record<string, string> = {
 export function searchTerms(text: string): string[] {
   const words = text.replace(/(\p{Lu})(\p{Lu}\p{Ll})/gu, '$1 $2')
     .replace(/(\p{Ll}|\p{N})(\p{Lu})/gu, '$1 $2').match(/[\p{L}\p{N}]+/gu) ?? [];
-  return [...new Set(words.map(word => word.toLowerCase()).map(word => aliases[word] ?? word))];
+  return [...new Set(words.map(word => word.toLowerCase()).map(word => Object.hasOwn(aliases, word) ? aliases[word]! : word))];
 }
 export function searchText(fact: Fact): string {
   const original = [fact.locator, ...fact.tags, ...fact.effects].join(' ');

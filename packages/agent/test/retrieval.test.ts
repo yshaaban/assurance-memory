@@ -42,6 +42,19 @@ test('task vocabulary retrieves identifier/effect owners and discloses broader f
   } finally { index.close(); }
 });
 
+test('constructor identifiers remain literal search terms without inherited alias text', () => {
+  const index = new LocalIndex(':memory:');
+  try {
+    const constructor = fact('Resource.constructor', { kind: 'METHOD' });
+    const native = fact('nativeCode');
+    publish(index, [constructor, native]);
+    const result = localQuery(index, 'search', { query: 'constructor' });
+    assert.deepEqual(result.terms, ['constructor']);
+    assert.deepEqual((result.items as Fact[]).map(item => item.id), [constructor.id]);
+    assert.deepEqual(index.search('native code').map(item => item.id), [native.id]);
+  } finally { index.close(); }
+});
+
 test('exact symbols and named policy owners survive helper-heavy file lookup', () => {
   const index = new LocalIndex(':memory:');
   try {

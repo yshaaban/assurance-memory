@@ -6,7 +6,7 @@ Executed locally on 2026-09-08 with Node 24.16.0, JDK 21.0.12.1 and PostgreSQL 1
 
 | Check | Result | Scope |
 | --- | --- | --- |
-| `npm test` | 78 Node tests; 25 Java scenarios / 85 assertions pass | Extraction, local SQLite, CLI/MCP, service boundaries and assurance behavior |
+| `npm test` | 79 Node tests; 25 Java scenarios / 85 assertions pass | Extraction, local SQLite, CLI/MCP, service boundaries and assurance behavior |
 | `mvn -B -ntp -Ppostgres-it verify` | Build succeeds; 10 PostgreSQL assertions pass | Durable persistence, rollback, concurrency and isolation |
 | `bash scripts/test-spring.sh` | Seed and restart-persistence pass | Packaged service preserves state across restart |
 
@@ -18,7 +18,7 @@ The added local regressions exercise behavior that can lose or misrepresent inve
 - History remains append-only; a later review supersedes earlier ranking influence. Current counterevidence lowers priority without removing the candidate or changing severity.
 - Context and backlog agree on priority before limiting. Scan and annotation revisions invalidate pagination; malformed cursors fail instead of silently restarting.
 - Failed CLI scans preserve the prior schema and snapshot. Search-policy changes require and rebuild the lexical projection, including when source facts are unchanged.
-- Identifier spellings, lifecycle vocabulary, exact-symbol lookup, named file owners and explicit broader-match limits have controlled retrieval fixtures. CLI input cannot silently discard extra query words; MCP review access remains read-only.
+- Identifier spellings (including literal `constructor` terms), lifecycle vocabulary, exact-symbol lookup, named file owners and explicit broader-match limits have controlled retrieval fixtures. CLI input cannot silently discard extra query words; MCP review access remains read-only.
 
 ## Reproducible projection exercise
 

@@ -78,7 +78,7 @@ The [1.2 design decision](docs/decisions/002-investigation-feedback.md) records 
 
 ## Evidence and scale
 
-The [1.2 validation report](docs/VALIDATION_1_2.md) records **78 Node tests**, **25 Java scenarios / 85 assertions**, PostgreSQL checks and the Spring restart test. It also states the limits of the retrieval and review validation and the next agent-outcome gate.
+The [1.2 validation report](docs/VALIDATION_1_2.md) records **79 Node tests**, **25 Java scenarios / 85 assertions**, PostgreSQL checks and the Spring restart test. It also states the limits of the retrieval and review validation and the next agent-outcome gate.
 
 The [1.1 validation report](docs/VALIDATION_1_1.md) records Node and Java regression tests, real PostgreSQL transaction checks, a Spring restart test, and a real application scan. A synthetic **100,000-fact** local projection published initially in **15.5 seconds** on the recorded development machine. That measurement excludes compiler parsing and is not a production capacity claim.
 
