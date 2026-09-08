@@ -65,7 +65,9 @@ export async function taskHandoff(options) {
   const database = resolve(options.db);
   const output = join(await realpath(dirname(resolve(options.output))), basename(options.output));
   const inputParent = await realpath(dirname(database));
-  if (['', '-wal', '-shm'].some(suffix => output === join(inputParent, basename(database) + suffix)))
+  // Conservative across case-sensitive and normalized/case-insensitive filesystems.
+  const pathKey = value => value.normalize('NFD').toUpperCase().toLowerCase();
+  if (['', '-wal', '-shm'].some(suffix => pathKey(output) === pathKey(join(inputParent, basename(database) + suffix))))
     throw new Error('Archive output must be separate from the index and its sidecars');
   let existing = null;
   try {

@@ -3,7 +3,7 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, realpathSync } from 'node:fs';
-import { open, unlink } from 'node:fs/promises';
+import { lstat, open, stat, unlink } from 'node:fs/promises';
 import { resolve, dirname, basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -46,6 +46,10 @@ export async function taskContext(options) {
     while (!existsSync(ancestor)) { missing.unshift(basename(ancestor)); ancestor = dirname(ancestor); }
     return join(realpathSync(ancestor), ...missing);
   };
+  try {
+    if ((await lstat(options.db)).isSymbolicLink() && !existsSync(options.db))
+      throw new Error('Database path cannot be a dangling symlink');
+  } catch (error) { if (error.code !== 'ENOENT') throw error; }
   const databasePaths = new Set([canonicalParentPath(options.db), ...(existsSync(options.db) ? [realpathSync(options.db)] : [])]);
   const packetPath = canonicalParentPath(options.output);
   if ([...databasePaths].some(path => ['', '-wal', '-shm'].some(suffix => packetPath === path + suffix)))
@@ -67,6 +71,16 @@ export async function taskContext(options) {
   let completed = false;
   const started = performance.now();
   try {
+    // Filesystem identity also catches case/Unicode aliases on filesystems that
+    // normalize names. Check the exclusively reserved file before SQLite opens.
+    const reserved = await output.stat();
+    for (const databasePath of databasePaths) for (const suffix of ['', '-wal', '-shm']) {
+      let candidate;
+      try { candidate = await stat(databasePath + suffix); }
+      catch (error) { if (error.code === 'ENOENT') continue; throw error; }
+      if (candidate.dev === reserved.dev && candidate.ino === reserved.ino)
+        throw new Error('Packet output must be separate from the index and its sidecars');
+    }
     const query = args => JSON.parse(execFileSync(process.execPath, [cli, ...args], {
       encoding: 'utf8', timeout: 120_000, maxBuffer: 32 * 1024 * 1024,
       stdio: ['ignore', 'pipe', 'pipe'],

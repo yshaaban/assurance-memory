@@ -242,10 +242,41 @@ test('task packets reject index and sidecar output aliases before SQLite can rep
       assert.notEqual(result.status, 0); assert.match(result.stderr, /separate from the index/);
       for (const sidecar of ['', '-wal', '-shm']) await assert.rejects(access(db + sidecar));
     }
+    await writeFile(join(root, 'CaseProbe'), 'filesystem spelling probe');
+    let caseSensitive = false;
+    try { await access(join(root, 'caseprobe')); } catch { caseSensitive = true; }
+    const spelling = spawnSync(process.execPath, [hook, '--config', join(root, 'workspace.json'), '--db', db,
+      '--task', join(root, 'task.txt'), '--output', join(root, 'INDEX.SQLITE-wal')], { encoding: 'utf8' });
+    if (caseSensitive) {
+      assert.equal(spelling.status, 0, spelling.stderr);
+      assert.equal(JSON.parse(await readFile(join(root, 'INDEX.SQLITE-wal'), 'utf8')).investigation.snapshot, 1);
+    } else {
+      assert.notEqual(spelling.status, 0); assert.match(spelling.stderr, /separate from the index/);
+      for (const sidecar of ['', '-wal', '-shm']) await assert.rejects(access(db + sidecar));
+      await assert.rejects(access(join(root, 'INDEX.SQLITE-wal')));
+    }
     const nested = spawnSync(process.execPath, [hook, '--config', join(root, 'workspace.json'),
       '--db', join(root, 'new/cache/index.sqlite'), '--task', join(root, 'task.txt'),
       '--output', join(root, 'packet.json')], { encoding: 'utf8' });
     assert.equal(nested.status, 0, nested.stderr);
     assert.equal(JSON.parse(await readFile(join(root, 'packet.json'), 'utf8')).investigation.snapshot, 1);
+    const closed = new LocalIndex(join(root, 'new/cache/index.sqlite')); closed.close();
+    const existingBefore = await readFile(join(root, 'new/cache/index.sqlite'));
+    await symlink(join(root, 'new/cache/index.sqlite'), join(root, 'existing-alias.sqlite'));
+    const existingAlias = spawnSync(process.execPath, [hook, '--config', join(root, 'workspace.json'),
+      '--db', join(root, 'existing-alias.sqlite'), '--task', join(root, 'task.txt'),
+      '--output', join(root, 'new/cache/INDEX.SQLITE-wal')], { encoding: 'utf8' });
+    if (!caseSensitive) {
+      assert.notEqual(existingAlias.status, 0); assert.match(existingAlias.stderr, /separate from the index/);
+      await assert.rejects(access(join(root, 'new/cache/INDEX.SQLITE-wal')));
+      assert.deepEqual(await readFile(join(root, 'new/cache/index.sqlite')), existingBefore);
+    } else assert.equal(existingAlias.status, 0, existingAlias.stderr);
+    await symlink(join(root, 'missing.sqlite'), join(root, 'dangling.sqlite'));
+    const dangling = spawnSync(process.execPath, [hook, '--config', join(root, 'workspace.json'),
+      '--db', join(root, 'dangling.sqlite'), '--task', join(root, 'task.txt'),
+      '--output', join(root, 'missing.sqlite-wal')], { encoding: 'utf8' });
+    assert.notEqual(dangling.status, 0); assert.match(dangling.stderr, /dangling symlink/);
+    await assert.rejects(access(join(root, 'missing.sqlite')));
+    await assert.rejects(access(join(root, 'missing.sqlite-wal')));
   } finally { await rm(root, { recursive: true, force: true }); }
 });

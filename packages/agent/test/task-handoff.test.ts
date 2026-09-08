@@ -78,6 +78,8 @@ test('task handoff rejects unsafe targets and failures preserve the prior archiv
     const missingPrecondition = run([hook, '--db', db, '--output', join(root, 'new.json')]);
     assert.notEqual(missingPrecondition.status, 0); assert.match(missingPrecondition.stderr, /quiescent/);
     assert.notEqual(run([hook, '--db', db, '--output', db, '--quiescent', '--replace']).status, 0);
+    for (const name of ['INDEX.SQLITE', 'INDEX.SQLITE-WAL', 'INDEX.SQLITE-SHM'])
+      assert.notEqual(run([hook, '--db', db, '--output', join(root, name), '--quiescent', '--replace']).status, 0);
     assert.deepEqual(await readFile(db), database);
     await writeFile(join(root, 'unrelated.txt'), 'Preserve unrelated data');
     assert.notEqual(run([hook, '--db', db, '--output', join(root, 'unrelated.txt'), '--quiescent', '--replace']).status, 0);

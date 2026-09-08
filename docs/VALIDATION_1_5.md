@@ -12,7 +12,7 @@ Executed on 2026-09-08 with Node 24.16.0, JDK 21.0.12.1 and PostgreSQL 17 on mac
 | Independent code reviews | Filename selection and task-packet output collision defects fixed; follow-up directory compatibility regression fixed | Architecture/simplicity and integrity/protocol perspectives |
 | Independent publication review | No private application source/tasks, secret-shaped values or personal commit emails in reviewed public changes | Read-only review of public diff and history; documentation corrections applied |
 
-The disposable PostgreSQL server and Spring processes were stopped after checks. The full suite ran after final code fixes. Documentation changes do not add new runtime behavior.
+The disposable PostgreSQL server and Spring processes were stopped after checks. The full suite is rerun after release code fixes. Documentation changes do not add new runtime behavior.
 
 Source lifecycle checks exercise real compiler value-only changes, enclosing-file declarations, direct dependency membership, deleted citations, source disappearance/recreation, reversion and explicit re-review. Migration preserves schema-3 records and local precedence; a failed scan rolls back the schema upgrade. Candidate-only version-1 archives remain compatible, while mixed version-2 archives preserve original candidate digests. Imported source notes remain stale or absent and never create findings or discount candidate priority.
 
@@ -44,3 +44,7 @@ Both reported complete configured discovery. These timings include extraction an
 ## Fresh paired study
 
 Study outcomes and independent review are recorded after all twelve assigned stages finish. The frozen design uses two missions, two arms, three cycles, a 720-second provider ceiling and at most two concurrent providers. Both arms receive plain notes and authored-test retention. The structured arm additionally receives fresh task context and source-observation archives. No replacement model trials are allowed.
+
+## Final path-alias review
+
+After the model study was frozen, an additional APFS probe found that differently cased sidecar output paths could evade string comparisons. Task-start now compares the reserved packet inode/device with every canonical/physical database and sidecar path before opening SQLite, and rejects dangling database leaf symlinks. Task-end uses conservative normalized case-folded path comparisons before copying or publishing. Seven focused integration tests and independent reviewer reproductions pass. These changes harden output paths; the study keeps its exact earlier helper bytes and ordinary non-aliasing paths. No provider was rerun to incorporate the correction.
