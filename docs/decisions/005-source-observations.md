@@ -68,6 +68,15 @@ Task-start delivery composes existing scan, investigation and import operations.
 
 A warm, in-memory synthetic probe on Node 24.16 used **1,200 facts, 3,600 source notes and 200 reads per measurement**. Context median latency was **0.092 ms before notes** and **0.098 ms after notes**, with **0.117 ms p95 after notes**. A source-history page measured **0.029 ms median / 0.037 ms p95**, with three records per owner. These observations check the read path's immediate cost on one machine; they are not production capacity, cold-storage latency or evidence of an agent speed benefit.
 
+Reproduce the workload with the standalone [source-observation read probe](../../scripts/benchmark-source-observations.mjs):
+
+```sh
+npm run build
+node scripts/benchmark-source-observations.mjs
+```
+
+Each invocation writes one compact JSON diagnostic with runtime, workload counts, read timing, elapsed time and process-memory snapshots. New measurements do not replace the historical values above or establish a production or agent-outcome claim.
+
 ## Verification and remaining gates
 
 Behavior checks cover candidate-free source capture, body/value edits, enclosing-file declaration membership, dependencies becoming resolved, new importers, deleted citations, deletion/recreation, reversion, fresh explicit review, source/candidate namespace isolation, archive compatibility, imported-history precedence and actual schema-3 migration rollback. Full regression and real PostgreSQL/restart checks have passed during integration. These checks establish implementation behavior within their fixtures; they do not determine the usefulness or truth of retained reasoning.
