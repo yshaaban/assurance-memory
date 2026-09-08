@@ -34,6 +34,10 @@ A source snapshot is never replaced by an evaluator-authored repair. A rejected 
 
 Canonical notes preserve UTF-8 text, including a byte-order mark and CRLF line endings. Original shared knowledge is identical between arms. Subsequent authored handoffs can differ because the arms have independent histories; the runner does not exchange handoffs or candidate solutions between them. Review information parity before launch, and assess this history dependence when interpreting later differences.
 
+Set the common manifest option `retainSupplementalTests: true` to carry new agent-authored `.test.` and `.spec.` files across accepted cycles. It defaults to false for existing studies and cannot be configured per arm. These files are sealed separately under each stage's `supplemental-tests` tree and restored at their original relative paths for the next agent. The prompt and `supplementalTests` report label them `UNTRUSTED_AGENT_AUTHORED_VERIFICATION`. They never enter the approved production snapshot or protected evaluator overlay; carrying a test does not make it oracle evidence.
+
+Agents may revise or delete their previously authored tests. Earlier versions remain in predecessor seals. Original tests, source and configuration cannot be overwritten by restoration, and reserved context/report/retained paths and symlinks are rejected. Preparation hooks cannot rewrite restored tests. Both arms use the same retention rule, while their authored test contents can differ with their independent histories.
+
 ## Manifest
 
 All example paths below are placeholders for evaluator-owned private files. No application source, hidden checker, expected owner or solution belongs in a public study manifest.
@@ -47,6 +51,7 @@ This miniature manifest assigns one mission, two cycles and two arms: four stage
   "seed": 941,
   "outputRoot": "/path/to/private-study/results",
   "maxConcurrency": 2,
+  "retainSupplementalTests": true,
   "provider": {
     "argv": [
       "provider-cli", "--json", "--directory", "{workspace}",

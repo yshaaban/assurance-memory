@@ -148,6 +148,93 @@ print(json.dumps({'type':'turn.completed','usage':{'input_tokens':10,'output_tok
         self.assertEqual(summary['finalizationFailures'], 0)
         self.assertGreater(summary['finalizationHookSeconds'], 0)
 
+    def test_supplemental_tests_retain_revisions_and_deletions_without_becoming_oracle_inputs(self):
+        self.m['retainSupplementalTests'] = True
+        self.provider.write_text(self.provider.read_text() + '''
+test=root/'src/authored.test.py'
+if cycle == 1:
+    assert not test.exists()
+    test.write_text('untrusted '+arm+' 1')
+else:
+    assert test.read_text() == 'untrusted '+arm+' '+str(cycle-1)
+    if cycle == 2: test.write_text('untrusted '+arm+' 2')
+    else: test.unlink()
+''')
+        for cycle in self.m['missions'][0]['cycles']:
+            cycle['oracle']['argv'][2] += '; assert not Path("src/authored.test.py").exists()'
+        self.freeze()
+        for cycle in range(1, 4):
+            for arm in ['A', 'B']:
+                run = self.run_stage(arm, cycle)
+                self.assertEqual(run['state'], 'awaiting-review', run)
+                self.assertTrue(run['protectedChecksPass'])
+                path = l.stage_path(self.m, self.row(arm, cycle))
+                self.assertFalse((path / 'source/src/authored.test.py').exists())
+                self.assertIn('untrusted authored verification artifacts', (path / 'prompt.txt').read_text())
+                self.assertFalse(run['supplementalTests']['includedInProtectedOracle'])
+                capture = path / 'supplemental-tests/src/authored.test.py'
+                if cycle < 3:
+                    self.assertEqual(capture.read_text(), f'untrusted {arm} {cycle}')
+                else:
+                    self.assertFalse(capture.exists())
+                self.review(arm, cycle)
+        first = l.stage_path(self.m, self.row('A', 1))
+        self.assertEqual((first / 'supplemental-tests/src/authored.test.py').read_text(), 'untrusted A 1')
+        for row in l.schedule(self.m):
+            l.verify_stage(self.m, row)
+
+    def test_supplemental_test_retention_is_common_explicit_and_disabled_by_default(self):
+        self.provider.write_text(self.provider.read_text() + '\n(root/"src/authored.test.py").write_text("new")\n')
+        self.freeze()
+        run = self.run_stage()
+        self.assertTrue(run['protectedChecksPass'])
+        self.assertNotIn('supplementalTests', run)
+        self.assertFalse((l.stage_path(self.m, self.row()) / 'supplemental-tests').exists())
+        for invalid in [1, 'true', None]:
+            changed = copy.deepcopy(self.m)
+            changed['retainSupplementalTests'] = invalid
+            with self.assertRaisesRegex(ValueError, 'common boolean'):
+                l.validate_manifest(changed)
+        self.m['arms'][0]['retainSupplementalTests'] = True
+        with self.assertRaisesRegex(ValueError, 'common to both arms'):
+            l.validate_manifest(self.m)
+
+    def test_preparation_cannot_rewrite_carried_agent_tests(self):
+        self.m['retainSupplementalTests'] = True
+        self.provider.write_text(self.provider.read_text() + '\n(root/"src/authored.test.py").write_text("agent evidence")\n')
+        self.m['missions'][0]['cycles'][1]['prepare'] = [[sys.executable, '-c',
+            'from pathlib import Path; Path("src/authored.test.py").write_text("evaluator laundering")']]
+        self.freeze()
+        self.assertTrue(self.run_stage()['protectedChecksPass'])
+        self.review()
+        run = self.run_stage(cycle=2)
+        self.assertEqual(run['state'], 'harness-failed')
+        self.assertIn('Preparation changed source or protected inputs', run['harnessError'])
+        self.assertNotIn('provider', run)
+
+    def test_carried_tests_reject_trusted_reserved_and_symlink_collisions(self):
+        self.m['retainSupplementalTests'] = True
+        mission = self.m['missions'][0]
+        source = Path(mission['base'])
+        parent = self.root / 'parent'
+        tests = parent / 'supplemental-tests'
+        workspace = self.root / 'candidate'
+        h.copy_tree(source, workspace)
+        for name in ['src/value.test.py', '.pilot-context/tool.test.py', '.memory/tool.test.py']:
+            with self.subTest(name=name):
+                shutil.rmtree(tests, ignore_errors=True)
+                target = tests / name
+                target.parent.mkdir(parents=True)
+                target.write_text('untrusted overwrite')
+                with self.assertRaisesRegex(ValueError, 'collides'):
+                    l.restore_supplemental_tests(parent, workspace, h.inventory(source), mission, self.m)
+        shutil.rmtree(tests)
+        tests.mkdir()
+        (tests / 'src').symlink_to(source / 'src', target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, 'collides'):
+            l.restore_supplemental_tests(parent, workspace, h.inventory(source), mission, self.m)
+        self.assertEqual((source / 'src/value.test.py').read_text(), 'trusted test')
+
     def test_finalization_failure_keeps_provider_checks_and_failure_denominator_separate(self):
         self.m['arms'][0]['finalize'] = [[sys.executable, '-c', 'import sys; sys.exit(7)']]
         self.freeze()

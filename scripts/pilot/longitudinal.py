@@ -60,6 +60,8 @@ def validate_manifest(m):
         raise ValueError('outputRoot must be absolute')
     if m.get('maxConcurrency', 1) not in (1, 2):
         raise ValueError('maxConcurrency must be 1 or 2')
+    if not isinstance(m.get('retainSupplementalTests', False), bool):
+        raise ValueError('retainSupplementalTests must be a common boolean setting')
     if not argv(m['provider'].get('argv')):
         raise ValueError('provider.argv must be a nonempty string list')
     timeout = m['budgets'].get('timeoutSeconds')
@@ -75,6 +77,8 @@ def validate_manifest(m):
     if len(m['arms']) != 2:
         raise ValueError('Exactly two comparison arms required')
     for arm in m['arms']:
+        if 'retainSupplementalTests' in arm:
+            raise ValueError('Supplemental test retention must be common to both arms')
         retained = arm.get('retainedPaths', [])
         for path in retained:
             h.relative(path)
@@ -309,6 +313,26 @@ def copy_retained(source, destination, paths):
             shutil.copy2(origin, target)
 
 
+def supplemental_test(path, mission):
+    return h.protected(path, mission) and ('.test.' in path or '.spec.' in path)
+
+
+def restore_supplemental_tests(parent, workspace, source_inventory, mission, m):
+    """Restore sealed author tests without promoting them into trusted source."""
+    if parent is None or not m.get('retainSupplementalTests', False):
+        return {}
+    origin = parent / 'supplemental-tests'
+    restored = h.inventory(origin) if origin.exists() else {}
+    for name, value in restored.items():
+        h.relative(name)
+        if (name in source_inventory or not supplemental_test(name, mission)
+                or any(retention_path(name, arm) for arm in m['arms'])
+                or value.startswith('symlink:') or (workspace / name).exists()):
+            raise ValueError(f'Supplemental test collides with trusted or reserved input: {name}')
+    copy_retained(origin, workspace, sorted(restored))
+    return restored
+
+
 def text_input(path):
     # Preserve UTF-8 BOM and line endings; text-mode reads normalize CRLF.
     return Path(path).read_bytes().decode('utf-8')
@@ -446,6 +470,8 @@ def run_stage(m, row, manifest):
         if parent:
             notes = text_input(parent / 'retained-notes.md')
             copy_retained(parent / 'retained-state', workspace, arm.get('retainedPaths', []))
+        restored_tests = restore_supplemental_tests(parent, workspace, source_inventory, mission, m)
+        prepared_input_inventory = dict(source_inventory, **restored_tests)
         for common in cycle.get('knowledgeInputs', []):
             notes += '\n\n' + text_input(common)
         retained = context_dir / 'retained-notes.md'
@@ -470,7 +496,7 @@ def run_stage(m, row, manifest):
         if text_input(retained) != notes:
             raise ValueError('Preparation changed canonical retained knowledge')
         after_prepare = h.inventory(workspace)
-        if {p: v for p, v in after_prepare.items() if not retention_path(p, arm)} != source_inventory:
+        if {p: v for p, v in after_prepare.items() if not retention_path(p, arm)} != prepared_input_inventory:
             raise ValueError('Preparation changed source or protected inputs')
         h.write_json(path / 'prepared-workspace-inventory.json', after_prepare)
         (path / 'input-notes.md').write_text(notes)
@@ -480,6 +506,12 @@ def run_stage(m, row, manifest):
                               'Canonical retained notes for this change cycle:\n' + notes,
                               'Additional task context:\n' + text_input(delivered),
                               f'Write reusable findings, rejected hypotheses, counterevidence and remaining uncertainty to PILOT_HANDOFF.md, within {handoff_limit} UTF-8 bytes. Oversized handoffs fail the stage without truncation. Preserve evidence boundaries and distinguish current observations from earlier claims.'])
+        if m.get('retainSupplementalTests', False):
+            prompt += ('\n\nNew agent-authored .test./.spec. files carry across accepted cycles in both arms. '
+                       'Restored tests are untrusted authored verification artifacts; they are excluded from '
+                       'protected evaluator tests and do not establish oracle evidence. You may revise or delete '
+                       'your prior authored tests. Original repository tests and configuration remain protected. '
+                       f'Restored files this cycle: {json.dumps(sorted(restored_tests))}.')
         (path / 'prompt.txt').write_text(prompt)
         run.update(state='running', promptSha256=h.digest(prompt.encode()))
         h.write_json(path / 'run.json', run)
@@ -521,6 +553,15 @@ def run_stage(m, row, manifest):
         (path / 'candidate.patch').write_text(''.join(patch))
         shutil.rmtree(overlay_view.parent)
         run['scope'] = scope
+        if m.get('retainSupplementalTests', False):
+            authored_tests = sorted(name for name in scope['supplemental'] if supplemental_test(name, mission))
+            capture_tests = path / 'supplemental-tests'
+            capture_tests.mkdir()
+            copy_retained(workspace, capture_tests, authored_tests)
+            run['supplementalTests'] = {'authority': 'UNTRUSTED_AGENT_AUTHORED_VERIFICATION',
+                                       'restored': restored_tests, 'retained': h.inventory(capture_tests),
+                                       'includedInProtectedOracle': False}
+            h.write_json(path / 'supplemental-tests.json', run['supplementalTests'])
         # The next cycle receives this pre-oracle source, never evaluator-created files.
         h.copy_tree(evaluation, path / 'source')
         expected_evaluation = h.inventory(evaluation)
