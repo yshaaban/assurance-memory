@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { subjectId } from '../src/util.js';
 import { LocalIndex } from '../src/local-index.js';
 import { parseReviewArchive, LOCAL_REVIEW_ARCHIVE_LIMITS } from '../src/local-review-archive.js';
 
@@ -105,7 +106,7 @@ test('task-start transfers review archives across checkout roots without moving 
     assert.equal(packet.reviewImport.imported, 1);
     assert.equal(packet.reviewImport.total, 1);
     assert.equal(packet.reviewImport.digest, originalArchive.digest);
-    assert.equal(packet.reviewImport.freshness, 'STALE_OR_CANDIDATE_ABSENT');
+    assert.equal(packet.reviewImport.freshness, 'STALE_OR_SUBJECT_ABSENT');
     assert.equal(packet.sourceChanges.availability, 'UNAVAILABLE_ACROSS_INDEX_ROOTS');
     assert.equal(packet.sourceChanges.items, undefined, 'Unavailable drift must not masquerade as an empty complete change list');
     assert.equal(packet.investigation.snapshot, 1);
@@ -172,6 +173,74 @@ test('task-start rejects corrupt and oversized review archives before creating o
       await assert.rejects(access(`${db}-wal`));
       await assert.rejects(access(`${db}-shm`));
       await assert.rejects(access(output));
+    }
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+
+test('candidate-free source reasoning survives task handoff and requires explicit review at the new checkout', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'assurance-source-handoff-'));
+  const handoff = fileURLToPath(new URL('../../../../scripts/task-handoff.mjs', import.meta.url));
+  try {
+    const oldRoot = join(root, 'old'), newRoot = join(root, 'new');
+    for (const checkout of [oldRoot, newRoot]) {
+      await mkdir(join(checkout, 'src'), { recursive: true });
+      await writeFile(join(checkout, 'src/policy.ts'), 'export function displayKey(value: string) { return value; }\n');
+      await writeFile(join(checkout, 'workspace.json'), JSON.stringify({ workspace: 'source-handoff', components: { app: { root: './src' } } }));
+      await writeFile(join(checkout, 'task.txt'), 'Investigate displayKey case preservation');
+    }
+    const run = (checkout: string, output: string, extra: string[] = []) => spawnSync(process.execPath,
+      [hook, '--config', join(checkout, 'workspace.json'), '--db', join(checkout, 'index.sqlite'),
+        '--task', join(checkout, 'task.txt'), '--output', join(checkout, output), ...extra], { encoding: 'utf8' });
+    assert.equal(run(oldRoot, 'initial.json').status, 0);
+    const sourceId = subjectId('app', 'policy.ts#displayKey');
+    const note = { sourceId, disposition: 'COUNTEREVIDENCE' as const, author: 'fixture reviewer',
+      reason: 'Display identity deliberately preserves case.', evidence: 'Read displayKey; lowercasing would merge distinct display names.' };
+    const prior = new LocalIndex(join(oldRoot, 'index.sqlite'));
+    try {
+      assert.equal(prior.backlog().items.length, 0);
+      prior.addReview({ ...note, expectedSnapshot: prior.revision() });
+    } finally { prior.close(); }
+    const archive = join(root, 'source-reviews.json');
+    const exported = spawnSync(process.execPath, [handoff, '--db', join(oldRoot, 'index.sqlite'), '--output', archive, '--quiescent'], { encoding: 'utf8' });
+    assert.equal(exported.status, 0, exported.stderr);
+    assert.equal(JSON.parse(exported.stdout).records, 1);
+    const restored = run(newRoot, 'restored.json', ['--review-archive', archive]);
+    assert.equal(restored.status, 0, restored.stderr);
+    const packet = JSON.parse(await readFile(join(newRoot, 'restored.json'), 'utf8'));
+    assert.equal(packet.reviewImport.freshness, 'STALE_OR_SUBJECT_ABSENT');
+    const summaries = (value: any) => value.investigation.entries.flatMap((entry: any) => entry.sourceReviews ?? []);
+    assert.ok(summaries(packet).some((review: any) => review.sourceId === sourceId && review.state === 'STALE'));
+    const current = new LocalIndex(join(newRoot, 'index.sqlite'));
+    try {
+      assert.equal(current.backlog().items.length, 0);
+      current.addReview({ ...note, expectedSnapshot: current.revision(), author: 'explicit re-review' });
+    } finally { current.close(); }
+    assert.equal(run(newRoot, 'reviewed.json').status, 0);
+    assert.ok(summaries(JSON.parse(await readFile(join(newRoot, 'reviewed.json'), 'utf8')))
+      .some((review: any) => review.sourceId === sourceId && review.state === 'CURRENT'));
+    await writeFile(join(newRoot, 'src/policy.ts'), 'export function displayKey(value: string) { return value.toLowerCase(); }\n');
+    assert.equal(run(newRoot, 'changed.json').status, 0);
+    assert.ok(summaries(JSON.parse(await readFile(join(newRoot, 'changed.json'), 'utf8')))
+      .some((review: any) => review.sourceId === sourceId && review.state === 'STALE'));
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+
+test('task packets reject index and sidecar output aliases before SQLite can replace the reserved file', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'assurance-packet-alias-'));
+  try {
+    await mkdir(join(root, 'src'));
+    await writeFile(join(root, 'src/policy.ts'), 'export const flag = true;');
+    await writeFile(join(root, 'workspace.json'), JSON.stringify({ workspace: 'packet-alias', components: { app: { root: './src' } } }));
+    await writeFile(join(root, 'task.txt'), 'policy flag');
+    await symlink(root, join(root, 'alias'));
+    const db = join(root, 'index.sqlite');
+    for (const suffix of ['', '-wal', '-shm']) {
+      const result = spawnSync(process.execPath, [hook, '--config', join(root, 'workspace.json'), '--db', db,
+        '--task', join(root, 'task.txt'), '--output', join(root, 'alias', 'index.sqlite' + suffix)], { encoding: 'utf8' });
+      assert.notEqual(result.status, 0); assert.match(result.stderr, /separate from the index/);
+      for (const sidecar of ['', '-wal', '-shm']) await assert.rejects(access(db + sidecar));
     }
   } finally { await rm(root, { recursive: true, force: true }); }
 });

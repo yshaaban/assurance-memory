@@ -36,7 +36,7 @@ function taskMatches(index: LocalIndex, task: string, count: number): Row {
     const symbolTerms = searchTerms(symbol), pathTerms = searchTerms(hit.path), allTerms = searchTerms(searchText(hit as any));
     const matchedTerms = terms.filter(term => allTerms.includes(term));
     const exactSymbol = anchorKeys.includes(compact(symbol));
-    const exactFile = anchorKeys.includes(compact(hit.path)) || anchorKeys.includes(compact(hit.path.split('/').at(-1).replace(/\.[^.]+$/, '')));
+    const exactFile = anchorKeys.includes(compact(hit.path)) || anchorKeys.includes(compact(hit.path.split('/').at(-1))) || anchorKeys.includes(compact(hit.path.split('/').at(-1).replace(/\.[^.]+$/, '')));
     const named = ['FUNCTION', 'METHOD', 'CLASS'].includes(hit.kind) && !symbol.includes('@');
     const score = (exactSymbol ? 10000 : exactFile ? 2000 : 0) + matchedTerms.reduce((total, term) => total + weighted(term)
       * (symbolTerms.includes(term) ? 8 : pathTerms.includes(term) ? 4 : 1), 0) + (named ? 4 : 0);

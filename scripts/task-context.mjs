@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, realpathSync } from 'node:fs';
 import { open, unlink } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { resolve, dirname, basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
@@ -40,6 +40,11 @@ export async function taskContext(options) {
   const maxBytes = Number(options['max-bytes'] ?? 24_000);
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 20) throw new Error('--limit must be 1..20 files');
   if (!Number.isSafeInteger(maxBytes) || maxBytes < 4096 || maxBytes > 128_000) throw new Error('--max-bytes must be 4096..128000');
+  const canonicalParentPath = path => join(realpathSync(dirname(resolve(path))), basename(path));
+  const databasePaths = new Set([canonicalParentPath(options.db), ...(existsSync(options.db) ? [realpathSync(options.db)] : [])]);
+  const packetPath = canonicalParentPath(options.output);
+  if ([...databasePaths].some(path => ['', '-wal', '-shm'].some(suffix => packetPath === path + suffix)))
+    throw new Error('Packet output must be separate from the index and its sidecars');
   const task = await input(options.task, 8000);
   if (!task.text.trim() || task.text.length > 2000 || task.text.includes('\0')) throw new Error('Task must contain 1..2000 characters without NUL');
   const notes = options.notes ? await input(options.notes, 65_536) : null;
@@ -80,7 +85,7 @@ export async function taskContext(options) {
         // Import the exact already-validated bytes, not a second read of a mutable file.
         reviewImport = { ...index.importReviews(archive.bytes), source: archive.parsed.source,
           inputSha256: hash(archive.bytes), inputBytes: archive.bytes.length,
-          authority: 'USER_REPORTED_LOCAL_ANNOTATION', freshness: 'STALE_OR_CANDIDATE_ABSENT',
+          authority: 'USER_REPORTED_LOCAL_ANNOTATION', freshness: 'STALE_OR_SUBJECT_ABSENT',
           meaning: 'Original review captures and history are retained. Restoring never establishes current applicability or creates a candidate.' };
       } finally { index.close(); }
     }
@@ -121,7 +126,7 @@ export async function taskContext(options) {
   }
 }
 
-if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
+if (process.argv[1] && existsSync(process.argv[1]) && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
   try {
     const { values } = parseArgs({ options: Object.fromEntries(
       ['config', 'db', 'task', 'notes', 'review-archive', 'output', 'limit', 'max-bytes'].map(key => [key, { type: 'string' }])) });

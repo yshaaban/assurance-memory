@@ -173,3 +173,16 @@ test('compact provenance survives oversized context and explicitly retains stale
     assert.equal(result.truncated, true); assert.ok(Buffer.byteLength(JSON.stringify(result)) <= 8000);
   } finally { index.close(); }
 });
+
+
+test('explicit filename basenames remain selected alongside an exact symbol', () => {
+  const index = new LocalIndex(':memory:');
+  try {
+    const display = fact('displayText', 'format/displayText.ts');
+    const writer = fact('writeCsv', 'format/csvWriter.ts');
+    publish(index, [display, writer]);
+    const result = localQuery(index, 'investigate', { task: 'Compare displayText with csvWriter.ts' });
+    assert.deepEqual(new Set((result.entries as any[]).map(entry => entry.path)), new Set([display.path, writer.path]));
+    assert.equal((result.entries as any[]).find(entry => entry.path === writer.path).matches[0].rankingReasons[0], 'TASK_EXACT_FILE');
+  } finally { index.close(); }
+});
