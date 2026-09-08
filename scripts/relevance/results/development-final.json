@@ -1,0 +1,863 @@
+{
+  "schemaVersion": 1,
+  "split": "development",
+  "measuredAt": "2026-09-08T19:57:28.301Z",
+  "freezeSha256": "17b863323878926c175df2f384840265cd533ea5675d551bbc756aa0d7265cf7",
+  "implementationSha256": "834b12569a806be68409f0175dc866f1d593e7cd6786098001db2ceefaa2af52",
+  "runtime": {
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "rg": "ripgrep 15.1.0"
+  },
+  "protocol": {
+    "limit": 5,
+    "maxBytes": 24000,
+    "latencyRepetitions": 7,
+    "heldOutPolicy": "Held-out scoring opens once after development tuning stops. Tasks and labels authored by the implementation engineer; not independently blinded. All scored failures remain published.",
+    "substantive": "Exact fact locator in source, matches, owners, nearbySymbols or source-bearing search snippet. A filename, import neighbor, warning or unrelated same-file symbol is not a hit.",
+    "groups": "Any exact locator within one predeclared group counts once; owners, consumers and intentional-difference counterexamples have separate denominators.",
+    "ordinarySearch": "Case-insensitive literal rg OR over task words, two context lines, first five matching files in sorted path order, same complete-response byte cap. This fixed scripted baseline is not an adaptive human/agent search session.",
+    "syntheticLimits": "Public hand-authored retrieval fixture, not production scale or observed user incidents."
+  },
+  "rows": [
+    {
+      "id": "cancel-callback",
+      "ambiguous": false,
+      "preparationMs": 619.59375,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 2,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 8267,
+          "truncated": false,
+          "substantiveLocators": [
+            "async/session.ts#cancelSession",
+            "async/session.ts#deliverCallback",
+            "async/session.ts#file",
+            "async/subscriber.ts#file",
+            "async/subscriber.ts#subscribeSession",
+            "async/subscriber.ts#subscribeSession@callback:144"
+          ],
+          "paths": [
+            "async/session.ts",
+            "async/subscriber.ts"
+          ],
+          "packetBytes": 10214,
+          "queryMs": [
+            2.7795000000000982,
+            0.9207910000000084,
+            0.9229170000000977,
+            0.9650420000000395,
+            0.8426670000000058,
+            0.9899580000000014,
+            0.7762089999999944
+          ],
+          "medianQueryMs": 0.9229170000000977,
+          "p95QueryMs": 2.7795000000000982
+        },
+        "current": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 2,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 8708,
+          "truncated": false,
+          "substantiveLocators": [
+            "async/session.ts#cancelSession",
+            "async/session.ts#deliverCallback",
+            "async/session.ts#file",
+            "async/subscriber.ts#file",
+            "async/subscriber.ts#subscribeSession",
+            "async/subscriber.ts#subscribeSession@callback:144"
+          ],
+          "paths": [
+            "async/session.ts",
+            "async/subscriber.ts"
+          ],
+          "packetBytes": 10655,
+          "queryMs": [
+            2.0438749999999573,
+            1.393041999999923,
+            1.0930830000000924,
+            1.0069999999999482,
+            1.1625000000000227,
+            0.9258330000000115,
+            0.9492499999998927
+          ],
+          "medianQueryMs": 1.0930830000000924,
+          "p95QueryMs": 2.0438749999999573
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 4,
+          "irrelevantEntries": 2,
+          "irrelevantEntryBytes": 6143,
+          "briefBytes": 6982,
+          "truncated": false,
+          "substantiveLocators": [
+            "async/session.ts#cancelSession",
+            "async/session.ts#deliverCallback",
+            "async/subscriber.ts#subscribeSession",
+            "noise/operationNotes.ts#investigateIssue"
+          ],
+          "paths": [
+            "async/session.ts",
+            "async/subscriber.ts",
+            "cache/resourceRegistry.ts",
+            "noise/operationNotes.ts"
+          ],
+          "packetBytes": 8929,
+          "queryMs": [
+            5.673000000000002,
+            4.277624999999944,
+            4.172750000000065,
+            4.211208000000056,
+            4.063625000000002,
+            3.9417499999999563,
+            4.186207999999965
+          ],
+          "medianQueryMs": 4.186207999999965,
+          "p95QueryMs": 5.673000000000002
+        }
+      }
+    },
+    {
+      "id": "named-registry",
+      "ambiguous": false,
+      "preparationMs": 620.84625,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 0,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 1,
+          "irrelevantEntries": 1,
+          "irrelevantEntryBytes": 1960,
+          "briefBytes": 3536,
+          "truncated": true,
+          "substantiveLocators": [
+            "noise/operationNotes.ts#file",
+            "noise/operationNotes.ts#investigateIssue"
+          ],
+          "paths": [
+            "noise/operationNotes.ts"
+          ],
+          "packetBytes": 5722,
+          "queryMs": [
+            0.6422079999999823,
+            0.5079160000000229,
+            0.3864160000000538,
+            0.33837499999981446,
+            0.42724999999995816,
+            0.36445800000001327,
+            0.33862500000009277
+          ],
+          "medianQueryMs": 0.3864160000000538,
+          "p95QueryMs": 0.6422079999999823
+        },
+        "current": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 2,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 8434,
+          "truncated": true,
+          "substantiveLocators": [
+            "cache/requestPanel.ts#file",
+            "cache/requestPanel.ts#renderResourcePanel",
+            "cache/resourceRegistry.ts#file",
+            "cache/resourceRegistry.ts#invalidateResource",
+            "cache/resourceRegistry.ts#requestResource"
+          ],
+          "paths": [
+            "cache/requestPanel.ts",
+            "cache/resourceRegistry.ts"
+          ],
+          "packetBytes": 10620,
+          "queryMs": [
+            6.9442499999997835,
+            2.458667000000105,
+            2.4277079999999387,
+            2.2938340000000608,
+            2.4668750000000728,
+            2.2441670000000613,
+            2.2725840000000517
+          ],
+          "medianQueryMs": 2.4277079999999387,
+          "p95QueryMs": 6.9442499999997835
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 5,
+          "irrelevantEntries": 3,
+          "irrelevantEntryBytes": 818,
+          "briefBytes": 7642,
+          "truncated": false,
+          "substantiveLocators": [
+            "cache/displayLabel.ts#resourceDisplayLabel",
+            "cache/requestPanel.ts#renderResourcePanel",
+            "cache/resourceRegistry.ts#invalidateResource",
+            "cache/resourceRegistry.ts#requestResource",
+            "noise/formatNotes.ts#formatInvestigationReport",
+            "noise/operationNotes.ts#investigateIssue"
+          ],
+          "paths": [
+            "cache/displayLabel.ts",
+            "cache/requestPanel.ts",
+            "cache/resourceRegistry.ts",
+            "noise/formatNotes.ts",
+            "noise/operationNotes.ts"
+          ],
+          "packetBytes": 9828,
+          "queryMs": [
+            6.796291999999994,
+            6.699459000000161,
+            6.734375,
+            6.740958999999975,
+            6.833750000000009,
+            6.608249999999998,
+            6.475625000000036
+          ],
+          "medianQueryMs": 6.734375,
+          "p95QueryMs": 6.833750000000009
+        }
+      }
+    },
+    {
+      "id": "transaction",
+      "ambiguous": false,
+      "preparationMs": 625.8552910000001,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 3,
+          "irrelevantEntries": 1,
+          "irrelevantEntryBytes": 2651,
+          "briefBytes": 9491,
+          "truncated": false,
+          "substantiveLocators": [
+            "format/exportTable.ts#exportTable",
+            "format/exportTable.ts#file",
+            "io/exportController.ts#exportDocument",
+            "io/exportController.ts#file",
+            "io/transactionWriter.ts#commitTransaction",
+            "io/transactionWriter.ts#file"
+          ],
+          "paths": [
+            "io/transactionWriter.ts",
+            "io/exportController.ts",
+            "format/exportTable.ts"
+          ],
+          "packetBytes": 11451,
+          "queryMs": [
+            1.0562499999998636,
+            0.97137500000008,
+            0.9976249999999709,
+            0.7380419999999503,
+            0.8166670000000522,
+            0.775749999999789,
+            1.0186659999999392
+          ],
+          "medianQueryMs": 0.97137500000008,
+          "p95QueryMs": 1.0562499999998636
+        },
+        "current": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 2,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 7307,
+          "truncated": true,
+          "substantiveLocators": [
+            "io/exportController.ts#exportDocument",
+            "io/exportController.ts#file",
+            "io/transactionWriter.ts#commitTransaction",
+            "io/transactionWriter.ts#file"
+          ],
+          "paths": [
+            "io/transactionWriter.ts",
+            "io/exportController.ts"
+          ],
+          "packetBytes": 9267,
+          "queryMs": [
+            1.1686660000000302,
+            0.9320000000000164,
+            0.8180829999996604,
+            0.789375000000291,
+            1.1984159999997246,
+            0.7995829999999842,
+            0.8894580000001042
+          ],
+          "medianQueryMs": 0.8894580000001042,
+          "p95QueryMs": 1.1984159999997246
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 0,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 5,
+          "irrelevantEntries": 5,
+          "irrelevantEntryBytes": 7346,
+          "briefBytes": 7505,
+          "truncated": true,
+          "substantiveLocators": [
+            "async/session.ts#cancelSession",
+            "async/session.ts#deliverCallback",
+            "async/subscriber.ts#subscribeSession",
+            "cache/displayLabel.ts#resourceDisplayLabel",
+            "cache/requestPanel.ts#renderResourcePanel",
+            "cache/resourceRegistry.ts#invalidateResource",
+            "cache/resourceRegistry.ts#requestResource"
+          ],
+          "paths": [
+            "async/session.ts",
+            "async/subscriber.ts",
+            "cache/displayLabel.ts",
+            "cache/requestPanel.ts",
+            "cache/resourceRegistry.ts"
+          ],
+          "packetBytes": 9465,
+          "queryMs": [
+            4.82229099999995,
+            4.336374999999862,
+            4.1924159999998665,
+            4.3564580000002024,
+            4.315749999999753,
+            4.0919999999996435,
+            4.350916999999754
+          ],
+          "medianQueryMs": 4.336374999999862,
+          "p95QueryMs": 4.82229099999995
+        }
+      }
+    },
+    {
+      "id": "intentional-display",
+      "ambiguous": false,
+      "preparationMs": 626.4085829999999,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 1,
+            "total": 1
+          },
+          "returnedEntries": 5,
+          "irrelevantEntries": 3,
+          "irrelevantEntryBytes": 7407,
+          "briefBytes": 14832,
+          "truncated": true,
+          "substantiveLocators": [
+            "cache/displayLabel.ts#file",
+            "cache/displayLabel.ts#resourceDisplayLabel",
+            "cache/requestPanel.ts#file",
+            "cache/requestPanel.ts#renderResourcePanel",
+            "cache/resourceRegistry.ts#file",
+            "cache/resourceRegistry.ts#invalidateResource",
+            "cache/resourceRegistry.ts#requestResource",
+            "crypto/auditLabel.ts#file",
+            "crypto/auditLabel.ts#tenantAuditLabel",
+            "format/displayText.ts#displayText",
+            "format/displayText.ts#file"
+          ],
+          "paths": [
+            "cache/resourceRegistry.ts",
+            "cache/requestPanel.ts",
+            "cache/displayLabel.ts",
+            "crypto/auditLabel.ts",
+            "format/displayText.ts"
+          ],
+          "packetBytes": 16870,
+          "queryMs": [
+            3.153957999999875,
+            2.706249999999727,
+            2.826915999999983,
+            2.5045829999999114,
+            2.7242089999999735,
+            2.695875000000342,
+            2.6635410000003503
+          ],
+          "medianQueryMs": 2.706249999999727,
+          "p95QueryMs": 3.153957999999875
+        },
+        "current": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 1,
+            "total": 1
+          },
+          "returnedEntries": 2,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 7943,
+          "truncated": true,
+          "substantiveLocators": [
+            "cache/displayLabel.ts#file",
+            "cache/displayLabel.ts#resourceDisplayLabel",
+            "cache/resourceRegistry.ts#file",
+            "cache/resourceRegistry.ts#invalidateResource",
+            "cache/resourceRegistry.ts#requestResource"
+          ],
+          "paths": [
+            "cache/displayLabel.ts",
+            "cache/resourceRegistry.ts"
+          ],
+          "packetBytes": 9981,
+          "queryMs": [
+            2.256583000000319,
+            2.2216669999997976,
+            2.0957499999999527,
+            2.170542000000296,
+            2.0947079999996276,
+            1.8857090000001335,
+            2.042124999999942
+          ],
+          "medianQueryMs": 2.0957499999999527,
+          "p95QueryMs": 2.256583000000319
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 1,
+            "total": 1
+          },
+          "returnedEntries": 5,
+          "irrelevantEntries": 3,
+          "irrelevantEntryBytes": 712,
+          "briefBytes": 7283,
+          "truncated": true,
+          "substantiveLocators": [
+            "cache/displayLabel.ts#resourceDisplayLabel",
+            "cache/requestPanel.ts#renderResourcePanel",
+            "cache/resourceRegistry.ts#invalidateResource",
+            "cache/resourceRegistry.ts#requestResource",
+            "crypto/auditLabel.ts#tenantAuditLabel",
+            "format/displayText.ts#displayText"
+          ],
+          "paths": [
+            "cache/displayLabel.ts",
+            "cache/requestPanel.ts",
+            "cache/resourceRegistry.ts",
+            "crypto/auditLabel.ts",
+            "format/displayText.ts"
+          ],
+          "packetBytes": 9321,
+          "queryMs": [
+            5.187415999999757,
+            5.065084000000297,
+            4.910957999999937,
+            4.813499999999749,
+            4.803957999999966,
+            4.850582999999915,
+            5.2862920000002305
+          ],
+          "medianQueryMs": 4.910957999999937,
+          "p95QueryMs": 5.2862920000002305
+        }
+      }
+    },
+    {
+      "id": "empty-lexical",
+      "ambiguous": false,
+      "preparationMs": 613.5261250000003,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 0,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 1093,
+          "truncated": false,
+          "substantiveLocators": [],
+          "paths": [],
+          "packetBytes": 3009,
+          "queryMs": [
+            0.10170900000002803,
+            0.01695800000015879,
+            0.020207999999911408,
+            0.014000000000123691,
+            0.017749999999978172,
+            0.013541999999688414,
+            0.01554199999964112
+          ],
+          "medianQueryMs": 0.01695800000015879,
+          "p95QueryMs": 0.10170900000002803
+        },
+        "current": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 0,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 1450,
+          "truncated": false,
+          "substantiveLocators": [],
+          "paths": [],
+          "packetBytes": 3366,
+          "queryMs": [
+            0.0439169999999649,
+            0.031084000000191736,
+            0.028624999999919964,
+            0.02124999999978172,
+            0.020667000000230473,
+            0.030917000000044936,
+            0.024208000000271568
+          ],
+          "medianQueryMs": 0.028624999999919964,
+          "p95QueryMs": 0.0439169999999649
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 0,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 84,
+          "truncated": false,
+          "substantiveLocators": [],
+          "paths": [],
+          "packetBytes": 2000,
+          "queryMs": [
+            0.004125000000385626,
+            0.008332999999765889,
+            0.003624999999829015,
+            0.0015830000002097222,
+            0.0013329999997040431,
+            0.0011670000003505265,
+            0.0014590000000680448
+          ],
+          "medianQueryMs": 0.0015830000002097222,
+          "p95QueryMs": 0.008332999999765889
+        }
+      }
+    },
+    {
+      "id": "unmatched",
+      "ambiguous": false,
+      "preparationMs": 612.6937080000002,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 0,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 1372,
+          "truncated": false,
+          "substantiveLocators": [],
+          "paths": [],
+          "packetBytes": 3295,
+          "queryMs": [
+            0.16566599999987375,
+            0.10795800000005329,
+            0.08287500000005821,
+            0.06112500000017462,
+            0.07387500000004366,
+            0.0941250000000764,
+            0.0594159999996009
+          ],
+          "medianQueryMs": 0.08287500000005821,
+          "p95QueryMs": 0.16566599999987375
+        },
+        "current": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 0,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 1513,
+          "truncated": false,
+          "substantiveLocators": [],
+          "paths": [],
+          "packetBytes": 3436,
+          "queryMs": [
+            0.1850830000003043,
+            0.2666250000002037,
+            0.17508300000008603,
+            0.1479580000000169,
+            0.15829200000007404,
+            0.1580420000000231,
+            0.13904200000024503
+          ],
+          "medianQueryMs": 0.15829200000007404,
+          "p95QueryMs": 0.2666250000002037
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 0,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 117,
+          "truncated": false,
+          "substantiveLocators": [],
+          "paths": [],
+          "packetBytes": 2040,
+          "queryMs": [
+            4.160541999999623,
+            3.8508339999998498,
+            3.5591670000003433,
+            3.752834000000348,
+            3.642457999999806,
+            3.58395900000005,
+            3.4193340000001626
+          ],
+          "medianQueryMs": 3.642457999999806,
+          "p95QueryMs": 4.160541999999623
+        }
+      }
+    }
+  ],
+  "totals": {
+    "previous": {
+      "owners": {
+        "hit": 3,
+        "total": 4
+      },
+      "consumers": {
+        "hit": 2,
+        "total": 3
+      },
+      "counterexamples": {
+        "hit": 1,
+        "total": 1
+      },
+      "returnedEntries": 11,
+      "irrelevantEntries": 5,
+      "irrelevantEntryBytes": 12018,
+      "briefBytes": 38591,
+      "packetBytes": 50561,
+      "medianQueryMs": 0.6422079999999823,
+      "p95QueryMs": 2.7795000000000982
+    },
+    "current": {
+      "owners": {
+        "hit": 4,
+        "total": 4
+      },
+      "consumers": {
+        "hit": 3,
+        "total": 3
+      },
+      "counterexamples": {
+        "hit": 1,
+        "total": 1
+      },
+      "returnedEntries": 8,
+      "irrelevantEntries": 0,
+      "irrelevantEntryBytes": 0,
+      "briefBytes": 35355,
+      "packetBytes": 47325,
+      "medianQueryMs": 0.9492499999998927,
+      "p95QueryMs": 2.458667000000105
+    },
+    "ordinary": {
+      "owners": {
+        "hit": 3,
+        "total": 4
+      },
+      "consumers": {
+        "hit": 2,
+        "total": 3
+      },
+      "counterexamples": {
+        "hit": 1,
+        "total": 1
+      },
+      "returnedEntries": 19,
+      "irrelevantEntries": 13,
+      "irrelevantEntryBytes": 15019,
+      "briefBytes": 29613,
+      "packetBytes": 41583,
+      "medianQueryMs": 4.211208000000056,
+      "p95QueryMs": 6.740958999999975
+    }
+  },
+  "limitations": [
+    "Public authored fixture, not independently blinded task labels, production capacity or agent benefit.",
+    "Complete packet bytes use each actual task-start packet with its nested response replaced for comparator arms; identical scan/provenance envelope, no notes.",
+    "Preparation is measured once for the current real scan + hook per task. Warm query latency separately compares all three methods; ordinary rg needs no index.",
+    "Snippet matches are retrieval opportunities, not evidence an agent substantively read or correctly used a source.",
+    "Empty-label negative and ambiguous tasks remain in irrelevant-entry and byte denominators. No recall is invented for a zero-label task."
+  ]
+}

@@ -60,8 +60,8 @@ test('task brief reports term selection, empty retrieval and strict input limits
   try {
     publish(index, [fact('cancel')]);
     const long = localQuery(index, 'investigate', { task: 'the ' + Array.from({ length: 30 }, (_, i) => `term${i}`).join(' ') });
-    assert.equal((long.retrieval as any).terms.length, 12);
-    assert.equal((long.retrieval as any).omittedTermCount, 18);
+    assert.equal((long.retrieval as any).terms.length, 20);
+    assert.equal((long.retrieval as any).omittedTermCount, 10);
     assert.equal((long.retrieval as any).ignoredStopwordCount, 1);
     assert.equal(long.truncated, true);
     const empty = localQuery(index, 'investigate', { task: 'the and is' });
@@ -128,12 +128,48 @@ test('response byte accounting remains exact across a decimal digit boundary', (
     const added = Math.floor((10001 - Buffer.byteLength(JSON.stringify(baseline))) / 2) - 1;
     publish(index, [{ ...selected, effects: ['x'.repeat(added + 1)] }]);
     const sizes = [];
-    for (const suffix of ['', '?']) {
+    for (const suffix of ['', '?', '??', '???', '????']) {
       const result = localQuery(index, 'investigate', { task: `cancelSession${suffix}` });
       const actual = Buffer.byteLength(JSON.stringify(result));
       assert.equal((result.budget as any).responseBytes, actual);
       sizes.push(actual);
     }
     assert.ok(sizes.includes(10001), `Expected the boundary fixture to cover 10,001 bytes; got ${sizes}`);
+  } finally { index.close(); }
+});
+
+
+test('explicit late owners and separate consumers survive noisy prose and helper-heavy files', () => {
+  const index = new LocalIndex(':memory:');
+  try {
+    const owner = fact('renewLease', 'queue/owner.ts');
+    const consumer = fact('acknowledgeJob', 'queue/worker.ts');
+    publish(index, [owner, consumer, ...Array.from({ length: 120 }, (_, i) => fact(`requestHelper${i}`, 'noise.ts', 'VARIABLE'))]);
+    const result = localQuery(index, 'investigate', { task: 'Please carefully investigate request behavior and logs with environment configuration previous discussion operational metrics deployment details debugging context. Inspect `renewLease` and acknowledgeJob.', limit: 2 });
+    assert.deepEqual(new Set((result.entries as any[]).map(entry => entry.source.id)), new Set([owner.id, consumer.id]));
+    assert.ok((result.retrieval as any).probeCount <= 26);
+    assert.match((result.entries as any[])[0].matches[0].rankingReasons.join(' '), /TASK_EXACT_SYMBOL/);
+  } finally { index.close(); }
+});
+
+test('compact provenance survives oversized context and explicitly retains stale counterevidence', () => {
+  const index = new LocalIndex(':memory:');
+  try {
+    const owner = { ...fact('renewLease', 'queue/owner.ts'), effects: ['x'.repeat(30000)] };
+    const consumer = fact('acknowledgeJob', 'queue/worker.ts');
+    const findings: Finding[] = [{ subjectId: owner.id, ruleId: 'TS_EMPTY_CATCH', severity: 'HIGH', line: 1, message: 'Candidate' }];
+    publish(index, [owner, consumer], findings);
+    index.addReview({ candidateId: index.backlog().items[0].id, expectedSnapshot: 1, disposition: 'COUNTEREVIDENCE',
+      author: 'fixture', reason: 'A separate consumer checks the token', evidence: 'Intentional boundary inspected at the original revision' });
+    publish(index, [{ ...owner, contentHash: sha256('changed') }, consumer], findings);
+    const result = localQuery(index, 'investigate', { task: 'renewLease acknowledgeJob', limit: 2, maxBytes: 8000 });
+    const entries = result.entries as any[];
+    assert.equal(entries.length, 2);
+    const selected = entries.find(entry => entry.source.id === owner.id);
+    assert.equal(selected.detail, 'COMPACT'); assert.ok(selected.omittedDetail);
+    assert.equal(selected.candidates[0].review.state, 'STALE');
+    assert.equal(selected.candidates[0].review.disposition, 'COUNTEREVIDENCE');
+    assert.equal(selected.candidates[0].action, 'INVESTIGATE_BEHAVIOR');
+    assert.equal(result.truncated, true); assert.ok(Buffer.byteLength(JSON.stringify(result)) <= 8000);
   } finally { index.close(); }
 });
