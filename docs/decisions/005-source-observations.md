@@ -1,6 +1,6 @@
 # Decision 005: retain source observations through one review lifecycle
 
-Status: accepted implementation for 1.5; longitudinal pilot measurement is pending. This decision extends [Decision 004](004-longitudinal-maintenance.md) without changing the assurance kernel's authority.
+Status: accepted implementation for 1.5; retrieval and agent-benefit gates remain open. This decision extends [Decision 004](004-longitudinal-maintenance.md) without changing the assurance kernel's authority.
 
 ## Scope and decision
 
@@ -83,6 +83,6 @@ Behavior checks cover candidate-free source capture, body/value edits, enclosing
 
 The independent retrieval holdout contains five privately authored tasks created after the evaluated code was frozen, with no tuning on those tasks. Required-owner coverage was 4/4 versus 3/4 for the preceding retrieval, and consumer coverage was 3/3 versus 2/3. Required counterexample coverage fell to 1/2 from 2/2. That negative result keeps the retrieval-value gate open: more owners do not compensate automatically for lost counterevidence. A later filename-anchor bug fix was not rescored on that holdout; these counts describe the frozen pre-fix comparison.
 
-Longitudinal pilot measurement is pending. No accepted-outcome, avoided-investigation, total-cost or retained-reasoning benefit is claimed here. Future evaluation must keep both arms' information opportunities explicit, retain failed and blocked assignments, separate integration failures from model outcomes, and count preparation, review and rework. Arbitrary claims, automatic proof, broader detector activation, online backup and compiler caching remain outside this decision.
+The [fresh paired study](../VALIDATION_1_5.md#fresh-paired-study) exercises source archives across successive tasks and retains independently rejected candidates and their blocked descendants. It exposes a missed prior owner in automatic delivery and temporal counterexamples missed by protected checks. No avoided-investigation, total-cost or retained-reasoning benefit is established. Follow-up evaluation must keep both arms' information opportunities explicit, retain failed and blocked assignments, separate integration failures from model outcomes, and count preparation, review and rework. Arbitrary claims, automatic proof, broader detector activation, online backup and compiler caching remain outside this decision.
 
 See [source observations](../SOURCE_OBSERVATIONS.md), [review archives](../REVIEW_ARCHIVES.md), [task workflow](../TASK_WORKFLOW.md) and [longitudinal pilots](../LONGITUDINAL_PILOTS.md) for the operational contracts.

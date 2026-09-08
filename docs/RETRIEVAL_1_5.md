@@ -31,3 +31,5 @@ node scripts/relevance/run.mjs --split held-out --output .local/new-independent-
 ```
 
 The published tasks are now development data. A subsequent efficacy claim needs fresh tasks, with owner, consumer and intentional-counterexample groups labeled separately before implementation changes.
+
+Follow-up investigation is tracked in [issue #13](https://github.com/yshaaban/assurance-memory/issues/13), including prior-owner changes, stale/absent source notes and intentional counterexample retrieval.

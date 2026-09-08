@@ -41,7 +41,7 @@ The byte allocator reserves compact source identity and review summaries across 
 
 The development comparison improved from 3/4 owner groups and 2/3 consumer groups in the previous brief to 4/4 and 3/3 in the final development iteration. Both retrieved the one counterexample group. The initial new implementation retrieved those groups but increased irrelevant entries from five to seven and brief bytes from 38,591 to 52,816; that result remains in `results/development-initial.json`. Exact-anchor file selection reduced the final development count to zero irrelevant entries and 35,355 brief bytes. `results/development-final.json` predates a presentation-only clarification of bounded review coverage; its implementation digest records the exact measured version.
 
-The author-known reserved split was scored once after implementation commit `8472320`; ranking was not changed afterward:
+The author-known reserved split was scored once after implementation commit `8472320`. No tuning used its outcomes. A later independent code review fixed filename-anchor recognition; these recorded rows were not rescored. See the [independent report](../../docs/RETRIEVAL_1_5.md) for the separate sample and revision limits:
 
 | Measure across seven reserved tasks | Previous brief | Current brief | Ordinary search |
 | --- | ---: | ---: | ---: |

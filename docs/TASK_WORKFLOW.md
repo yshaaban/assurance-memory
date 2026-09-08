@@ -17,6 +17,16 @@ npm run task-context -- \
 
 Deliver the task and the resulting JSON to your agent through its normal prompt or attachment mechanism. The hook does not invoke an agent, modify application source, run application checks or publish anything. Keep packets private: they contain source locations and retained reasoning. Use a new output filename for each attempt. Packet output must be separate from the index and its WAL/SHM sidecars; aliases of those paths are rejected before creating the packet or scanning. An existing output is never overwritten; a failed scan, import or query removes the incomplete output and returns a nonzero exit status. Completed scans and imports remain committed even if a later packet query fails.
 
+## Upgrade an existing index
+
+For an index created by 1.4 or earlier, run an explicit scan with the 1.5 build before invoking `task-context`:
+
+```sh
+node packages/agent/dist/src/local-cli.js scan --config /absolute/path/to/workspace.json --db /absolute/path/to/index.sqlite
+```
+
+Use the same physical checkout and configuration. A successful scan upgrades the index to schema 4 atomically; failure preserves the previous schema and snapshot. The task hook reads the prior status before scanning, and read-only operations deliberately refuse an older schema. It therefore cannot perform this first upgrade itself. Preserve a SQLite-consistent backup if you need rollback to an older tool version; newer schemas cannot be opened by older builds.
+
 ## Move reasoning between checkouts
 
 An index records the real filesystem root of each component. Copying its SQLite file into another checkout does not move that binding. A scan against a different root is rejected, even when the component identifier and source bytes match. This protects the source context captured by existing reviews.
@@ -35,7 +45,7 @@ npm run task-context -- \
   --output "$new_packet"
 ```
 
-`--review-archive` requires an absent destination database path, including absent SQLite sidecars. The hook validates the complete archive before creating the index or packet, scans the new checkout, imports the exact validated bytes through the existing review API, then produces the investigation. The archive limit remains 16 MiB and 10,000 originating records; malformed, corrupt or over-limit inputs fail without importing a prefix. Archive input is optional and independent of plain `--notes`.
+`--review-archive` requires an absent destination database path, including absent SQLite sidecars. Create its parent directory first: archive import reserves the destination before scanning. The hook validates the complete archive before creating the index or packet, scans the new checkout, imports the exact validated bytes through the existing review API, then produces the investigation. The archive limit remains 16 MiB and 10,000 originating records; malformed, corrupt or over-limit inputs fail without importing a prefix. Archive input is optional and independent of plain `--notes`.
 
 Restored observations preserve original captures, provenance and history. Candidate reviews are `STALE` when their candidate exists and `CANDIDATE_ABSENT` when it does not. Source observations are `STALE` when their exact selected fact exists and `SOURCE_ABSENT` otherwise. Restoration never creates a missing candidate or source or establishes current applicability, including after an unchanged rescan. Inspect current source and append a new local review when warranted. Preserve the old index and archive; the hook never rewrites root bindings or deletes an old database.
 
@@ -62,7 +72,7 @@ The scan and review import are separate committed operations. A later failure le
 
 The hook checks scan and review revisions before completing the packet. It rejects a concurrent scan or review change observed across its queries. Source freshness still means **as of the scan**: the hook does not lock the application against subsequent edits.
 
-`--limit` defaults to five files and accepts 1–20. `--max-bytes` defaults to 24,000 and accepts 4,096–128,000. These limits apply to the nested investigation brief, not the entire packet. Task text is limited to 2,000 characters and 8,000 UTF-8 bytes. Optional notes have a separate 65,536-byte complete-or-fail limit. BOMs and line endings in retained notes are preserved. Invalid UTF-8 and oversized inputs fail; no prose is silently shortened. Parent directories must already exist, and the output is created with owner-only permissions.
+`--limit` defaults to five files and accepts 1–20. `--max-bytes` defaults to 24,000 and accepts 4,096–128,000. These limits apply to the nested investigation brief, not the entire packet. Task text is limited to 2,000 characters and 8,000 UTF-8 bytes. Optional notes have a separate 65,536-byte complete-or-fail limit. BOMs and line endings in retained notes are preserved. Invalid UTF-8 and oversized inputs fail; no prose is silently shortened. The packet output parent must already exist. Without `--review-archive`, the scan can create missing database parent directories; archive import requires its database parent to exist too. The packet is created with owner-only permissions.
 
 ## Close one change before starting the next
 
