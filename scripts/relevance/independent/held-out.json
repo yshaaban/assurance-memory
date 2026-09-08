@@ -1,0 +1,79 @@
+[
+  {
+    "id": "epoch-reconnect",
+    "task": "After reconnect, live replication must reject frames from an old epoch; historical replay must still accept recorded epochs. Investigate admission and application boundaries.",
+    "owners": [
+      [
+        "replication/epochFence.ts#isCurrentEpoch"
+      ]
+    ],
+    "consumers": [
+      [
+        "replication/applyFrame.ts#applyFrame"
+      ]
+    ],
+    "counterexamples": [
+      [
+        "replication/replayArchive.ts#replayHistoricalFrame"
+      ]
+    ]
+  },
+  {
+    "id": "delay-versus-exhaustion",
+    "task": "Update chooseDelay and retryDelivery to cap backoff delay without changing the independent exhaustion policy.",
+    "owners": [
+      [
+        "delivery/backoffPolicy.ts#chooseDelay"
+      ]
+    ],
+    "consumers": [
+      [
+        "delivery/retryLoop.ts#retryDelivery"
+      ]
+    ],
+    "counterexamples": [
+      [
+        "delivery/retryBudget.ts#canRetry"
+      ]
+    ]
+  },
+  {
+    "id": "late-codec-owner",
+    "task": "The incident timeline includes operational reviews, the deployment window, customer symptoms, environment configuration, reproduction notes, repeated discussions, compatibility checks, memory metrics, retry counts, diagnostics, and performance observations. After reviewing this context, inspect decodeFrame and readFrames for malformed short packets.",
+    "owners": [
+      [
+        "codec/frameCodec.ts#decodeFrame"
+      ]
+    ],
+    "consumers": [
+      [
+        "codec/frameStream.ts#readFrames"
+      ]
+    ],
+    "counterexamples": []
+  },
+  {
+    "id": "ambiguous-serializer",
+    "task": "Investigate serialize formatting behavior.",
+    "owners": [
+      [
+        "debug/serialize.ts#serialize",
+        "wire/serialize.ts#serialize"
+      ]
+    ],
+    "consumers": [],
+    "counterexamples": [],
+    "ambiguous": true,
+    "acceptable": [
+      "debug/serialize.ts",
+      "wire/serialize.ts"
+    ]
+  },
+  {
+    "id": "missing-domain",
+    "task": "Investigate authorization revocation for XylophoneGrant before credential renewal.",
+    "owners": [],
+    "consumers": [],
+    "counterexamples": []
+  }
+]

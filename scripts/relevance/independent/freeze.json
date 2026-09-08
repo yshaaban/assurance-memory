@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "frozenAt": "2026-09-08T20:05:07.304429+00:00",
+  "baselineCommit": "dbf32a4",
+  "rankingFrozenCommit": "8472320",
+  "protocol": {
+    "limit": 5,
+    "maxBytes": 24000,
+    "latencyRepetitions": 7,
+    "heldOutPolicy": "Independently authored by root after implementation freeze8472320, before scoring; implementation engineer does not see tasks or labels. Adversarial authored sample, not randomized production tasks. Single run retained without ranking edits.",
+    "substantive": "Exact fact locator in source, matches, owners, nearbySymbols or source-bearing search snippet. A filename, import neighbor, warning or unrelated same-file symbol is not a hit.",
+    "groups": "Any exact locator within one predeclared group counts once; owners, consumers and intentional-difference counterexamples have separate denominators.",
+    "ordinarySearch": "Case-insensitive literal rg OR over task words, two context lines, first five matching files in sorted path order, same complete-response byte cap. This fixed scripted baseline is not an adaptive human/agent search session.",
+    "syntheticLimits": "Public hand-authored retrieval fixture, not production scale or observed user incidents."
+  },
+  "files": {
+    "fixture/codec/frameCodec.ts": "0bd0d75118fa421971df099b51a3897cc0ac6fb74249dd1cdec6ed2c315858f2",
+    "fixture/codec/frameStream.ts": "666fa8181fcc16d4f332ee524067925ae6e56e14568f428e0e9902cd155b648c",
+    "fixture/debug/serialize.ts": "a55fb62359a02d8bfdc7117d5512dab13dc35cc3211d59ed4d91bee0b5e67735",
+    "fixture/delivery/backoffPolicy.ts": "f50ef2eb59435b840b8694ad5acfed73d1267e8651fd6dcd39faabb01b8ce9c6",
+    "fixture/delivery/retryBudget.ts": "27b15ab2547a5a0e445173fc833c9606416f44bf1b2b95c0447563e9315ef666",
+    "fixture/delivery/retryLoop.ts": "d0200dbd5c021c2dbe0ef25489abf85482ba367476c19d5f20bc196815e2a6fb",
+    "fixture/noise/operations.ts": "946dac899831303ae9c987ba54d62e2de0c266805479a9ba03e0892b2b17d7fe",
+    "fixture/replication/applyFrame.ts": "c0ffdbd7423b87977e8369742cd1dbb2c74bb27ca3f0a622a2d4112aaf2df1ba",
+    "fixture/replication/epochFence.ts": "470bdc70c3ff3ca6f15280aecedcfe5d10d19b90e9d0bd56e516c1336e847047",
+    "fixture/replication/replayArchive.ts": "7a03e9052f9ab779cab3f4e6e36e805c5f4d5d31fc3f8f59eeaf61606b542161",
+    "fixture/wire/serialize.ts": "a9e5dab025052c0aa1db5be351e515ab3e208b212f7d7db123d736ab96102108",
+    "held-out.json": "b4e3f259f161a598ab32fc66d73232d4d937caf2fa16ccbd5440cae5615eb4ef"
+  }
+}

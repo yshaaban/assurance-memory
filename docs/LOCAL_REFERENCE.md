@@ -1,6 +1,6 @@
 # Local CLI and MCP reference
 
-This reference describes the implementation in version 1.4.0. Start with the [local workflow](LOCAL_WORKFLOW.md) for a walkthrough, [concepts](CONCEPTS.md) for the authority model, and [extension guide](EXTENDING.md) for detector behavior. The local index is an optional SQLite projection; the assurance service is a separate, authoritative workflow.
+This reference describes the implementation in version 1.5.0. Start with the [local workflow](LOCAL_WORKFLOW.md) for a walkthrough, [concepts](CONCEPTS.md) for the authority model, and [extension guide](EXTENDING.md) for detector behavior. The local index is an optional SQLite projection; the assurance service is a separate, authoritative workflow.
 
 ## Executables and prerequisites
 
@@ -113,7 +113,7 @@ With `--profile`, each component adds `profile.analysis` and `profile.projection
 | Field | Meaning |
 |---|---|
 | `workspace`, `snapshot` | Index identity and latest committed local scan number |
-| `schemaVersion`, `reviewRevision` | Local schema version (3) and annotation revision; append or permanent invalidation advances the latter |
+| `schemaVersion`, `reviewRevision` | Local schema version (4) and annotation revision; append or permanent invalidation advances the latter |
 | `searchPolicyDigest` | Digest of compiled search policy, matched against the policy used to build stored search metadata |
 | `facts`, `opportunities` | Total current facts and currently emitted candidates |
 | `components` | Up to 200 components, sorted by ID; each includes root, snapshot, source revision, coverage, analyzer, rules, configuration/environment digests, `candidatePolicyDigest`, `factCount` and `findingCount` |
@@ -128,7 +128,7 @@ Counts and paths depend on your checkout. This is an illustrative excerpt, with 
 {
   "workspace": "payments",
   "snapshot": 2,
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "reviewRevision": 0,
   "facts": 1200,
   "opportunities": 43,
