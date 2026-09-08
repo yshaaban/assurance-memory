@@ -1,0 +1,1034 @@
+{
+  "schemaVersion": 1,
+  "split": "held-out",
+  "measuredAt": "2026-09-08T20:01:21.964Z",
+  "freezeSha256": "17b863323878926c175df2f384840265cd533ea5675d551bbc756aa0d7265cf7",
+  "implementationSha256": "b1dd2e763eb87d08e968b334e88eba4e0cbb7c9636eee6469f53240f87d75a51",
+  "runtime": {
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "rg": "ripgrep 15.1.0"
+  },
+  "protocol": {
+    "limit": 5,
+    "maxBytes": 24000,
+    "latencyRepetitions": 7,
+    "heldOutPolicy": "Held-out scoring opens once after development tuning stops. Tasks and labels authored by the implementation engineer; not independently blinded. All scored failures remain published.",
+    "substantive": "Exact fact locator in source, matches, owners, nearbySymbols or source-bearing search snippet. A filename, import neighbor, warning or unrelated same-file symbol is not a hit.",
+    "groups": "Any exact locator within one predeclared group counts once; owners, consumers and intentional-difference counterexamples have separate denominators.",
+    "ordinarySearch": "Case-insensitive literal rg OR over task words, two context lines, first five matching files in sorted path order, same complete-response byte cap. This fixed scripted baseline is not an adaptive human/agent search session.",
+    "syntheticLimits": "Public hand-authored retrieval fixture, not production scale or observed user incidents."
+  },
+  "rows": [
+    {
+      "id": "lease-late-owner",
+      "ambiguous": false,
+      "preparationMs": 709.004333,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 0,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 1,
+          "irrelevantEntries": 1,
+          "irrelevantEntryBytes": 1960,
+          "briefBytes": 3536,
+          "truncated": true,
+          "substantiveLocators": [
+            "noise/operationNotes.ts#file",
+            "noise/operationNotes.ts#investigateIssue"
+          ],
+          "paths": [
+            "noise/operationNotes.ts"
+          ],
+          "packetBytes": 5690,
+          "queryMs": [
+            2.100416999999993,
+            0.4402499999999918,
+            0.5298329999999396,
+            0.3804169999999658,
+            0.4585419999999658,
+            0.449292000000014,
+            0.35983299999998053
+          ],
+          "medianQueryMs": 0.449292000000014,
+          "p95QueryMs": 2.100416999999993
+        },
+        "current": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 2,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 8067,
+          "truncated": true,
+          "substantiveLocators": [
+            "queue/leaseOwner.ts#file",
+            "queue/leaseOwner.ts#releaseLease",
+            "queue/leaseOwner.ts#renewLease",
+            "queue/worker.ts#acknowledgeJob",
+            "queue/worker.ts#file"
+          ],
+          "paths": [
+            "queue/worker.ts",
+            "queue/leaseOwner.ts"
+          ],
+          "packetBytes": 10221,
+          "queryMs": [
+            7.575042000000053,
+            2.2718750000000227,
+            1.5308750000000373,
+            1.6284169999998994,
+            1.5014579999999569,
+            1.4399579999999332,
+            1.743665999999962
+          ],
+          "medianQueryMs": 1.6284169999998994,
+          "p95QueryMs": 7.575042000000053
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 5,
+          "irrelevantEntries": 3,
+          "irrelevantEntryBytes": 801,
+          "briefBytes": 1887,
+          "truncated": false,
+          "substantiveLocators": [
+            "noise/formatNotes.ts#formatInvestigationReport",
+            "noise/operationNotes.ts#investigateIssue",
+            "queue/displayStatus.ts#leaseDisplayStatus",
+            "queue/leaseOwner.ts#releaseLease",
+            "queue/leaseOwner.ts#renewLease",
+            "queue/worker.ts#acknowledgeJob"
+          ],
+          "paths": [
+            "noise/formatNotes.ts",
+            "noise/operationNotes.ts",
+            "queue/displayStatus.ts",
+            "queue/leaseOwner.ts",
+            "queue/worker.ts"
+          ],
+          "packetBytes": 4041,
+          "queryMs": [
+            21.089917000000014,
+            7.096458000000098,
+            6.569707999999991,
+            6.732708000000002,
+            6.587582999999995,
+            6.60633299999995,
+            7.034457999999972
+          ],
+          "medianQueryMs": 6.732708000000002,
+          "p95QueryMs": 21.089917000000014
+        }
+      }
+    },
+    {
+      "id": "csv-boundary",
+      "ambiguous": false,
+      "preparationMs": 648.8901250000001,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 2,
+            "total": 2
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 4,
+          "irrelevantEntries": 2,
+          "irrelevantEntryBytes": 5322,
+          "briefBytes": 12762,
+          "truncated": false,
+          "substantiveLocators": [
+            "cache/resourceRegistry.ts#file",
+            "cache/resourceRegistry.ts#invalidateResource",
+            "cache/resourceRegistry.ts#requestResource",
+            "format/csvWriter.ts#escapeCsvCell",
+            "format/csvWriter.ts#file",
+            "format/csvWriter.ts#writeCsvRow",
+            "format/exportTable.ts#exportTable",
+            "format/exportTable.ts#file",
+            "io/exportController.ts#exportDocument",
+            "io/exportController.ts#file"
+          ],
+          "paths": [
+            "format/csvWriter.ts",
+            "format/exportTable.ts",
+            "cache/resourceRegistry.ts",
+            "io/exportController.ts"
+          ],
+          "packetBytes": 14733,
+          "queryMs": [
+            1.7245000000000346,
+            1.692542000000003,
+            1.44987500000002,
+            1.3851669999999103,
+            1.3702920000000631,
+            1.5216659999998683,
+            1.280875000000151
+          ],
+          "medianQueryMs": 1.44987500000002,
+          "p95QueryMs": 1.7245000000000346
+        },
+        "current": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 2,
+            "total": 2
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 2,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 7978,
+          "truncated": true,
+          "substantiveLocators": [
+            "format/csvWriter.ts#escapeCsvCell",
+            "format/csvWriter.ts#file",
+            "format/csvWriter.ts#writeCsvRow",
+            "format/exportTable.ts#exportTable",
+            "format/exportTable.ts#file"
+          ],
+          "paths": [
+            "format/csvWriter.ts",
+            "format/exportTable.ts"
+          ],
+          "packetBytes": 9949,
+          "queryMs": [
+            1.7186670000000959,
+            1.7450420000000122,
+            1.5821670000000267,
+            1.2529159999999138,
+            1.4172920000000886,
+            1.2026670000000195,
+            1.3023330000000897
+          ],
+          "medianQueryMs": 1.4172920000000886,
+          "p95QueryMs": 1.7450420000000122
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 0,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 2
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 5,
+          "irrelevantEntries": 5,
+          "irrelevantEntryBytes": 7346,
+          "briefBytes": 7519,
+          "truncated": true,
+          "substantiveLocators": [
+            "async/session.ts#cancelSession",
+            "async/session.ts#deliverCallback",
+            "async/subscriber.ts#subscribeSession",
+            "cache/displayLabel.ts#resourceDisplayLabel",
+            "cache/requestPanel.ts#renderResourcePanel",
+            "cache/resourceRegistry.ts#invalidateResource",
+            "cache/resourceRegistry.ts#requestResource"
+          ],
+          "paths": [
+            "async/session.ts",
+            "async/subscriber.ts",
+            "cache/displayLabel.ts",
+            "cache/requestPanel.ts",
+            "cache/resourceRegistry.ts"
+          ],
+          "packetBytes": 9490,
+          "queryMs": [
+            4.959124999999858,
+            4.718166999999994,
+            4.288041999999905,
+            4.359750000000076,
+            4.095792000000074,
+            4.136082999999871,
+            4.311500000000024
+          ],
+          "medianQueryMs": 4.311500000000024,
+          "p95QueryMs": 4.959124999999858
+        }
+      }
+    },
+    {
+      "id": "tenant-key",
+      "ambiguous": false,
+      "preparationMs": 670.664708,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 4,
+          "irrelevantEntries": 2,
+          "irrelevantEntryBytes": 3970,
+          "briefBytes": 10889,
+          "truncated": false,
+          "substantiveLocators": [
+            "crypto/auditLabel.ts#file",
+            "crypto/auditLabel.ts#tenantAuditLabel",
+            "crypto/encryptPayload.ts#encryptPayload",
+            "crypto/encryptPayload.ts#file",
+            "crypto/tenantKey.ts#file",
+            "crypto/tenantKey.ts#selectTenantKey",
+            "noise/formatNotes.ts#file",
+            "noise/formatNotes.ts#formatInvestigationReport"
+          ],
+          "paths": [
+            "crypto/encryptPayload.ts",
+            "crypto/tenantKey.ts",
+            "crypto/auditLabel.ts",
+            "noise/formatNotes.ts"
+          ],
+          "packetBytes": 12839,
+          "queryMs": [
+            1.5043750000004366,
+            1.1984999999999673,
+            1.3117090000000644,
+            0.9882089999996424,
+            1.0282079999997222,
+            1.2029999999999745,
+            1.0503749999998035
+          ],
+          "medianQueryMs": 1.1984999999999673,
+          "p95QueryMs": 1.5043750000004366
+        },
+        "current": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 2,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 7414,
+          "truncated": true,
+          "substantiveLocators": [
+            "crypto/encryptPayload.ts#encryptPayload",
+            "crypto/encryptPayload.ts#file",
+            "crypto/tenantKey.ts#file",
+            "crypto/tenantKey.ts#selectTenantKey"
+          ],
+          "paths": [
+            "crypto/tenantKey.ts",
+            "crypto/encryptPayload.ts"
+          ],
+          "packetBytes": 9364,
+          "queryMs": [
+            1.1716669999996157,
+            1.2059580000000096,
+            1.0062910000001466,
+            1.1108330000001843,
+            1.0053749999997308,
+            1.4091659999999138,
+            1.021874999999909
+          ],
+          "medianQueryMs": 1.1108330000001843,
+          "p95QueryMs": 1.4091659999999138
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 5,
+          "irrelevantEntries": 3,
+          "irrelevantEntryBytes": 947,
+          "briefBytes": 1679,
+          "truncated": true,
+          "substantiveLocators": [
+            "cache/requestPanel.ts#renderResourcePanel",
+            "cache/resourceRegistry.ts#invalidateResource",
+            "cache/resourceRegistry.ts#requestResource",
+            "crypto/auditLabel.ts#tenantAuditLabel",
+            "crypto/encryptPayload.ts#encryptPayload",
+            "crypto/tenantKey.ts#selectTenantKey"
+          ],
+          "paths": [
+            "cache/requestPanel.ts",
+            "cache/resourceRegistry.ts",
+            "crypto/auditLabel.ts",
+            "crypto/encryptPayload.ts",
+            "crypto/tenantKey.ts"
+          ],
+          "packetBytes": 3629,
+          "queryMs": [
+            4.4947910000000775,
+            4.251541999999972,
+            4.433500000000095,
+            4.27633300000025,
+            3.927832999999737,
+            4.306165999999848,
+            4.443374999999833
+          ],
+          "medianQueryMs": 4.306165999999848,
+          "p95QueryMs": 4.4947910000000775
+        }
+      }
+    },
+    {
+      "id": "csv-counterexample",
+      "ambiguous": false,
+      "preparationMs": 666.2107080000001,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 1,
+            "total": 1
+          },
+          "returnedEntries": 5,
+          "irrelevantEntries": 3,
+          "irrelevantEntryBytes": 6532,
+          "briefBytes": 13623,
+          "truncated": true,
+          "substantiveLocators": [
+            "cache/displayLabel.ts#file",
+            "cache/displayLabel.ts#resourceDisplayLabel",
+            "format/csvWriter.ts#escapeCsvCell",
+            "format/csvWriter.ts#file",
+            "format/csvWriter.ts#writeCsvRow",
+            "format/displayText.ts#displayText",
+            "format/displayText.ts#file",
+            "format/exportTable.ts#exportTable",
+            "format/exportTable.ts#file",
+            "noise/operationNotes.ts#file",
+            "noise/operationNotes.ts#investigateIssue"
+          ],
+          "paths": [
+            "format/csvWriter.ts",
+            "format/displayText.ts",
+            "noise/operationNotes.ts",
+            "format/exportTable.ts",
+            "cache/displayLabel.ts"
+          ],
+          "packetBytes": 15609,
+          "queryMs": [
+            1.7253329999998641,
+            1.622457999999824,
+            1.7056250000000546,
+            1.6300000000001091,
+            1.6412909999999101,
+            1.5238329999997404,
+            1.4465420000001359
+          ],
+          "medianQueryMs": 1.6300000000001091,
+          "p95QueryMs": 1.7253329999998641
+        },
+        "current": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 1,
+            "total": 1
+          },
+          "returnedEntries": 2,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 7630,
+          "truncated": true,
+          "substantiveLocators": [
+            "format/csvWriter.ts#escapeCsvCell",
+            "format/csvWriter.ts#file",
+            "format/csvWriter.ts#writeCsvRow",
+            "format/displayText.ts#displayText",
+            "format/displayText.ts#file"
+          ],
+          "paths": [
+            "format/csvWriter.ts",
+            "format/displayText.ts"
+          ],
+          "packetBytes": 9616,
+          "queryMs": [
+            1.40887500000008,
+            1.3465420000002268,
+            1.193083999999999,
+            1.1774580000001151,
+            1.1340419999996811,
+            1.5140839999999116,
+            1.1563329999999041
+          ],
+          "medianQueryMs": 1.193083999999999,
+          "p95QueryMs": 1.5140839999999116
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 1,
+            "total": 1
+          },
+          "returnedEntries": 5,
+          "irrelevantEntries": 3,
+          "irrelevantEntryBytes": 787,
+          "briefBytes": 1570,
+          "truncated": true,
+          "substantiveLocators": [
+            "cache/displayLabel.ts#resourceDisplayLabel",
+            "format/csvWriter.ts#escapeCsvCell",
+            "format/csvWriter.ts#writeCsvRow",
+            "format/displayText.ts#displayText",
+            "format/exportTable.ts#exportTable",
+            "noise/formatNotes.ts#formatInvestigationReport"
+          ],
+          "paths": [
+            "cache/displayLabel.ts",
+            "format/csvWriter.ts",
+            "format/displayText.ts",
+            "format/exportTable.ts",
+            "noise/formatNotes.ts"
+          ],
+          "packetBytes": 3556,
+          "queryMs": [
+            4.8888749999996435,
+            4.489624999999705,
+            4.26666699999987,
+            4.533624999999574,
+            4.290917000000263,
+            4.25570899999957,
+            4.668791999999939
+          ],
+          "medianQueryMs": 4.489624999999705,
+          "p95QueryMs": 4.8888749999996435
+        }
+      }
+    },
+    {
+      "id": "ambiguous-status",
+      "ambiguous": true,
+      "preparationMs": 659.0991670000003,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 4,
+          "irrelevantEntries": 1,
+          "irrelevantEntryBytes": 1952,
+          "briefBytes": 11127,
+          "truncated": false,
+          "substantiveLocators": [
+            "noise/operationNotes.ts#file",
+            "noise/operationNotes.ts#investigateIssue",
+            "queue/displayStatus.ts#file",
+            "queue/displayStatus.ts#leaseDisplayStatus",
+            "queue/leaseOwner.ts#file",
+            "queue/leaseOwner.ts#releaseLease",
+            "queue/leaseOwner.ts#renewLease",
+            "queue/worker.ts#acknowledgeJob",
+            "queue/worker.ts#file"
+          ],
+          "paths": [
+            "queue/displayStatus.ts",
+            "noise/operationNotes.ts",
+            "queue/leaseOwner.ts",
+            "queue/worker.ts"
+          ],
+          "packetBytes": 13055,
+          "queryMs": [
+            1.2868749999997817,
+            1.1953749999997854,
+            1.019832999999835,
+            1.0064579999998386,
+            1.2331659999999829,
+            1.396458000000166,
+            0.9918750000001637
+          ],
+          "medianQueryMs": 1.1953749999997854,
+          "p95QueryMs": 1.396458000000166
+        },
+        "current": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 4,
+          "irrelevantEntries": 1,
+          "irrelevantEntryBytes": 2051,
+          "briefBytes": 11754,
+          "truncated": false,
+          "substantiveLocators": [
+            "noise/operationNotes.ts#file",
+            "noise/operationNotes.ts#investigateIssue",
+            "queue/displayStatus.ts#file",
+            "queue/displayStatus.ts#leaseDisplayStatus",
+            "queue/leaseOwner.ts#file",
+            "queue/leaseOwner.ts#releaseLease",
+            "queue/leaseOwner.ts#renewLease",
+            "queue/worker.ts#acknowledgeJob",
+            "queue/worker.ts#file"
+          ],
+          "paths": [
+            "queue/displayStatus.ts",
+            "noise/operationNotes.ts",
+            "queue/leaseOwner.ts",
+            "queue/worker.ts"
+          ],
+          "packetBytes": 13682,
+          "queryMs": [
+            1.1790829999999914,
+            1.154667000000245,
+            1.107665999999881,
+            1.305417000000034,
+            1.1557910000001357,
+            1.4312919999997575,
+            1.0711249999999382
+          ],
+          "medianQueryMs": 1.1557910000001357,
+          "p95QueryMs": 1.4312919999997575
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 5,
+          "irrelevantEntries": 2,
+          "irrelevantEntryBytes": 584,
+          "briefBytes": 1607,
+          "truncated": false,
+          "substantiveLocators": [
+            "noise/formatNotes.ts#formatInvestigationReport",
+            "noise/operationNotes.ts#investigateIssue",
+            "queue/displayStatus.ts#leaseDisplayStatus",
+            "queue/leaseOwner.ts#releaseLease",
+            "queue/leaseOwner.ts#renewLease",
+            "queue/worker.ts#acknowledgeJob"
+          ],
+          "paths": [
+            "noise/formatNotes.ts",
+            "noise/operationNotes.ts",
+            "queue/displayStatus.ts",
+            "queue/leaseOwner.ts",
+            "queue/worker.ts"
+          ],
+          "packetBytes": 3535,
+          "queryMs": [
+            4.266541999999845,
+            4.05566699999963,
+            3.757000000000062,
+            3.9576250000000073,
+            4.0283330000002024,
+            4.418749999999818,
+            4.444750000000113
+          ],
+          "medianQueryMs": 4.05566699999963,
+          "p95QueryMs": 4.444750000000113
+        }
+      }
+    },
+    {
+      "id": "negative-syntax",
+      "ambiguous": false,
+      "preparationMs": 650.404833,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 0,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 1090,
+          "truncated": false,
+          "substantiveLocators": [],
+          "paths": [],
+          "packetBytes": 2974,
+          "queryMs": [
+            0.11779200000000856,
+            0.018500000000130967,
+            0.014917000000423286,
+            0.0154579999998532,
+            0.014415999999982887,
+            0.01358299999992596,
+            0.01412499999969441
+          ],
+          "medianQueryMs": 0.014917000000423286,
+          "p95QueryMs": 0.11779200000000856
+        },
+        "current": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 0,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 1447,
+          "truncated": false,
+          "substantiveLocators": [],
+          "paths": [],
+          "packetBytes": 3331,
+          "queryMs": [
+            0.04829100000006292,
+            0.02491699999973207,
+            0.025125000000116415,
+            0.024249999999483407,
+            0.022582999999940512,
+            0.02329199999985576,
+            0.020209000000249944
+          ],
+          "medianQueryMs": 0.024249999999483407,
+          "p95QueryMs": 0.04829100000006292
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 0,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 84,
+          "truncated": false,
+          "substantiveLocators": [],
+          "paths": [],
+          "packetBytes": 1968,
+          "queryMs": [
+            0.003040999999939231,
+            0.009250000000065484,
+            0.0029580000000350992,
+            0.001457999999729509,
+            0.0010000000002037268,
+            0.0010000000002037268,
+            0.0009580000005371403
+          ],
+          "medianQueryMs": 0.001457999999729509,
+          "p95QueryMs": 0.009250000000065484
+        }
+      }
+    },
+    {
+      "id": "long-unknown-tail",
+      "ambiguous": false,
+      "preparationMs": 660.0508750000008,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 1,
+          "irrelevantEntries": 1,
+          "irrelevantEntryBytes": 1960,
+          "briefBytes": 3536,
+          "truncated": true,
+          "substantiveLocators": [
+            "noise/operationNotes.ts#file",
+            "noise/operationNotes.ts#investigateIssue"
+          ],
+          "paths": [
+            "noise/operationNotes.ts"
+          ],
+          "packetBytes": 5708,
+          "queryMs": [
+            0.6184579999999187,
+            0.5779169999996157,
+            0.4532499999995707,
+            0.6652500000000146,
+            0.5687500000003638,
+            0.4517909999995027,
+            0.3836250000003929
+          ],
+          "medianQueryMs": 0.5687500000003638,
+          "p95QueryMs": 0.6652500000000146
+        },
+        "current": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 0,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 1796,
+          "truncated": true,
+          "substantiveLocators": [],
+          "paths": [],
+          "packetBytes": 3968,
+          "queryMs": [
+            0.7704579999999623,
+            0.8396659999998519,
+            0.7371670000002268,
+            0.8697499999998399,
+            0.7514579999997295,
+            0.710624999999709,
+            0.6865000000007058
+          ],
+          "medianQueryMs": 0.7514579999997295,
+          "p95QueryMs": 0.8697499999998399
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 2,
+          "irrelevantEntries": 2,
+          "irrelevantEntryBytes": 584,
+          "briefBytes": 1003,
+          "truncated": false,
+          "substantiveLocators": [
+            "noise/formatNotes.ts#formatInvestigationReport",
+            "noise/operationNotes.ts#investigateIssue"
+          ],
+          "paths": [
+            "noise/formatNotes.ts",
+            "noise/operationNotes.ts"
+          ],
+          "packetBytes": 3175,
+          "queryMs": [
+            7.602207999999337,
+            8.13091600000007,
+            7.356541999999536,
+            7.426875000000109,
+            7.357499999999163,
+            7.3998750000000655,
+            7.3101669999996375
+          ],
+          "medianQueryMs": 7.3998750000000655,
+          "p95QueryMs": 8.13091600000007
+        }
+      }
+    }
+  ],
+  "totals": {
+    "previous": {
+      "owners": {
+        "hit": 3,
+        "total": 4
+      },
+      "consumers": {
+        "hit": 3,
+        "total": 4
+      },
+      "counterexamples": {
+        "hit": 1,
+        "total": 1
+      },
+      "returnedEntries": 19,
+      "irrelevantEntries": 10,
+      "irrelevantEntryBytes": 21696,
+      "briefBytes": 56563,
+      "packetBytes": 70608,
+      "medianQueryMs": 1.0282079999997222,
+      "p95QueryMs": 1.7245000000000346
+    },
+    "current": {
+      "owners": {
+        "hit": 4,
+        "total": 4
+      },
+      "consumers": {
+        "hit": 4,
+        "total": 4
+      },
+      "counterexamples": {
+        "hit": 1,
+        "total": 1
+      },
+      "returnedEntries": 12,
+      "irrelevantEntries": 1,
+      "irrelevantEntryBytes": 2051,
+      "briefBytes": 46086,
+      "packetBytes": 60131,
+      "medianQueryMs": 1.1716669999996157,
+      "p95QueryMs": 1.7450420000000122
+    },
+    "ordinary": {
+      "owners": {
+        "hit": 3,
+        "total": 4
+      },
+      "consumers": {
+        "hit": 2,
+        "total": 4
+      },
+      "counterexamples": {
+        "hit": 1,
+        "total": 1
+      },
+      "returnedEntries": 27,
+      "irrelevantEntries": 18,
+      "irrelevantEntryBytes": 11049,
+      "briefBytes": 15349,
+      "packetBytes": 29394,
+      "medianQueryMs": 4.418749999999818,
+      "p95QueryMs": 7.602207999999337
+    }
+  },
+  "limitations": [
+    "Public authored fixture, not independently blinded task labels, production capacity or agent benefit.",
+    "Complete packet bytes use each actual task-start packet with its nested response replaced for comparator arms; identical scan/provenance envelope, no notes.",
+    "Preparation is measured once for the current real scan + hook per task. Warm query latency separately compares all three methods; ordinary rg needs no index.",
+    "Snippet matches are retrieval opportunities, not evidence an agent substantively read or correctly used a source.",
+    "Empty-label negative and ambiguous tasks remain in irrelevant-entry and byte denominators. No recall is invented for a zero-label task."
+  ]
+}

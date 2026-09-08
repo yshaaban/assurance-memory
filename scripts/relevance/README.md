@@ -36,3 +36,25 @@ Every task prepares a real task-start packet. Complete packet bytes include the 
 The task-only ranking uses at most six explicit identifier/path probes and twenty normalized term probes, with per-probe result limits. Exact source mentions stay strongest. When exact mentions resolve, other lexical files are counted as omitted lower-confidence context instead of filling the file quota with weak matches. This can miss relevant consumers that were never named: callers still need to inspect the explicitly bounded import context and search further. Without exact anchors, broad lexical results remain possible and no confidence claim is made.
 
 The byte allocator reserves compact source identity and review summaries across selected files before expanding effects, symbols and explanations. Compact entries explicitly list omitted detail and retain follow-up IDs. Source and candidate reviews retain their reported state, original text truncation markers and history/context pointers; ranking never refreshes a review or grants evidence authority. Every query remains inside the existing read transaction. Ordinary search, aliases, schema and index storage are unchanged.
+
+## Recorded results
+
+The development comparison improved from 3/4 owner groups and 2/3 consumer groups in the previous brief to 4/4 and 3/3 in the final development iteration. Both retrieved the one counterexample group. The initial new implementation retrieved those groups but increased irrelevant entries from five to seven and brief bytes from 38,591 to 52,816; that result remains in `results/development-initial.json`. Exact-anchor file selection reduced the final development count to zero irrelevant entries and 35,355 brief bytes. `results/development-final.json` predates a presentation-only clarification of bounded review coverage; its implementation digest records the exact measured version.
+
+The author-known reserved split was scored once after implementation commit `8472320`; ranking was not changed afterward:
+
+| Measure across seven reserved tasks | Previous brief | Current brief | Ordinary search |
+| --- | ---: | ---: | ---: |
+| Owner groups retrieved | 3/4 | 4/4 | 3/4 |
+| Consumer groups retrieved | 3/4 | 4/4 | 2/4 |
+| Counterexample groups retrieved | 1/1 | 1/1 | 1/1 |
+| Irrelevant file entries | 10 | 1 | 18 |
+| Bytes in irrelevant entries | 21,696 | 2,051 | 11,049 |
+| Complete nested response bytes | 56,563 | 46,086 | 15,349 |
+| Complete delivered packet bytes | 70,608 | 60,131 | 29,394 |
+| Median warm query/serialization time | 1.028 ms | 1.172 ms | 4.419 ms |
+| 95th percentile warm query/serialization time | 1.725 ms | 1.745 ms | 7.602 ms |
+
+The current brief still returned one irrelevant file for the ambiguous status task. The previous brief missed the late-mentioned owner and consumer; ordinary search also missed the CSV consumer group because earlier alphabetically ordered broad matches exhausted its five-file window. These failures remain in `results/author-known-reserved.json`. The structured packet is substantially larger than the ordinary-search packet despite having fewer irrelevant files. Small metadata fixtures and a fixed grep script cannot establish saved engineer or model effort.
+
+The full repository test suite passed after the ranking freeze: 126 Node tests, 39 Python tests and 25 Java scenarios / 85 assertions. New behavior tests cover a named owner and separate consumer after noisy prose, helper-heavy retrieval, compact provenance under oversized context, and retained stale counterevidence. Existing shared-query, omission, snapshot/review, CLI and exact byte-accounting checks remain enabled.
