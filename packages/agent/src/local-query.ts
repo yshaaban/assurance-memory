@@ -9,21 +9,41 @@ export function localQuery(index: LocalIndex, command: string, args: Record<stri
     if (typeof value !== 'string' || value.length > 2000) throw new Error(`${key} must be a bounded string`);
     return value;
   };
+  const decodeCursor = (encoded: string): Record<string, any> | undefined => {
+    if (!encoded) return undefined;
+    let value: unknown;
+    try { value = JSON.parse(Buffer.from(encoded, 'base64url').toString()); } catch { throw new Error('Invalid cursor'); }
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid cursor');
+    return value as Record<string, any>;
+  };
   return index.read(() => {
     const snapshot = index.revision();
+    const reviewRevision = index.reviewRevision();
     switch (command) {
       case 'status': return index.summary();
-      case 'search': return { snapshot, items: index.search(string('query'), count), limited: true };
+      case 'search': return { snapshot, ...index.searchResult(string('query'), count), limited: true };
       case 'impact': return { snapshot, ...index.impact(string('id'), count) };
-      case 'context': return { snapshot, ...index.context(string('id'), count) };
+      case 'context': return { snapshot, reviewRevision, ...index.context(string('id'), count) };
       case 'backlog': {
         const encoded = string('after');
         const category = string('category');
-        const cursor = encoded ? JSON.parse(Buffer.from(encoded, 'base64url').toString()) : undefined;
-        if (cursor && (cursor.snapshot !== snapshot || cursor.category !== category)) throw new Error('Index changed; restart backlog pagination');
+        const cursor = decodeCursor(encoded);
+        if (cursor && (cursor.snapshot !== snapshot || cursor.reviewRevision !== reviewRevision || cursor.category !== category)) throw new Error('Index changed; restart backlog pagination');
+        if (cursor && (!cursor.after || typeof cursor.after !== 'object' || Array.isArray(cursor.after))) throw new Error('Invalid cursor');
         const result = index.backlog(count, cursor?.after, category);
-        return { snapshot, ...result, next: result.next
-          ? Buffer.from(JSON.stringify({ snapshot, category, after: result.next })).toString('base64url') : null };
+        return { snapshot, reviewRevision, ...result, next: result.next
+          ? Buffer.from(JSON.stringify({ snapshot, reviewRevision, category, after: result.next })).toString('base64url') : null };
+      }
+      case 'reviews': {
+        const id = string('id');
+        const encoded = string('after');
+        const cursor = decodeCursor(encoded);
+        if (cursor && (cursor.snapshot !== snapshot || cursor.reviewRevision !== reviewRevision || cursor.id !== id))
+          throw new Error('Index changed; restart review pagination');
+        if (cursor && (!Number.isSafeInteger(cursor.after) || cursor.after < 1)) throw new Error('Invalid cursor');
+        const result = index.reviewHistory(id, count, cursor?.after);
+        return { snapshot, reviewRevision, ...result, next: result.next
+          ? Buffer.from(JSON.stringify({ snapshot, reviewRevision, id, after: result.next })).toString('base64url') : null };
       }
       case 'drift': {
         if (typeof args.snapshot !== 'number') throw new Error('snapshot must be a number');

@@ -9,10 +9,12 @@ Read the [local workflow](LOCAL_WORKFLOW.md) to try investigation, the [local re
 ```mermaid
 flowchart LR
     Code["Source + compiler inputs"] --> Scan["Explicit component scan"]
-    Scan --> Local["Disposable SQLite index"]
+    Scan --> Local["Local SQLite index and review history"]
     Local --> Inspect["Search, candidates, context, import impact"]
     Inspect --> Hypothesis["Read source and test a hypothesis"]
     Hypothesis --> Proposal["Propose requirement or debt"]
+    Hypothesis --> Note["Append source-bound investigation review"]
+    Note --> Local
     Proposal --> Review["Maintainer review"]
     Review --> Kernel["Authoritative assurance service"]
     Runner["Independent checker"] --> Kernel
@@ -25,10 +27,10 @@ There is no automatic promotion from an index finding to an approved requirement
 
 | Question | Local investigation projection | Assurance service |
 |---|---|---|
-| What does it contain? | Current extracted facts, candidates, import edges, scan metadata and drift | Reviewed claim revisions, arguments, component heads, evidence, counterevidence, plans, decisions and debt |
+| What does it contain? | Current extracted facts, candidates, import edges, scan metadata, drift and retained local reviews | Reviewed claim revisions, arguments, component heads, evidence, counterevidence, plans, decisions and debt |
 | What can it establish? | That the configured extractor emitted a summary at a recorded scan | Current support under a declared evidence policy |
-| Who supplies inputs? | A person or agent running the local scanner | Separately authorized scanner, maintainer, agent and runner roles |
-| What is its lifetime? | Disposable and rebuildable; history can be rotated | Durable policy/evidence history with an explicit retention policy |
+| Who supplies inputs? | A person or agent running the scanner or explicitly appending a user-reported review | Separately authorized scanner, maintainer, agent and runner roles |
+| What is its lifetime? | Source facts are rebuildable; user review records must be preserved before replacing the database | Durable policy/evidence history with an explicit retention policy |
 | What does absence mean? | No result was returned by that bounded query over that extraction | Assessment depends on declared scopes, coverage, evidence and current applicability |
 | Can it authorize a release? | No | The gate can issue an exact-state receipt; external Git/deployment integration must enforce it |
 
@@ -132,7 +134,7 @@ node packages/agent/dist/src/cli.js call claims.frontier --json frontier.json
 { "id": "payments.cancellation", "limit": 20, "maxClaims": 500 }
 ```
 
-The same operation is exposed as `assurance_frontier` in **service MCP mode**. It is not one of the six local index tools.
+The same operation is exposed as `assurance_frontier` in **service MCP mode**. It is not one of the seven local index tools.
 
 | Request field | Contract |
 |---|---|

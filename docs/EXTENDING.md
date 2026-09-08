@@ -11,8 +11,10 @@ An extension should make a useful investigation easier while preserving the dist
 | Discovery, configuration rules, component/environment pinning, adapter invocation | [scan.ts](../packages/agent/src/scan.ts) |
 | Java parsing/attribution and Java rule manifest | [JavaAnalyzer.java](../services/core/src/main/java/dev/assurance/core/JavaAnalyzer.java) |
 | Content fingerprints for compiler classpaths | [dependency-inputs.ts](../packages/agent/src/dependency-inputs.ts) |
-| Candidate categories, scores, evidence prompts and local design heuristics | [investigation.ts](../packages/agent/src/investigation.ts) |
-| Local persistence, atomic ingestion, FTS and import traversal | [local-index.ts](../packages/agent/src/local-index.ts) |
+| Candidate categories, base/source-role scores, ranking explanations, evidence prompts and local design heuristics | [investigation.ts](../packages/agent/src/investigation.ts) |
+| Local persistence, schema migration, atomic ingestion, review-adjusted ranking and import traversal | [local-index.ts](../packages/agent/src/local-index.ts) |
+| Search token normalization, bounded reranking and lexical symbol navigation | [local-search.ts](../packages/agent/src/local-search.ts) |
+| Append-only local review captures, applicability and invalidation | [local-review.ts](../packages/agent/src/local-review.ts) |
 | Shared local query validation, snapshots and pagination | [local-query.ts](../packages/agent/src/local-query.ts) |
 | CLI options and stdio MCP transport/tool schemas | [local-cli.ts](../packages/agent/src/local-cli.ts), [mcp.ts](../packages/agent/src/mcp.ts) |
 | Approved claim/evidence applicability and argument semantics | [Claims.java](../services/core/src/main/java/dev/assurance/core/Claims.java) |
@@ -45,16 +47,35 @@ The rule name therefore affects product behavior. `JAVA_LARGE_METHOD` and `TS_LA
 Priority is:
 
 ```text
-score = severityBase + boundaryBonus
+baseScore = severityBase + boundaryBonus
+score = baseScore - testReliabilityDiscount - currentCounterevidenceDiscount
 severityBase: HIGH = 80; MEDIUM = 50; LOW = 20
-boundaryBonus: +10 when the subject has the "boundaries" tag; otherwise 0
+boundaryBonus: +10 for the "boundaries" tag; otherwise 0
+testReliabilityDiscount: 25 only when sourceRole is TEST and category is RELIABILITY
+currentCounterevidenceDiscount: 20 only for the latest CURRENT COUNTEREVIDENCE review
 ```
 
-Sort order is descending score then ascending candidate ID. The available scores are 20, 30, 50, 60, 80 and 90. They order inspection effort; they do not represent confidence, exploitability, production incident probability, monetary principal or interest. A boundary tag is an extractor heuristic, not evidence that the subject is a public production API.
+Backlog order is descending effective score then ascending candidate ID. Original severity and `baseScore` remain unchanged; discounts are additive and can produce negative scores. These are triage weights, not confidence, exploitability, incident probability or money. `rankingReasons` explains each contribution. A boundary tag is an extractor heuristic, not evidence of a public production API.
 
-Every candidate contains its source subject, path/line, rule ID, message, severity, category, score, `confidence: STATIC_CANDIDATE`, `nextStep` and `evidenceNeeded`. Simplification prompts ask for a likely future change, ownership/caller inspection, behavior checks and a before/after change-surface comparison. Other categories ask for an explicit contract and a check that can fail for the suspected mechanism. A finding with no matching fact fails ingestion.
+`sourceRole` is inferred as `TEST` from a `tests` tag or a conventional test directory/TS-JS filename; otherwise `CONFIG` language becomes `CONFIGURATION`, and remaining code defaults to `PRODUCTION`. Configuration fixtures under test paths therefore have role `TEST`. Role classification does not establish that a warning is intentional. Test warnings and locally reviewed candidates remain visible; other source/category priorities are preserved.
+
+The latest local review affects ranking only while its captured source/context is current. `INVESTIGATE`, stale, absent or missing reviews produce no review discount. Review history does not stack discounts or suppress a rule. Branch concentration explicitly warns that count alone cannot justify refactoring: establish a concrete change scenario and scattered or duplicated policy first.
+
+Every candidate contains its source subject, path/line, rule ID, message, severity, category, `baseScore`, effective `score`, `sourceRole`, `rankingReasons`, `confidence: STATIC_CANDIDATE`, `nextStep` and `evidenceNeeded`. Simplification prompts ask for a likely future change, ownership/caller inspection, behavior checks and a before/after change-surface comparison. Other categories ask for an explicit contract and a check that can fail for the suspected mechanism. A finding with no matching fact fails ingestion.
 
 Identity is `sha256(subjectId + ':' + ruleId)`. Multiple sites of one rule on the same subject collapse to one record; this is not a per-occurrence diagnostic inventory. Adapter deduplication retains the first finding for that pair. The local projection records first/last-seen scans and disappearance. Disappearance can result from a code change, rule change, subject identity movement or loss of semantic detection. It is not evidence of repayment or even necessarily a fix.
+
+## Retrieval and local review extensions
+
+Search normalization and ranking are lexical presentation policy. The implementation splits identifier boundaries and uses a small explicit alias map; it tries all terms before a reported any-term fallback. Preserve the 500-character/20-normalized-term query bounds, 200–1,000-row lexical pool, indexed exact-symbol lookup (`limit + 1` rows), owner expansion (at most five files with `limit + 1` rows each), exhaustion flags and exact-match explanations. The combined reranking input may exceed the lexical pool; do not present that pool as the total metadata bound. Do not silently drop terms, relabel a broader match as exact, or turn `owners`/`localSymbols` locator navigation into call-graph assertions. Context compacts metadata, so preserve its explicit limitation count/truncation flag and the full `status` path.
+
+Local schema 2 introduces append-only review records and permanent invalidations. Source facts are rebuildable, but the database may be the only copy of local annotations; preserve it with SQLite-consistent backup tooling before replacement. Do not treat an annotated database as disposable cache. Read-only access must reject older schemas. CLI scan validates configuration before writable open and commits pending schema migration/search rebuild with its first successful scan; errors or close before commit roll them back. A CLI annotation append requires a compatible index and the expected current scan. Read paths share scan/review revision pins through `local-query.ts`; backlog cursors also pin category, and review-history cursors pin candidate ID. Both reject stale continuations. Local MCP remains seven read-only tools with no annotation write or migration tool.
+
+The stored `searchPolicyDigest` hashes compiled `local-search.js` separately from candidate policy. A mismatch rejects read-only opens until scan rebuilds FTS from indexed facts, including unchanged rows. Preserve that check when changing normalization or aliases. Queries must not extract source or rebuild search metadata. Search-only rebuilds do not advance source/review revisions or invalidate review captures; ordinary scan publication still advances the snapshot and reconciles applicability. Test changed policy against unchanged facts, failed upgrade rollback, and retained review history. Rebuild and restart processes after compiled policy changes because the digest is computed on module load.
+
+Review captures bind candidate/source facts, containing files, the complete stored direct-import/importer membership, optional cited facts and component context. Reconcile within the scan transaction before commit. A no-op scan keeps a capture current, whereas source, membership, cited-fact, context or candidate-policy changes invalidate it permanently. A revert cannot revive that capture. Test failed scans, new dependencies, stale cursors, review supersession and delete/reappear sequences; untrusted local text never becomes kernel evidence or a global false-positive suppression.
+
+The [gated detector backlog](DETECTOR_BACKLOG.md) describes proposed duplicate-owner, retry/concurrency, lifecycle and normalization investigations. Each entry names required facts, intentional negative controls, validation and graduation criteria. None is a newly shipped detector. Preserve current structural warnings, including caught/detached work, until the relevant analyzer or applicable review provides stronger evidence; `.catch` syntax alone does not prove complete failure/lifecycle ownership.
 
 ## Current rule families
 
@@ -148,7 +169,7 @@ There is no full API-schema compatibility engine, historical migration replay, C
 2. **Choose the smallest owner.** Extract language meaning in the adapter. Derive language-independent investigation presentation from compact facts only when those facts support the interpretation. Keep new rule output as candidates.
 3. **Define stable identity and coverage.** Preserve subject identities where possible. Decide how multiple sites collapse. Make unresolved behavior and output budgets explicit; never silently truncate an inventory or convert unsupported analysis into absence evidence.
 4. **Version its applicability.** Add source rules to the executed manifest and update analyzer/checker versions when semantics change. The scanner hashes its implementation inputs. The local index additionally records `candidatePolicyDigest`, a digest of compiled `investigation.js`; a changed postprocessing policy produces `CONTEXT_CHANGED` on the next scan. Rebuild and restart scanner processes after code changes because that digest is computed when the module loads.
-5. **Check presentation.** Confirm category, score, source location, evidence prompt and confidence. New categories require coordinated type, query validation, CLI documentation and MCP schema changes. Queries must remain shared between CLI and MCP.
+5. **Check presentation.** Confirm category, source role, original/effective score, ranking explanations, source location, evidence prompt and confidence. Preserve candidate identity and visibility when adjusting rank. New categories require coordinated type, query validation, CLI documentation and MCP schema changes. Queries must remain shared between CLI and MCP.
 6. **Exercise dangerous boundaries.** Test a true mechanism, an intentional boundary/false-positive case, relevant edits, deletion/new membership, missing inputs, stale reads/cursors and rule removal where applicable. Assert observable results and retained uncertainty, not SQL statement spelling.
 7. **Measure usefulness.** Label a representative sample with maintainers; report useful precision by rule, false-confidence cases and missed seeded mechanisms. Compare the cost of finding and validating work with the tool to the existing workflow.
 
@@ -202,6 +223,7 @@ Before broader use, establish project-specific acceptance criteria for useful ca
 - Every candidate keeps source provenance and a validation step; no score or source text acquires policy authority.
 - Rules, analyzer/checker versions, dependency inputs and candidate policy changes remain visible to applicability/drift.
 - Missing inputs, new/removed subjects, identity collisions and limits retain uncertainty or fail atomically.
-- CLI and MCP share read semantics, consistent snapshot pins and honest truncation/pagination.
+- CLI and MCP share read semantics, consistent scan/review pins and honest truncation/pagination; review append remains an explicit CLI write.
+- Migration, review invalidation and source reversion preserve append-only history and do not restore stale applicability.
 - Behavior tests cover the relevant failure boundary; measurements distinguish synthetic projection cost from real extraction.
 - User documentation states the new capability and the conditions in which it cannot answer the question.

@@ -14,11 +14,11 @@ node packages/agent/dist/src/local-cli.js impact SUBJECT_ID --db .assurance-cach
 node packages/agent/dist/src/local-cli.js drift 2 --db .assurance-cache/index.sqlite
 ```
 
-`search` uses literal token conjunction over locators, tags and effects, ranked by SQLite FTS5 BM25. It does not embed code or index raw file bodies. It returns a bounded top set, not an exhaustive inventory. Read the cited source using ordinary repository tools.
+`search` normalizes camelCase, underscores and a small explicit set of morphology aliases over locators, tags and effects. It tries all terms first and broadens only after zero all-term matches, reporting `matchMode: ANY_TERM`. Exact symbol/file boosts and per-item `rankingReasons` explain bounded reranking; `candidatePoolTruncated` reports pool exhaustion. It does not embed code or index raw file bodies. Read the cited source using ordinary repository tools.
 
-`context` returns the subject, component scan metadata, candidate findings and bounded direct import neighbors. `impact` follows reverse imports transitively, handles cycles, and supplies a predecessor for each affected file. A `truncated` result means the supplied node budget is insufficient. Imports are potential change dependencies; they are not behavioral call-graph proofs. Currently this projection uses component-local TS/JS `IMPORT:` summaries.
+`context` returns the subject, compact component metadata, candidate/review summaries, direct import neighbors, lexical `owners` and nearby `localSymbols`. The symbol fields are navigation hints, not call edges. Component metadata omits environment/rule inventories and caps coverage limitations at eight with a truncation flag; use `status` for full diagnostics. `impact` follows reverse imports transitively, handles cycles, and supplies a predecessor for each affected file. A `truncated` result means the supplied node budget is insufficient. Imports are potential change dependencies; they are not behavioral call-graph proofs. Currently this projection uses component-local TS/JS `IMPORT:` summaries.
 
-`backlog` orders candidates by severity plus a small public-boundary bonus. Scores are transparent investigation priorities, not debt cost or defect probability. Use the returned opaque `next` value as `--after` to continue. A new scan invalidates that cursor rather than silently skipping work. Drift pages use immutable snapshot IDs and numeric row cursors.
+`backlog` retains original severity and `baseScore`, and explains its effective `score` through `sourceRole` and `rankingReasons`. Test-source reliability warnings receive a 25-point discount; the latest applicable local counterevidence note subtracts another 20. All candidates remain visible. Scores are triage priorities, not debt cost or defect probability, and branch count alone does not justify a refactor. Use the returned opaque `next` as `--after`; a new scan or review revision invalidates it rather than silently skipping work. Drift pages retain numeric row cursors.
 
 Candidates include existing lifecycle/reliability rules, duplicate implementations, large functions, import cycles, layer violations, plus concentrated conditional decisions and mixed effect ownership. Every item states the evidence needed before acting.
 
@@ -27,15 +27,41 @@ Candidates include existing lifecycle/reliability rules, duplicate implementatio
 1. Check scan coverage and source revision. Rescan a changed checkout.
 2. Choose a candidate and retrieve its context and import impact.
 3. Read its actual implementation and callers. Identify the expected behavior and likely next change.
-4. Decide whether it is a defect, an intentional boundary, or a simplification opportunity. Capture an explicit counterexample or a before/after change-surface argument.
+4. Decide whether it is a defect, an intentional boundary, or a simplification opportunity. Capture an explicit counterexample or a before/after change-surface argument. Preserve a source-bound local note with CLI `review`; it remains untrusted and does not approve the conclusion.
 5. If shared assurance is needed, propose the requirement and repayment obligations through the service. A maintainer reviews them; independent checkers supply evidence.
 6. Make a bounded change and run the relevant behavior checks. Rescan and inspect drift. A disappearing candidate means it was not detected in that scan; it does **not** close a reviewed debt obligation.
 
 Local findings are not automatically uploaded as approved requirements or evidence. Source and finding text remain untrusted data in both CLI and MCP output.
 
+## Preserve a local investigation note
+
+Use the current candidate ID and snapshot in a `review.json` file:
+
+```json
+{
+  "candidateId": "<candidate digest>",
+  "expectedSnapshot": 2,
+  "disposition": "COUNTEREVIDENCE",
+  "author": "reviewer",
+  "reason": "Failure is handled by the documented fallback owner.",
+  "evidence": "Inspected the fallback and ran the focused rejection-path test."
+}
+```
+
+```sh
+node packages/agent/dist/src/local-cli.js review --input review.json --db .assurance-cache/index.sqlite
+node packages/agent/dist/src/local-cli.js reviews CANDIDATE_ID --db .assurance-cache/index.sqlite --limit 10
+```
+
+Choose `COUNTEREVIDENCE` to record why the structural warning may be intentional, or `INVESTIGATE` to record work still needed. The input is bounded to 65,536 bytes and may cite up to 32 additional fact IDs. Review text is a user report; the tool does not execute it, fetch evidence links, or authenticate its author. Full fields and limits are in the [local reference](LOCAL_REFERENCE.md#local-reviews-and-counterevidence).
+
+Notes append rather than overwrite. Only the latest `CURRENT` counterevidence note changes ranking. Source/file, direct-import content or membership, cited-fact, candidate and context/policy changes make prior notes stale; disappearance is reported as `CANDIDATE_ABSENT`. An unchanged scan keeps applicability, but reverting a changed source does not revive an invalidated note. Inspect and append a fresh note when appropriate. Review-history pagination pins the candidate, scan and review revision; restart after any pin changes.
+
+Local applicability is not assurance. A note never removes a candidate, establishes a requirement, or closes debt. For stronger proposed ownership/retry/lifecycle detectors, consult the [gated backlog](DETECTOR_BACKLOG.md) rather than treating ordinary branch counts as proof.
+
 ## Workspace boundaries and Java
 
-Choose one component per build target, with at most 50,000 extracted facts and 20,000 source/config files by default (configurable discovery ceiling: 50,000 files). All indexed components must participate in a workspace scan. Changing a component root or dropping an indexed component requires a fresh index or a new inventory; it cannot silently erase a component's findings.
+Choose one component per build target, with at most 50,000 extracted facts and 20,000 source/config files by default (configurable discovery ceiling: 50,000 files). All indexed components must participate in a workspace scan. Changing a component root or dropping an indexed component requires a new index after preserving the old database with a SQLite-consistent backup; it cannot silently erase a component's findings or review history.
 
 For Java, build the adapter with `bash scripts/test-java.sh` using JDK 21. Configure both `javaClasspath` (which can be empty for JDK-only code) and `javaCoreClassPath`:
 
@@ -72,7 +98,7 @@ Use the existing bridge in local mode:
 }
 ```
 
-The exact outer configuration belongs to the client. Local mode opens SQLite read-only and exposes status, search, backlog, context, impact and drift. Scan through the CLI. The service token is unnecessary. Remove `ASSURANCE_LOCAL_DB` to use the original authenticated service tools instead; local mode never falls back to a remote mutation.
+The exact outer configuration belongs to the client. Local mode opens SQLite read-only and exposes seven tools: status, search, backlog, context, impact, drift and candidate review history (`assurance_local_reviews`). Scan and append reviews through the CLI; MCP has no local mutation tool. The service token is unnecessary. Remove `ASSURANCE_LOCAL_DB` to use the original authenticated service tools instead; local mode never falls back to a remote mutation.
 
 ## Reviewed mission frontier
 
@@ -92,8 +118,12 @@ The result distinguishes local evidence/repair work, missing reviewed decomposit
 
 ## Persistence and limits
 
-The index uses SQLite WAL, one writer per workspace, and one atomic transaction across the configured scan. Readers keep seeing the last committed state. Failed scans roll back source facts, findings, drift and snapshot metadata together. A compiler is instantiated per component; the CLI does not retain every component's AST.
+Version 1.2.0 uses schema 2. CLI `scan` validates configuration before opening writable storage, then commits a schema-1 upgrade and normalized search rebuild with the first successful scan. A failed upgrade scan retains the previous schema and snapshot. Read-only queries/MCP and CLI review append reject older indexes until that scan succeeds.
+
+After changing the compiled search policy, rebuild/restart the tool and run `scan` again. The stored `searchPolicyDigest` must match before read-only access, including `status`, or review append. The scan rebuilds search metadata even for unchanged facts. Reads do not extract source or rebuild the index. Search-only metadata changes do not invalidate reviews or create source drift; the CLI scan still advances its snapshot and checks source/context applicability.
+
+The index uses SQLite WAL, one writer per workspace, and one atomic transaction across the configured scan, including pending migration, search rebuild and review invalidation. Readers retain the last committed state, subject to schema/search-policy compatibility. Failed scans roll back these changes with source facts, findings, drift and snapshot metadata. A compiler is instantiated per component; the CLI does not retain every component's AST.
 
 Persistence updates changed facts and FTS rows; unchanged rows are reused. **Compiler extraction still runs on every scan.** There is no unsafe cache based only on a Git commit or path timestamp. The 100,000-fact benchmark measures the projection independently of parsing.
 
-Default queries return 20 records; the ceiling is 200. MCP also bounds response bytes. The database stores extracted metadata and drift history, not raw source bodies, but paths and identifiers can still be sensitive. Keep the database with the workspace. History currently grows without automatic retention; rotate this disposable projection according to disk budget. Keep durable assurance/evidence history in the service.
+Default queries return 20 records; the ceiling is 200. MCP also bounds response bytes. The scanner stores extracted metadata and drift history rather than raw source bodies; local review text is also stored and may include excerpts. Paths, identifiers and annotations can still be sensitive. Keep the database with the workspace. Drift and append-only review history grow without automatic retention. Source metadata can be rebuilt, but this database may be the only copy of its review records. Preserve it with SQLite-consistent backup tooling before replacement or deletion, and retain the old copy for review-history lookup. Copying only a live main database file can miss committed WAL data. The service owns authoritative assurance/evidence history and does not automatically copy local annotations.

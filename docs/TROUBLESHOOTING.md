@@ -22,24 +22,25 @@ npm run build
 | Symptom | Cause and next action |
 | --- | --- |
 | `--db is required` | Queries need an index path. For the supplied fixture, use `--db examples/.assurance-cache/index.sqlite`. |
-| Cannot open the database, or `Initialize this index with the scan command first` | Run `scan` before any read-only query. Without `--db`, scan creates the index beside its configuration file, not necessarily beside your shell's current directory. |
-| `Database belongs to a different workspace` | One index belongs to one workspace. Select a new database path for a different workspace name. |
-| `Component root changed` | Resolved component roots are part of the indexed inventory. After moving a checkout or repartitioning, use a fresh index path. |
-| `Every indexed component must be scanned` | A scan omitted a previously indexed component. Restore the complete configuration or deliberately start a new index for the new inventory. |
-| `Index schema is newer than this tool` | Use a compatible tool revision. To regenerate disposable local data, scan into a new path. |
+| Cannot open the database, or `Index needs initialization or schema migration; run scan with this tool first` | Run a successful `scan` with the new tool before read-only queries or review append. Version 1.2.0 validates scan configuration before writable open, then commits schema-1 migration and search rebuild with the successful scan. Failure retains the previous schema and snapshot. MCP/read-only access does not migrate. Without `--db`, scan selects the index beside its configuration file. |
+| `Search policy changed; run scan with this tool before querying` | The stored search-policy digest differs from compiled `local-search.js`. Rebuild/restart the tool after code changes, then run a successful `scan` to rebuild search metadata, including unchanged facts. This gate also applies to `status`, MCP and review append. Queries do not rebuild the index. Preserve the database and its reviews; no replacement is needed. |
+| `Database belongs to a different workspace` | One index belongs to one workspace. Use a separate database path for a different workspace; preserve the existing database and its reviews. |
+| `Component root changed` | Resolved component roots are part of the indexed inventory. After moving a checkout or repartitioning, preserve the old database with a SQLite-consistent backup, then use a new index path; reviews do not transfer automatically. |
+| `Every indexed component must be scanned` | A scan omitted a previously indexed component. Restore the complete configuration, or preserve the old database and its reviews before starting a new index for the changed inventory. |
+| `Index schema is newer than this tool` | Use a compatible tool revision. Preserve local review history with a SQLite-consistent backup before any replacement; source reconstruction does not recover annotations. |
 | Database is busy or locked | The local index allows one writer per workspace and waits up to five seconds for lock contention. Let the active scan finish and retry; serialize scheduled scans for that index. |
 
-Use a new `--db` path when resetting a disposable projection. Keep an old database only if its drift history is useful, and close active readers/writers before archiving it. SQLite WAL files may contain committed data while connections are open; copying only the main file during an active scan is not a reliable backup.
+Source metadata is rebuildable; local review records are not. The database may be their only copy. Before replacement, deletion or moving to a new inventory, preserve it using SQLite-consistent backup tooling, such as the SQLite backup API, and retain that copy for history lookup. SQLite WAL files may contain committed data while connections are open; copying only a live main file is not a reliable backup. The service does not automatically retain these local annotations, and no review import/merge protocol is provided.
 
 ## TypeScript coverage and source discovery
 
-**Discovery is complete but semantics are partial.** These are separate assessments. Inspect `coverage.limitations` for compiler diagnostics and declared analyzer gaps. Resolve dependencies and choose the actual build-target tsconfig. Complete discovery does not imply complete type resolution or behavioral coverage.
+**Discovery is complete but semantics are partial.** These are separate assessments. Inspect `status` component `coverage.limitations` for full compiler diagnostics and declared analyzer gaps. `context` shows at most eight limitations and exposes `limitationCount`/`limitationsTruncated`; it omits environment and executed-rule inventories. Resolve dependencies and choose the actual build-target tsconfig. Complete discovery does not imply complete type resolution or behavioral coverage.
 
 **A monorepo root tsconfig produces unexpected diagnostics.** A solution tsconfig may contain only references. Configure one component per concrete target and point `tsconfig` to that target's effective configuration. Component roots resolve against the workspace JSON location; tsconfig paths resolve against the component root.
 
 **`Incomplete discovery ... previous snapshot retained`.** Symlinks and oversized recognized inputs can make discovery partial. Inspect the listed omissions. Select real source roots, adjust a justified `maxFileBytes` bound, or declare intentional exclusions in configuration. Exclusions narrow the declared inventory and should be reviewed as coverage choices. Local scans will not publish incomplete discovery as source deletions.
 
-**`Component exceeds its file limit` or the 50,000-fact partition bound.** Split by build target or a meaningful package boundary and use a new index for the changed inventory. Increasing the file limit cannot increase the hard fact bound. See [scaling](SCALING.md).
+**`Component exceeds its file limit` or the 50,000-fact partition bound.** Split by build target or a meaningful package boundary. Preserve the current database and its review history with a SQLite-consistent backup before using a new index for the changed inventory. Increasing the file limit cannot increase the hard fact bound. See [scaling](SCALING.md).
 
 **`Source changed during scan`, `Source membership changed during scan`, or changed compiler inputs.** Stop edits, code generation, and dependency installation during extraction, then retry. A stable checkout is required to avoid mixing source versions. The failed workspace transaction rolls back.
 
@@ -61,16 +62,37 @@ Use a new `--db` path when resetting a disposable projection. Keep an old databa
 
 | Symptom | Explanation |
 | --- | --- |
-| `Index changed; restart backlog pagination` | The cursor's snapshot or category no longer matches. Restart without `--after`; keep the category stable while paging. |
-| Invalid backlog cursor or JSON parsing error | Pass the exact opaque `next` string. A drift cursor is numeric and cannot be used for backlog. |
+| `Index changed; restart backlog pagination` | The cursor's scan, review revision or category no longer matches. Restart without `--after`; keep the category stable. Even an unchanged scan or a newly appended annotation requires a fresh page. |
+| Invalid backlog/review cursor or JSON parsing error | Pass the exact opaque `next` string to the same query/candidate/category. Drift cursors are numeric and are not interchangeable. |
 | `Invalid drift cursor` | Use a positive numeric snapshot and a nonnegative numeric row cursor returned by that snapshot's drift page. |
 | `Unknown subject ID; search first` | Use a search result's `id` or candidate's `subjectId`, not a candidate ID or path. After a rescan, search again if a declaration moved or disappeared. |
 | `Unknown candidate category` | Use uppercase `SIMPLIFICATION`, `INCONSISTENCY`, `RELIABILITY`, or `COVERAGE`; omit the option for all categories. |
 | `limit must be 1..200` | Supply an integer in that range. |
-| Search returns nothing | Search indexes locators, tags, and effects; all supplied tokens must match. Try fewer tokens or search the source directly with `rg`. |
-| Context/impact says `truncated: true` | The result budget was reached. Increase the limit up to 200 or investigate smaller source areas; do not interpret the page as a complete graph. |
+| Search returns nothing | Search indexes locators, tags and effects, not source bodies or review prose. Check normalized `terms`; the any-term fallback runs only after zero all-term matches. Try a narrower symbol/file name or search source with `rg`. |
+| Search reports `ANY_TERM` | No all-term match existed; these results match only part of the normalized query. Read `meaning` and narrow the query before relying on relevance. |
+| `Query exceeds 20 normalized terms` | The query is rejected without dropping words. Supply at most 20 distinct normalized terms and at most 500 characters. |
+| `candidatePoolTruncated: true` | The lexical pool, exact-symbol lookup or file-seed limit was reached. Separate bounded symbol/owner lookups can add metadata beyond the 200–1,000-row lexical pool. Narrow the query; raising the result limit cannot make search exhaustive. |
+| Context/impact says `truncated: true` | A result budget was reached. Increase the limit up to 200 or investigate smaller areas; do not interpret the page as a complete graph. `owners`/`localSymbols` are lexical navigation, not call edges. |
+| Context omits environment/rules or lists only eight limitations | This is deliberate metadata compaction. Read `metadataDetail`, `limitationCount` and `limitationsTruncated`, then use `status` for full diagnostics. |
 
 An empty backlog, empty impact set, or disappearing candidate is not a correctness result. Impact currently follows component-local TS/JS imports, and candidate coverage depends on implemented rules. Read the [coverage guide](DRIFT_COVERAGE.md) before interpreting absence.
+
+## Local annotations and ranking
+
+| Symptom | Cause and next action |
+| --- | --- |
+| `Index snapshot changed; inspect the candidate again before reviewing` | `expectedSnapshot` is stale. Read the candidate at the current scan and reassess the note before submitting it. |
+| `Candidate is absent from the current snapshot` or `Cited source is absent` | Review append requires an emitted candidate and existing cited facts. Search the new source; retained historical notes are read with `reviews`. |
+| `Review input exceeds 65536 bytes`, a field limit error, or `Unknown review field` | Use one bounded JSON object with only the documented fields. `reason` is at most 2,000 characters, `evidence` 8,000, and optional `factIds` at most 32 entries. See the [review input contract](LOCAL_REFERENCE.md#local-reviews-and-counterevidence). |
+| `Index changed; restart review pagination` | Scan, review revision or candidate ID differs from the cursor. Restart without `--after`; keep the candidate stable. |
+| Review is `STALE` after a small edit or a new importer | Captures include the source, containing file, direct imports/importers, cited facts and component context. Those changes conservatively invalidate the note. Inspect the new source and append a fresh note if justified. |
+| Review stays stale after reverting source | Invalidation is permanent. A revert cannot revive a previous capture; append a new source-bound review. |
+| Review says `CANDIDATE_ABSENT` | The candidate is no longer currently emitted. This is detector lifecycle state, not debt closure; the old review remains available. |
+| Score fell but severity did not | `baseScore` retains severity/boundary priority. Test-source reliability subtracts 25; a latest `CURRENT` `COUNTEREVIDENCE` note subtracts 20 more. `rankingReasons` and `review` explain the effective score. |
+| A reviewed warning still appears | Reviews never hide candidates. Only the latest applicable counterevidence note changes rank; `INVESTIGATE`, stale or absent notes do not. Local review text is not authoritative proof. |
+| MCP cannot add a note | Local MCP has seven read-only tools, including `assurance_local_reviews`. Use CLI `review --input FILE` to append. |
+
+Reviews are append-only user reports. Correct one with a new record; do not edit SQLite rows or treat `CURRENT` as confirmation that its reasoning is true. Review changes advance `reviewRevision` and invalidate backlog/review-history cursors even when no source scan occurred.
 
 ## Optional service and durable verification
 

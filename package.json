@@ -1,6 +1,6 @@
 {
   "name": "assurance-memory",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Requirement-centered memory, drift and coordination for code agents",
   "type": "module",
@@ -19,7 +19,7 @@
     "mcp": "node packages/agent/dist/src/mcp.js",
     "test:ts": "npm run build && node --test packages/agent/dist/test/unit.test.js",
     "local": "node packages/agent/dist/src/local-cli.js",
-    "test:local": "npm run build && node --test packages/agent/dist/test/local.test.js"
+    "test:local": "npm run build && node --test packages/agent/dist/test/local*.test.js packages/agent/dist/test/retrieval.test.js packages/agent/dist/test/ranking.test.js"
   },
   "devDependencies": {
     "@types/node": "22.19.7",

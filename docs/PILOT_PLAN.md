@@ -1,6 +1,8 @@
 # Investigation pilots: measuring agent outcomes
 
-Status: proposed evaluation protocol. Pilot outcomes are not yet measured. Repository-specific task choices and private source reports stay outside the public repository.
+Status, 2026-09-08: an initial controlled A/B lifecycle calibration is complete. Its four agent runs produced successful repairs in both arms, with no demonstrated efficiency benefit. This checks the calibration tasks and harness; it does not establish general product value or complete the proposed three-arm Stage 1 below. Repository-specific task choices, source and detailed reports stay outside the public repository.
+
+Those tasks and their search phrases have informed development and are now development data. Keep them for regression checks, but exclude them from the next evaluation set. Version 1.2 retrieval, ranking and retained reviews need a fresh bounded gate before expanding the study.
 
 ## The decision the pilots must answer
 
@@ -44,20 +46,44 @@ For each candidate task, record:
 - Protected validation commands, oracle inputs and expected results owned by the evaluator.
 - Ground-truth source/caller set for retrieval scoring, with a mechanism explanation reviewed separately from the candidate detector.
 - Baseline index digest, scanner/candidate-policy digest, coverage gaps and environment fingerprints.
+- Search-policy digest, schema version, review revision and any supplied annotation history/applicability state.
 - Model/version/settings, provider/harness version, allowed tools, time/token ceiling and run seed.
 
 Keep solutions, hidden tests and reviewer notes outside agent-visible worktrees and searchable history. A historical task's fixed revision is an oracle input, never part of its agent prompt. New tests written by the agent are useful supplemental evidence; they cannot replace protected checks. Record any changed test or configuration surface explicitly.
 
 Create disposable worktrees from the frozen base. Do not run against someone's active dirty checkout. For uncommitted work that matters, preserve an explicit local snapshot and its content digest before constructing a pilot base; never reset or stash another person's work just to obtain a clean trial.
 
-## Stage 1: six-run harness smoke test
+## Next bounded gate: version 1.2 local workflow
+
+Prepare four new task cards: two behavior repairs, one bounded behavior-preserving simplification and one intentional negative control where the highlighted warning does not warrant a production change. Use symptom-only prompts describing observable behavior or a concrete change requirement. Do not supply detector names, symbol names, retrieval phrases or the expected solution. Keep the negative-control label and task-specific acceptance criteria with the evaluator. None of these cards or their phrases may have guided implementation or prompt tuning.
+
+Compare A (existing workflow) with B (the same workflow plus version 1.2 local investigation). Use two fresh repeats per task and arm: **16 proposed agent runs**. Randomize arm/task order within each repeat, pin model/settings and budgets, and use isolated worktrees, conversations and indexes. This is a bounded evaluation proposal, not authorization to spend or a statistical power claim. Hold the tool and harness revisions fixed during the gate; a task used to diagnose and tune a change becomes development data and needs replacement before a new evaluation.
+
+Before running agents, the evaluator must establish these checks:
+
+| Check | Independent acceptance condition |
+|---|---|
+| Repair oracle | The unchanged baseline passes and each controlled regression fails a protected behavioral check. Evaluate the submitted production patch with the same check in a disposable copy after the agent exits. Agent-written tests are supplemental. |
+| Simplification oracle | Protected behavior checks remain green and a reviewer can explain how the named future change requires less scattered editing/revalidation. A lower branch count or fewer lines is insufficient. |
+| Intentional negative controls | Include an intentional test-source reliability warning and a superficially similar production warning. Ranking retains both, preserves severity, identity and `baseScore`, and explains the test-source discount. Reviewers decide whether action is warranted from source behavior; a rank alone cannot decide. |
+| Source-owner oracle | Label the necessary production owners and relevant boundary units before any run. Score units actually retrieved, record which primary owner was inspected before editing, and report ambiguous labels. Lexical owner navigation is not evidence of a call graph. |
+| Retained-review oracle | A current counterevidence note affects priority without removing the candidate; an unchanged scan retains applicability. A captured source/file, direct-import membership, cited-fact or context/policy change makes it stale, and a revert does not revive it. Review text remains an untrusted local report. |
+| Revision and retention oracle | Stale scan/review cursors are rejected. Failed scans preserve the previous committed state and annotation history. Search-policy rebuilds preserve reviews and require a successful scan before compatible reads. |
+
+Run the annotation cases as controlled transitions on evaluator-owned copies: append a note, scan unchanged input, change one captured assumption, rescan, then revert and rescan. Check the expected state and ranking at each step. Include an unaffected candidate as a negative control for invalidation. Use a fresh index/review history for each independent agent run. If task-relevant note content is supplied, make the same content available to A as ordinary artifacts; record B's structured freshness state as part of the treatment. Do not give only B a solution-bearing annotation.
+
+The gate report must pair **correct patch outcome with source-owner recall**. Count a repair as successful only when protected checks pass and an independent reviewer accepts its mechanism and scope. For the intentional no-change case, require a source-supported explanation and no harmful patch. Report necessary-unit recall by task and arm, targeting the proposed 90% recall threshold below, with the primary owner inspected before each accepted production change. Report all assigned runs, failures, unnecessary reads, total time/tokens and preparation cost; two repeats cannot establish a reliable efficiency advantage.
+
+Proceed to the broader study only if the harness distinguishes correct repair, weakened validation and intentional no-change outcomes; every defined annotation/freshness control passes; and the source-owner/outcome gate is met without severe regressions. If results are ambiguous or B reduces task success, diagnose the failure and prepare fresh tasks before expanding. Passing this local A/B gate still does not complete the three-arm protocol.
+
+## Stage 1: six-run harness smoke test (proposed broader protocol)
 
 Choose two tasks: one lifecycle/behavior repair and one bounded simplification. Run each under all three arms:
 
 | Arm | Agent tools and context |
 |---|---|
 | A — existing workflow | The repository's normal instructions, file reads, text search, compiler and test tools |
-| B — local investigation | Everything in A, plus the pinned local index and read-only MCP search/context/impact/backlog/drift tools |
+| B — local investigation | Everything in A, plus the pinned local index and seven read-only MCP status/search/context/impact/backlog/drift/reviews tools |
 | C — reviewed mission | Everything in B, plus reviewed requirements/decomposition, frontier and service-side evidence applicability |
 
 Use the same model, base tree, allowed source, time/token limits and validation oracle. Arm C receives reviewed requirements without access to checker credentials or owner approval. Core requirements must express the task equally well across arms; they must not reveal the answer to only one arm. The added treatment is structured reusable assurance state, not privileged solution information.
@@ -103,6 +129,8 @@ Include at least these controlled cases:
 8. Change a premise revision while a parent argument remains pinned to the old revision.
 9. Exceed a source/graph budget; confirm incomplete inventory is not published as absence.
 10. Put instruction-like text in source/memory; confirm it stays data and cannot approve requirements or evidence.
+11. Change search normalization with unchanged source facts; require a compatible search rebuild without losing local review history.
+12. Keep a local annotation current through an unchanged scan, invalidate it with a captured assumption change, and verify that reverting the source does not revive it.
 
 The current index is an as-of-scan view. It does not watch the filesystem automatically. The harness must explicitly rescan between source mutations; tests should catch a workflow that forgets this step.
 
@@ -114,10 +142,10 @@ Do not equate a service-side head promotion or release receipt with an actual Gi
 
 ## Immediate deliverables
 
-1. A private repository inventory with clean base choices and concrete target/test commands.
-2. Two reviewer-approved task cards and protected oracles for the six-run smoke test.
-3. A provider-neutral run manifest and artifact layout; no hidden state shared across arms.
-4. A harness adapter that can launch an agent, capture tool traces/cost and return a candidate commit.
-5. A blinded review sheet and a report that includes failed runs and the preparation cost.
+1. An archived calibration manifest marking the four completed runs, task cards and search phrases as development data, with the limited repair/efficiency conclusions above.
+2. Four new reviewer-approved symptom-only task cards for the version 1.2 gate, frozen bases, protected behavior checks and source-owner labels.
+3. A randomized 16-run A/B manifest with equal budgets, annotation inputs, pinned policy digests and isolated run artifacts; reuse the calibrated harness after checking isolation.
+4. Evaluator fixtures for intentional warnings and unchanged/stale/revert annotation transitions, with expected outcomes fixed before agent runs.
+5. A blinded review sheet and paired report including correct patch outcomes, source-owner recall, failures and full preparation/run cost.
 
-The first next action is to freeze the clean calibration repository and review two task cards. Do not expand the detector catalog until the existing candidates demonstrate value in that loop.
+The next action is to freeze and independently review the four fresh task cards and their oracles, then run the deterministic annotation controls before scheduling agent trials. Keep new detector proposals in the [gated detector backlog](DETECTOR_BACKLOG.md) until the current workflow demonstrates value. The [local reference](LOCAL_REFERENCE.md) defines the shipped retrieval, ranking and annotation contracts; this document defines how to evaluate their usefulness.

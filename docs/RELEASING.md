@@ -4,7 +4,7 @@ The repository is distributed as source. npm workspaces remain `private: true`; 
 
 ## Version boundaries
 
-The Node tooling is version 1.1.0. The retained Java Maven modules and JAR filenames are version 1.0.0. This distinction is intentional for the current publication snapshot; the Java API gained a read-only frontier operation without changing its existing authority semantics. Treat a future synchronized package release as a separate versioning decision. No compatibility is implied between arbitrary extractor/index revisions.
+The Node tooling is version 1.2.0. The retained Java Maven modules and JAR filenames are version 1.0.0. This distinction is intentional for the current source release; the Java API gained a read-only frontier operation without changing its existing authority semantics. Treat a future synchronized package release as a separate versioning decision. No compatibility is implied between arbitrary extractor/index revisions.
 
 The local index schema version is recorded with SQLite `user_version`; newer unsupported schemas are rejected. Context fingerprints cover source/compiler assumptions and local candidate-policy implementation. Any identity or detector change must document its effect on drift and evidence reuse.
 
@@ -12,7 +12,7 @@ The local index schema version is recorded with SQLite `user_version`; newer uns
 
 1. Follow [contributing](../CONTRIBUTING.md), run the appropriate tests and check links/examples.
 2. Keep local indexes, private task banks, source reports, credentials and generated build artifacts outside Git. Check the actual history being pushed, not only the working tree.
-3. Compare README claims against [validation](VALIDATION_1_1.md). Mark historical evidence and unexecuted checks explicitly.
+3. Compare README claims against [current validation](VALIDATION_1_2.md). Mark historical evidence and unexecuted checks explicitly.
 4. Confirm the lockfile, supported Node/JDK versions and executable examples agree with CI.
 5. Describe user-visible behavior, migration requirements, measured limits and unresolved risks in the changelog.
 6. Push only reviewed branches. Check both GitHub Actions jobs after publication.
