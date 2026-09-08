@@ -5,11 +5,12 @@ import { archiveCanonical as canonical, archiveRecordDigest, LOCAL_REVIEW_ARCHIV
   serializeReviewArchive, type LocalReviewArchive, type ReviewArchiveProvenance, type ReviewArchiveRecord } from './local-review-archive.js';
 
 export type LocalReviewDisposition = 'COUNTEREVIDENCE' | 'INVESTIGATE';
-export type LocalReviewState = 'CURRENT' | 'STALE' | 'CANDIDATE_ABSENT';
+export type LocalReviewState = 'CURRENT' | 'STALE' | 'CANDIDATE_ABSENT' | 'SOURCE_ABSENT';
 type ObjectValue = Record<string, unknown>;
 
 export interface LocalReviewInput {
-  candidateId: string;
+  candidateId?: string;
+  sourceId?: string;
   expectedSnapshot: number;
   disposition: LocalReviewDisposition;
   reason: string;
@@ -28,14 +29,15 @@ export interface ReviewSource {
 }
 
 export interface ReviewCapture {
-  candidate: ObjectValue;
+  candidate: ObjectValue | null;
+  sourceId?: string;
   sources: ReviewSource[];
   contexts: Array<{ component: string; metadata: ObjectValue }>;
 }
 
 export interface LocalReview extends ReviewCapture {
   id: number;
-  candidateId: string;
+  candidateId: string | null;
   snapshot: number;
   disposition: LocalReviewDisposition;
   reason: string;
@@ -50,19 +52,27 @@ export interface LocalReview extends ReviewCapture {
   archive?: ReviewArchiveProvenance;
 }
 
-/** The caller migrates user_version and owns the surrounding transaction. */
-export const LOCAL_REVIEW_SCHEMA = `
+const reviewTableSchema = `
   CREATE TABLE IF NOT EXISTS local_reviews(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    candidateId TEXT NOT NULL,
+    candidateId TEXT,
+    sourceId TEXT,
     snapshot INTEGER NOT NULL,
     disposition TEXT NOT NULL CHECK(disposition IN ('COUNTEREVIDENCE','INVESTIGATE')),
     created TEXT NOT NULL,
     body TEXT NOT NULL,
-    fingerprint TEXT NOT NULL
+    fingerprint TEXT NOT NULL,
+    CHECK ((candidateId IS NOT NULL AND sourceId IS NULL) OR (candidateId IS NULL AND sourceId IS NOT NULL))
   );
+`;
+
+/** The caller migrates user_version and owns the surrounding transaction. */
+export const LOCAL_REVIEW_SCHEMA = `${reviewTableSchema}
   CREATE INDEX IF NOT EXISTS local_reviews_candidate ON local_reviews(candidateId,id DESC);
   CREATE INDEX IF NOT EXISTS local_reviews_effective ON local_reviews(candidateId,
+    CASE WHEN json_type(body,'$.archive') IS NULL THEN 0 ELSE 1 END,id DESC);
+  CREATE INDEX IF NOT EXISTS local_reviews_source ON local_reviews(sourceId,id DESC);
+  CREATE INDEX IF NOT EXISTS local_reviews_source_effective ON local_reviews(sourceId,
     CASE WHEN json_type(body,'$.archive') IS NULL THEN 0 ELSE 1 END,id DESC);
   CREATE UNIQUE INDEX IF NOT EXISTS local_reviews_archive_digest ON local_reviews(json_extract(body,'$.archive.recordDigest'))
     WHERE json_type(body,'$.archive')='object';
@@ -90,18 +100,39 @@ export const LOCAL_REVIEW_SCHEMA = `
     BEGIN UPDATE local_review_meta SET revision=revision+1 WHERE id=1; END;
   CREATE VIEW IF NOT EXISTS local_review_latest AS
     SELECT r.*,
-      CASE WHEN o.id IS NULL OR o.resolved IS NOT NULL THEN 'CANDIDATE_ABSENT'
+      CASE WHEN r.sourceId IS NOT NULL AND f.id IS NULL THEN 'SOURCE_ABSENT'
+        WHEN r.candidateId IS NOT NULL AND (o.id IS NULL OR o.resolved IS NOT NULL) THEN 'CANDIDATE_ABSENT'
         WHEN i.reviewId IS NOT NULL THEN 'STALE' ELSE 'CURRENT' END AS state,
       i.snapshot AS invalidatedSnapshot, i.reason AS invalidationReason
     FROM local_reviews r
     LEFT JOIN local_review_invalidations i ON i.reviewId=r.id
     LEFT JOIN opportunities o ON o.id=r.candidateId
-    WHERE r.id=(SELECT newest.id FROM local_reviews newest WHERE newest.candidateId=r.candidateId
-      ORDER BY CASE WHEN json_type(newest.body,'$.archive') IS NULL THEN 0 ELSE 1 END,newest.id DESC LIMIT 1);
+    LEFT JOIN facts f ON f.id=r.sourceId
+    WHERE r.id=CASE WHEN r.sourceId IS NULL THEN
+      (SELECT newest.id FROM local_reviews newest WHERE newest.candidateId=r.candidateId
+        ORDER BY CASE WHEN json_type(newest.body,'$.archive') IS NULL THEN 0 ELSE 1 END,newest.id DESC LIMIT 1)
+      ELSE (SELECT newest.id FROM local_reviews newest WHERE newest.sourceId=r.sourceId
+        ORDER BY CASE WHEN json_type(newest.body,'$.archive') IS NULL THEN 0 ELSE 1 END,newest.id DESC LIMIT 1) END;
 `;
 
 export function initializeLocalReviewSchema(db: DatabaseSync): void {
   db.exec('DROP VIEW IF EXISTS local_review_latest;');
+  const columns = db.prepare('PRAGMA table_info(local_reviews)').all();
+  if (columns.length && !columns.some(column => column.name === 'sourceId')) {
+    // Rebuild inside the caller's transaction. Preserve IDs, immutable body bytes,
+    // original capture fingerprints, invalidations and revision; copy has no triggers.
+    db.exec(`DROP TRIGGER IF EXISTS local_reviews_no_update;
+      DROP TRIGGER IF EXISTS local_reviews_no_delete;
+      DROP TRIGGER IF EXISTS local_reviews_revision;
+      DROP INDEX IF EXISTS local_reviews_candidate;
+      DROP INDEX IF EXISTS local_reviews_effective;
+      DROP INDEX IF EXISTS local_reviews_archive_digest;
+      ALTER TABLE local_reviews RENAME TO local_reviews_v3;
+      ${reviewTableSchema}
+      INSERT INTO local_reviews(id,candidateId,snapshot,disposition,created,body,fingerprint)
+        SELECT id,candidateId,snapshot,disposition,created,body,fingerprint FROM local_reviews_v3;
+      DROP TABLE local_reviews_v3;`);
+  }
   db.exec(LOCAL_REVIEW_SCHEMA);
 }
 
@@ -147,14 +178,17 @@ export class LocalReviewStore {
   private validate(input: unknown): LocalReviewInput {
     if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Review must be an object');
     const value = input as ObjectValue;
-    const allowed = new Set(['candidateId', 'expectedSnapshot', 'disposition', 'reason', 'evidence', 'author', 'factIds']);
+    const allowed = new Set(['candidateId', 'sourceId', 'expectedSnapshot', 'disposition', 'reason', 'evidence', 'author', 'factIds']);
     if (Object.keys(value).some(key => !allowed.has(key))) throw new Error('Unknown review field');
     if (typeof value.disposition !== 'string' || !['COUNTEREVIDENCE', 'INVESTIGATE'].includes(value.disposition))
       throw new Error('Unknown review disposition');
     if (value.factIds !== undefined && (!Array.isArray(value.factIds) || value.factIds.length > 32))
       throw new Error('factIds must be an array of at most 32 source IDs');
+    if ((value.candidateId === undefined) === (value.sourceId === undefined))
+      throw new Error('Exactly one candidateId or sourceId is required');
     return {
-      candidateId: boundedString(value.candidateId, 'candidateId', 200),
+      ...(value.sourceId === undefined ? { candidateId: boundedString(value.candidateId, 'candidateId', 200) }
+        : { sourceId: boundedString(value.sourceId, 'sourceId', 200) }),
       expectedSnapshot: positiveInteger(value.expectedSnapshot, 'expectedSnapshot'),
       disposition: value.disposition as LocalReviewDisposition,
       reason: boundedString(value.reason, 'reason', 2000),
@@ -189,11 +223,12 @@ export class LocalReviewStore {
     return { fingerprint: hash.digest('hex'), count };
   }
 
-  private capture(candidateId: string, factIds: string[], dependenciesByFile = new Map<string, { fingerprint: string; count: number }>()): ReviewCapture {
-    const candidateRow = this.db.prepare('SELECT component,body FROM opportunities WHERE id=? AND resolved IS NULL').get(candidateId);
-    if (!candidateRow) throw new Error('Candidate is absent from the current snapshot');
-    const candidate = objectBody(candidateRow.body);
-    const primaryId = boundedString(candidate.subjectId, 'Candidate primary source ID', 200);
+  private capture(subject: { candidateId?: string; sourceId?: string }, factIds: string[], dependenciesByFile = new Map<string, { fingerprint: string; count: number }>()): ReviewCapture {
+    const candidateRow = subject.candidateId === undefined ? undefined
+      : this.db.prepare('SELECT component,body FROM opportunities WHERE id=? AND resolved IS NULL').get(subject.candidateId);
+    if (subject.candidateId !== undefined && !candidateRow) throw new Error('Candidate is absent from the current snapshot');
+    const candidate = candidateRow ? objectBody(candidateRow.body) : null;
+    const primaryId = boundedString(subject.sourceId ?? candidate?.subjectId, 'Primary source ID', 200);
     const ids = [...new Set([primaryId, ...factIds])].sort();
     const sources: ReviewSource[] = [];
     const contexts = new Map<string, ObjectValue>();
@@ -219,55 +254,65 @@ export class LocalReviewStore {
         contexts.set(component, metadata);
       }
     }
-    return { candidate, sources, contexts: [...contexts].sort(([a], [b]) => a.localeCompare(b))
+    return { candidate, ...(subject.sourceId === undefined ? {} : { sourceId: subject.sourceId }), sources, contexts: [...contexts].sort(([a], [b]) => a.localeCompare(b))
       .map(([component, metadata]) => ({ component, metadata })) };
   }
 
   append(input: unknown): LocalReview {
     this.requireTransaction();
     const value = this.validate(input);
-    if (value.expectedSnapshot !== this.snapshot()) throw new Error('Index snapshot changed; inspect the candidate again before reviewing');
-    const capture = this.capture(value.candidateId, value.factIds ?? []);
+    if (value.expectedSnapshot !== this.snapshot()) throw new Error('Index snapshot changed; inspect the subject again before reviewing');
+    const capture = this.capture(value, value.factIds ?? []);
     const created = new Date().toISOString();
     const fingerprint = sha256(canonical(capture));
     const body = { ...capture, reason: value.reason, evidence: value.evidence, author: value.author,
       authority: 'USER_REPORTED_LOCAL_ANNOTATION', freshness: 'AS_OF_SCAN' };
-    const result = this.db.prepare(`INSERT INTO local_reviews(candidateId,snapshot,disposition,created,body,fingerprint)
-      VALUES(?,?,?,?,?,?)`).run(value.candidateId, value.expectedSnapshot, value.disposition, created, JSON.stringify(body), fingerprint);
+    const result = this.db.prepare(`INSERT INTO local_reviews(candidateId,sourceId,snapshot,disposition,created,body,fingerprint)
+      VALUES(?,?,?,?,?,?,?)`).run(value.candidateId ?? null, value.sourceId ?? null, value.expectedSnapshot, value.disposition, created, JSON.stringify(body), fingerprint);
     return this.decode(this.db.prepare('SELECT * FROM local_reviews WHERE id=?').get(result.lastInsertRowid)!);
   }
 
   private decode(row: Record<string, unknown>): LocalReview {
     const body = objectBody(row.body) as unknown as ReviewCapture & Pick<LocalReview, 'reason' | 'evidence' | 'author'>;
-    const candidateId = String(row.candidateId);
+    const candidateId = row.candidateId === null ? null : String(row.candidateId);
+    const sourceId = row.sourceId === null ? undefined : String(row.sourceId);
     const invalidated = this.db.prepare('SELECT snapshot,reason FROM local_review_invalidations WHERE reviewId=?').get(Number(row.id));
-    const candidate = this.db.prepare('SELECT resolved FROM opportunities WHERE id=?').get(candidateId);
-    let state: LocalReviewState = !candidate || candidate.resolved !== null ? 'CANDIDATE_ABSENT' : invalidated ? 'STALE' : 'CURRENT';
-    return { ...body, id: Number(row.id), candidateId, snapshot: Number(row.snapshot),
+    const candidate = candidateId === null ? undefined : this.db.prepare('SELECT resolved FROM opportunities WHERE id=?').get(candidateId);
+    const source = sourceId === undefined ? undefined : this.db.prepare('SELECT id FROM facts WHERE id=?').get(sourceId);
+    const absent = sourceId !== undefined ? !source : !candidate || candidate.resolved !== null;
+    const state: LocalReviewState = absent ? sourceId === undefined ? 'CANDIDATE_ABSENT' : 'SOURCE_ABSENT' : invalidated ? 'STALE' : 'CURRENT';
+    return { ...body, id: Number(row.id), candidateId, ...(sourceId === undefined ? {} : { sourceId }), snapshot: Number(row.snapshot),
       disposition: String(row.disposition) as LocalReviewDisposition, created: String(row.created),
       fingerprint: String(row.fingerprint), state,
       invalidation: invalidated ? { snapshot: Number(invalidated.snapshot), reason: String(invalidated.reason) } : null,
       authority: 'USER_REPORTED_LOCAL_ANNOTATION', freshness: 'AS_OF_SCAN' };
   }
 
-  latest(candidateId: string): LocalReview | null {
-    candidateId = boundedString(candidateId, 'candidateId', 200);
-    const row = this.db.prepare(`SELECT * FROM local_reviews WHERE candidateId=?
-      ORDER BY CASE WHEN json_type(body,'$.archive') IS NULL THEN 0 ELSE 1 END,id DESC LIMIT 1`).get(candidateId);
+  latest(id: string, kind: 'CANDIDATE' | 'SOURCE' = 'CANDIDATE'): LocalReview | null {
+    id = boundedString(id, 'review subject ID', 200);
+    const column = this.subjectColumn(kind);
+    const row = this.db.prepare(`SELECT * FROM local_reviews WHERE ${column}=?
+      ORDER BY CASE WHEN json_type(body,'$.archive') IS NULL THEN 0 ELSE 1 END,id DESC LIMIT 1`).get(id);
     return row ? this.decode(row) : null;
   }
 
-  latestCurrent(candidateId: string): LocalReview | null {
-    const review = this.latest(candidateId);
+  private subjectColumn(kind: 'CANDIDATE' | 'SOURCE'): 'candidateId' | 'sourceId' {
+    if (kind !== 'CANDIDATE' && kind !== 'SOURCE') throw new Error('Review kind must be CANDIDATE or SOURCE');
+    return kind === 'CANDIDATE' ? 'candidateId' : 'sourceId';
+  }
+
+  latestCurrent(id: string, kind: 'CANDIDATE' | 'SOURCE' = 'CANDIDATE'): LocalReview | null {
+    const review = this.latest(id, kind);
     return review?.state === 'CURRENT' ? review : null;
   }
 
-  list(candidateId: string, count = 20, afterId?: number): { items: LocalReview[]; hasMore: boolean; next: number | null } {
-    candidateId = boundedString(candidateId, 'candidateId', 200);
+  list(id: string, count = 20, afterId?: number, kind: 'CANDIDATE' | 'SOURCE' = 'CANDIDATE'): { items: LocalReview[]; hasMore: boolean; next: number | null } {
+    id = boundedString(id, 'review subject ID', 200);
+    const column = this.subjectColumn(kind);
     if (!Number.isSafeInteger(count) || count < 1 || count > 200) throw new Error('limit must be 1..200');
     if (afterId !== undefined) positiveInteger(afterId, 'afterId');
-    const rows = this.db.prepare('SELECT * FROM local_reviews WHERE candidateId=? AND id<? ORDER BY id DESC LIMIT ?')
-      .all(candidateId, afterId ?? Number.MAX_SAFE_INTEGER, count + 1);
+    const rows = this.db.prepare(`SELECT * FROM local_reviews WHERE ${column}=? AND id<? ORDER BY id DESC LIMIT ?`)
+      .all(id, afterId ?? Number.MAX_SAFE_INTEGER, count + 1);
     const items = rows.slice(0, count).map(row => this.decode(row));
     return { items, hasMore: rows.length > count, next: rows.length > count ? items.at(-1)!.id : null };
   }
@@ -280,9 +325,9 @@ export class LocalReviewStore {
   private archiveRecord(row: Record<string, unknown>, workspace: string | null): ReviewArchiveRecord {
     const review = this.decode(row);
     const { candidateId, snapshot, disposition, reason, evidence, author, created, fingerprint,
-      invalidation, candidate, sources, contexts } = review;
+      invalidation, candidate, sourceId, sources, contexts } = review;
     return { origin: review.archive?.origin ?? { workspace, reviewId: review.id },
-      note: { candidateId, snapshot, disposition, reason, evidence, author, created, fingerprint,
+      note: { candidateId, ...(sourceId === undefined ? {} : { sourceId }), snapshot, disposition, reason, evidence, author, created, fingerprint,
         invalidation: review.archive ? review.archive.originalInvalidation : invalidation, candidate, sources, contexts } };
   }
 
@@ -309,7 +354,7 @@ export class LocalReviewStore {
         throw new Error(`Review archive exceeds ${LOCAL_REVIEW_ARCHIVE_LIMITS.bytes} bytes; preserve a SQLite-consistent backup`);
       records.push(entry);
     }
-    return serializeReviewArchive({ format: 'ASSURANCE_MEMORY_LOCAL_REVIEWS', version: 1,
+    return serializeReviewArchive({ format: 'ASSURANCE_MEMORY_LOCAL_REVIEWS', version: records.some(entry => entry.record.note.sourceId !== undefined) ? 2 : 1,
       authority: 'USER_REPORTED_LOCAL_ANNOTATION', exportedAt: new Date().toISOString(),
       source: { workspace, snapshot: this.snapshot(), reviewRevision: this.revision() }, records });
   }
@@ -322,8 +367,8 @@ export class LocalReviewStore {
     const existingImport = this.db.prepare(`SELECT id FROM local_reviews
       WHERE json_type(body,'$.archive')='object' AND json_extract(body,'$.archive.recordDigest')=?`);
     const original = this.db.prepare("SELECT * FROM local_reviews WHERE id=? AND json_type(body,'$.archive') IS NULL");
-    const insert = this.db.prepare(`INSERT INTO local_reviews(candidateId,snapshot,disposition,created,body,fingerprint)
-      VALUES(?,?,?,?,?,?)`);
+    const insert = this.db.prepare(`INSERT INTO local_reviews(candidateId,sourceId,snapshot,disposition,created,body,fingerprint)
+      VALUES(?,?,?,?,?,?,?)`);
     const invalidate = this.db.prepare('INSERT INTO local_review_invalidations(reviewId,snapshot,reason) VALUES(?,?,?)');
     let imported = 0, skipped = 0;
     this.db.exec('SAVEPOINT review_archive_import');
@@ -339,10 +384,10 @@ export class LocalReviewStore {
         const provenance: ReviewArchiveProvenance = { recordDigest: entry.digest, origin,
           originalInvalidation: note.invalidation,
           archiveDigest: archive.digest, restoredAt, targetSnapshot: snapshot };
-        const body = { candidate: note.candidate, sources: note.sources, contexts: note.contexts,
+        const body = { candidate: note.candidate, ...(note.sourceId === undefined ? {} : { sourceId: note.sourceId }), sources: note.sources, contexts: note.contexts,
           reason: note.reason, evidence: note.evidence, author: note.author,
           authority: 'USER_REPORTED_LOCAL_ANNOTATION', freshness: 'AS_OF_SCAN', archive: provenance };
-        const result = insert.run(note.candidateId, note.snapshot, note.disposition, note.created, JSON.stringify(body), note.fingerprint);
+        const result = insert.run(note.candidateId, note.sourceId ?? null, note.snapshot, note.disposition, note.created, JSON.stringify(body), note.fingerprint);
         // The destination snapshot can be zero when recovering before the first source scan.
         invalidate.run(result.lastInsertRowid, snapshot, 'ARCHIVE_RESTORE_REQUIRES_REVIEW');
         imported++;
@@ -373,16 +418,16 @@ export class LocalReviewStore {
         const review = this.decode(row);
         if (review.state === 'CURRENT') {
           const ids = review.sources.map(source => source.id).sort();
-          const key = JSON.stringify([review.candidateId, ids]);
+          const key = JSON.stringify([review.candidateId, review.sourceId, ids]);
           if (!fingerprints.has(key)) {
             if (fingerprints.size >= 1024) fingerprints.delete(fingerprints.keys().next().value!);
-            try { fingerprints.set(key, sha256(canonical(this.capture(review.candidateId, ids, dependenciesByFile)))); }
+            try { fingerprints.set(key, sha256(canonical(this.capture(review.sourceId === undefined ? { candidateId: review.candidateId! } : { sourceId: review.sourceId }, ids, dependenciesByFile)))); }
             catch { fingerprints.set(key, null); }
           }
           if (fingerprints.get(key) !== review.fingerprint) review.state = 'STALE';
         }
         if (review.state !== 'CURRENT') {
-          invalidate.run(review.id, snapshot, review.state === 'CANDIDATE_ABSENT' ? 'CANDIDATE_ABSENT' : 'SOURCE_OR_CONTEXT_CHANGED');
+          invalidate.run(review.id, snapshot, review.state === 'CANDIDATE_ABSENT' || review.state === 'SOURCE_ABSENT' ? review.state : 'SOURCE_OR_CONTEXT_CHANGED');
           count++;
         }
       }

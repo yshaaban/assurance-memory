@@ -58,6 +58,8 @@ node packages/agent/dist/src/local-cli.js reviews CANDIDATE_ID --db .assurance-c
 
 Choose `COUNTEREVIDENCE` to record why the structural warning may be intentional, or `INVESTIGATE` to record work still needed. The input is bounded to 65,536 bytes and may cite up to 32 additional fact IDs. Review text is a user report; the tool does not execute it, fetch evidence links, or authenticate its author. Full fields and limits are in the [local reference](LOCAL_REFERENCE.md#local-reviews-and-counterevidence).
 
+[Source observations](SOURCE_OBSERVATIONS.md) use the same review command with `sourceId` instead of `candidateId`, and `reviews --kind SOURCE`. They retain reasoning about an existing source without a detector finding and never change ranking.
+
 Notes append rather than overwrite. Only the latest `CURRENT` counterevidence note changes ranking. Source/file, direct-import content or membership, cited-fact, candidate and context/policy changes make prior notes stale; disappearance is reported as `CANDIDATE_ABSENT`. An unchanged scan keeps applicability, but reverting a changed source does not revive an invalidated note. Inspect and append a fresh note when appropriate. Review-history pagination pins the candidate, scan and review revision; restart after any pin changes.
 
 Local applicability is not assurance. A note never removes a candidate, establishes a requirement, or closes debt. For stronger proposed ownership/retry/lifecycle detectors, consult the [gated backlog](DETECTOR_BACKLOG.md) rather than treating ordinary branch counts as proof.
@@ -132,7 +134,7 @@ The result distinguishes local evidence/repair work, missing reviewed decomposit
 
 ## Persistence and limits
 
-Version 1.4.0 uses schema 3. CLI `scan` validates configuration before writable open, then commits schema-1/2 migration and search rebuild with the first successful scan. A failed upgrade scan retains the previous schema and snapshot. Queries/MCP, archive export, review append and imports into existing indexes require the compatible schema. Preserve a SQLite-consistent backup first: schema-2 export cannot bypass migration if the original source inventory is unavailable.
+The current local index uses schema 4. CLI `scan` validates configuration before writable open, then commits schema-1/2/3 migration and search rebuild with the first successful scan. A failed upgrade scan retains the previous schema and snapshot. Queries/MCP, archive export, review append and imports into existing indexes require the compatible schema. Preserve a SQLite-consistent backup first: schema-2 export cannot bypass migration if the original source inventory is unavailable.
 
 An upgrade can change the scanner implementation digest and make existing reviews stale despite unchanged application source. History survives; current applicability across tool versions is not promised. Toggling `--profile` with the same scanner build does not change fact or context identities.
 

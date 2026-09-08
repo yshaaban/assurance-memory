@@ -98,7 +98,7 @@ test('version-one migration rebuilds normalized search without changing source s
     index = new LocalIndex(path);
     assert.equal(index.revision(), 1);
     assert.equal(index.search('startup hydration')[0]!.id, owner.id);
-    assert.equal(index.summary().schemaVersion, 3);
+    assert.equal(index.summary().schemaVersion, 4);
     assert.equal(index.changes(1).items.length, 1);
   } finally { index?.close(); await rm(dir, { recursive: true }); }
 });

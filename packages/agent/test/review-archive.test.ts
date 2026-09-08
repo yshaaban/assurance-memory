@@ -228,7 +228,7 @@ test('corrupt, reordered, duplicate, oversized and malformed archives reject wit
     const reordered = parseReviewArchive(exported); reordered.records.reverse(); cases.push(sign(reordered));
     const duplicate = parseReviewArchive(exported); duplicate.records[1] = { ...duplicate.records[0]!, sequence: 2 }; cases.push(sign(duplicate));
     const missing = JSON.parse(exported); delete missing.records[1].record.note.evidence; cases.push(sign(missing));
-    const version = parseReviewArchive(exported); (version as any).version = 2; cases.push(sign(version));
+    const version = parseReviewArchive(exported); (version as any).version = 3; cases.push(sign(version));
     const tooMany = parseReviewArchive(exported); (tooMany as any).records = Array(LOCAL_REVIEW_ARCHIVE_LIMITS.records + 1).fill(null);
     const { digest: _tooManyDigest, ...tooManyPayload } = tooMany;
     cases.push(archiveCanonical({ ...tooManyPayload, digest: sha256(archiveCanonical(tooManyPayload)) }));

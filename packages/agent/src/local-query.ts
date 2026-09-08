@@ -37,15 +37,17 @@ export function localQuery(index: LocalIndex, command: string, args: Record<stri
           ? Buffer.from(JSON.stringify({ snapshot, reviewRevision, category, after: result.next })).toString('base64url') : null };
       }
       case 'reviews': {
+        const kind = args.kind ?? 'CANDIDATE';
+        if (kind !== 'CANDIDATE' && kind !== 'SOURCE') throw new Error('Review kind must be CANDIDATE or SOURCE');
         const id = string('id');
         const encoded = string('after');
         const cursor = decodeCursor(encoded);
-        if (cursor && (cursor.snapshot !== snapshot || cursor.reviewRevision !== reviewRevision || cursor.id !== id))
+        if (cursor && (cursor.snapshot !== snapshot || cursor.reviewRevision !== reviewRevision || cursor.id !== id || (cursor.kind ?? 'CANDIDATE') !== kind))
           throw new Error('Index changed; restart review pagination');
         if (cursor && (!Number.isSafeInteger(cursor.after) || cursor.after < 1)) throw new Error('Invalid cursor');
-        const result = index.reviewHistory(id, count, cursor?.after);
+        const result = index.reviewHistory(id, count, cursor?.after, kind);
         return { snapshot, reviewRevision, ...result, next: result.next
-          ? Buffer.from(JSON.stringify({ snapshot, reviewRevision, id, after: result.next })).toString('base64url') : null };
+          ? Buffer.from(JSON.stringify({ snapshot, reviewRevision, id, kind, after: result.next })).toString('base64url') : null };
       }
       case 'drift': {
         if (typeof args.snapshot !== 'number') throw new Error('snapshot must be a number');

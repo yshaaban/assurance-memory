@@ -104,7 +104,7 @@ test('version-two migration and failed scan preserve retained records and roll b
     const migrated = new LocalIndex(path, false, true);
     try {
       publish(migrated);
-      assert.equal(migrated.summary().schemaVersion, 3);
+      assert.equal(migrated.summary().schemaVersion, 4);
       assert.equal(migrated.reviewHistory(review.candidateId).items[0].state, 'CURRENT');
       assert.equal(migrated.reviewRevision(), 1);
       assert.equal(migrated.backlog().items[0].score, 60);

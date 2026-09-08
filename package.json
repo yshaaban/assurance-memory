@@ -1,6 +1,6 @@
 {
   "name": "assurance-memory",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "description": "Requirement-centered memory, drift and coordination for code agents",
   "type": "module",
@@ -22,7 +22,8 @@
     "task-context": "node scripts/task-context.mjs",
     "test:local": "npm run build && node --test packages/agent/dist/test/local*.test.js packages/agent/dist/test/retrieval.test.js packages/agent/dist/test/ranking.test.js packages/agent/dist/test/investigate.test.js packages/agent/dist/test/review-archive.test.js",
     "test:lab": "npm run build && node --test packages/agent/dist/test/lifecycle*.test.js",
-    "test:pilot": "python3 -m unittest discover -s scripts/pilot -p 'test_*.py'"
+    "test:pilot": "python3 -m unittest discover -s scripts/pilot -p 'test_*.py'",
+    "task-handoff": "node scripts/task-handoff.mjs"
   },
   "devDependencies": {
     "@types/node": "22.19.7",

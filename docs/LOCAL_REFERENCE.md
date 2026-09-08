@@ -1,6 +1,6 @@
 # Local CLI and MCP reference
 
-This reference describes the implementation in version 1.4.0. Start with the [local workflow](LOCAL_WORKFLOW.md) for a walkthrough, [concepts](CONCEPTS.md) for the authority model, and [extension guide](EXTENDING.md) for detector behavior. The local index is an optional SQLite projection; the assurance service is a separate, authoritative workflow.
+This reference describes the implementation in version 1.5.0. Start with the [local workflow](LOCAL_WORKFLOW.md) for a walkthrough, [concepts](CONCEPTS.md) for the authority model, and [extension guide](EXTENDING.md) for detector behavior. The local index is an optional SQLite projection; the assurance service is a separate, authoritative workflow.
 
 ## Executables and prerequisites
 
@@ -113,7 +113,7 @@ With `--profile`, each component adds `profile.analysis` and `profile.projection
 | Field | Meaning |
 |---|---|
 | `workspace`, `snapshot` | Index identity and latest committed local scan number |
-| `schemaVersion`, `reviewRevision` | Local schema version (3) and annotation revision; append or permanent invalidation advances the latter |
+| `schemaVersion`, `reviewRevision` | Local schema version (4) and annotation revision; append or permanent invalidation advances the latter |
 | `searchPolicyDigest` | Digest of compiled search policy, matched against the policy used to build stored search metadata |
 | `facts`, `opportunities` | Total current facts and currently emitted candidates |
 | `components` | Up to 200 components, sorted by ID; each includes root, snapshot, source revision, coverage, analyzer, rules, configuration/environment digests, `candidatePolicyDigest`, `factCount` and `findingCount` |
@@ -128,7 +128,7 @@ Counts and paths depend on your checkout. This is an illustrative excerpt, with 
 {
   "workspace": "payments",
   "snapshot": 2,
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "reviewRevision": 0,
   "facts": 1200,
   "opportunities": 43,
@@ -138,7 +138,7 @@ Counts and paths depend on your checkout. This is an illustrative excerpt, with 
 }
 ```
 
-Version 1.4.0 uses local schema 3. CLI `scan` validates configuration before writable open and commits schema-1/2 migration, normalized search rebuild and source publication together. Schema 3 preserves archive provenance and the precedence of locally submitted reviews. A failed upgrade scan retains the previous schema and source snapshot. Read-only queries, MCP and `review-export` reject older indexes; review append and imports into an existing index also require migration first. Schema versions newer than 3 are rejected.
+The current local index uses schema 4. CLI `scan` validates configuration before writable open and commits schema-1/2/3 migration, normalized search rebuild and source publication together. Schema 4 also supports source observations without fabricated candidates, preserving archive provenance and the precedence of locally submitted reviews. A failed upgrade scan retains the previous schema and source snapshot. Read-only queries, MCP and `review-export` reject older indexes; review append and imports into an existing index also require migration first. Schema versions newer than 4 are rejected.
 
 In particular, `review-export` cannot recover directly from schema 2. Preserve a SQLite-consistent backup before migration. If the original source inventory cannot be scanned successfully, retain that database and a compatible historical tool for reading its history; this version supplies no archive-only migration or manual schema-version bypass. A missing destination may be initialized by `review-import` before its first source scan, with restored candidates initially absent.
 
@@ -290,7 +290,7 @@ Context is a navigation aid with no raw source or mandatory assurance obligation
 
 ## Local reviews and counterevidence
 
-Local reviews preserve a source-bound investigation note and influence triage. They are **user-reported, untrusted annotations**, not independently checked evidence, approved requirements, or debt resolution. `author` is supplied text, not an authenticated identity; `reason` and `evidence` are stored text, not instructions to execute or URLs the tool follows.
+Local reviews preserve a source-bound investigation note. Candidate reviews can influence triage; [source observations](SOURCE_OBSERVATIONS.md) retain reasoning without changing ranking. They are **user-reported, untrusted annotations**, not independently checked evidence, approved requirements, or debt resolution. `author` is supplied text, not an authenticated identity; `reason` and `evidence` are stored text, not instructions to execute or URLs the tool follows.
 
 Create `review.json` using a candidate ID and scan number returned by backlog/context:
 
@@ -314,7 +314,7 @@ node packages/agent/dist/src/local-cli.js reviews '<candidate ID>' --db examples
 | Input | Contract |
 |---|---|
 | JSON file | One object, at most 65,536 bytes; unknown fields are rejected |
-| `candidateId` | Required nonempty string, at most 200 characters; candidate must currently be emitted |
+| `candidateId` or `sourceId` | Exactly one nonempty string, at most 200 characters; the selected candidate must currently be emitted or selected source fact must exist |
 | `expectedSnapshot` | Required positive safe integer equal to the current scan; stale input fails rather than rebinding |
 | `disposition` | Exactly `COUNTEREVIDENCE` or `INVESTIGATE` |
 | `author`, `reason`, `evidence` | Required nonempty strings, at most 200, 2,000 and 8,000 characters respectively; NUL is rejected |
@@ -322,17 +322,18 @@ node packages/agent/dist/src/local-cli.js reviews '<candidate ID>' --db examples
 
 `review` appends in a write transaction and returns `{review, reviewRevision}`. History is append-only: correct an earlier note by appending a new one. The latest locally submitted review controls the ranking adjustment when one exists; restored history cannot displace it. Without a local submission, the latest imported record is shown with stale or absent state and no discount. A current `COUNTEREVIDENCE` note subtracts 20 from the existing source-adjusted score; a latest `INVESTIGATE` note makes no review discount. Multiple historical notes do not stack discounts, and no disposition removes the candidate.
 
-Each record stores the candidate, primary/cited source facts, containing file facts, fingerprints/counts of all direct imports and importers, and component context. Scan reconciliation permanently invalidates a record after a captured source/file, cited fact, direct dependency content or membership, candidate, context or ranking-policy change. This includes newly added direct dependencies. A truly unchanged scan preserves applicability, although its new scan number still invalidates pagination cursors. These pins cover the stored direct import projection, not every runtime dependency.
+Each record stores the candidate (null for an explicitly selected source observation), primary/cited source facts, containing file facts, fingerprints/counts of all direct imports and importers, and component context. Scan reconciliation permanently invalidates a record after a captured source/file, cited fact, direct dependency content or membership, candidate, context or ranking-policy change. This includes newly added direct dependencies. A truly unchanged scan preserves applicability, although its new scan number still invalidates pagination cursors. These pins cover the stored direct import projection, not every runtime dependency.
 
 | `state` | Meaning |
 |---|---|
 | `CURRENT` | The annotation still matches its captured indexed source/context |
 | `STALE` | Its capture changed or it was permanently invalidated; no ranking discount |
 | `CANDIDATE_ABSENT` | The candidate is no longer currently emitted; history remains available |
+| `SOURCE_ABSENT` | A source observation’s selected fact is no longer indexed; history remains available |
 
 Invalidation is append-only and prevents resurrection: reverting source or reintroducing a candidate does not make an invalidated note current again. Inspect the new snapshot and append a fresh review if the reasoning still applies. This does not establish the truth of a `CURRENT` note; applicability and evidence quality are separate.
 
-`reviews` returns `{snapshot, reviewRevision, items, hasMore, next}`, newest record first. Each item includes the source capture, `fingerprint`, `state`, `invalidation` (or null), `authority: USER_REPORTED_LOCAL_ANNOTATION` and `freshness: AS_OF_SCAN`. Continue with the returned opaque `next` while `hasMore`; the cursor pins scan, review revision and candidate ID. A change to any pin produces `Index changed; restart review pagination`. Page size may change. Review append is CLI-only; local MCP exposes history reads, not a write tool.
+`reviews` returns `{snapshot, reviewRevision, items, hasMore, next}`, newest record first. Each item includes the source capture, `fingerprint`, `state`, `invalidation` (or null), `authority: USER_REPORTED_LOCAL_ANNOTATION` and `freshness: AS_OF_SCAN`. Continue with the returned opaque `next` while `hasMore`; the cursor pins scan, review revision, subject kind and ID. Use `--kind SOURCE` for source observations; the default is `CANDIDATE`. A change to any pin produces `Index changed; restart review pagination`. Page size may change. Review append is CLI-only; local MCP exposes history reads, not a write tool.
 
 ## Review archive commands
 

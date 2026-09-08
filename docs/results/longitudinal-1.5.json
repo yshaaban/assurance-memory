@@ -1,0 +1,523 @@
+{
+  "schemaVersion": 1,
+  "assigned": 12,
+  "isFinal": true,
+  "rows": [
+    {
+      "project": "Q",
+      "arm": "structured",
+      "cycle": 1,
+      "outcomes": {
+        "assigned": 1,
+        "sealed": 1,
+        "accepted": 1,
+        "blockedPredecessor": 0,
+        "providerStartedObserved": 1,
+        "providerCompleted": 1,
+        "protectedChecksPass": 1,
+        "productionFiles": 1,
+        "missedImpacts": 0,
+        "staleReasoningErrors": 0,
+        "explicitPolicyDecisionSitesCount": 2
+      },
+      "seconds": {
+        "provider": 285.709,
+        "preparation": 10.59,
+        "oracle": 2.048,
+        "finalizationTotal": 11.269,
+        "finalizationHooks": 0.306,
+        "finalizationInventory": 10.955,
+        "otherInventory": null,
+        "orchestrationInclusive": 325.427,
+        "otherStageOverheadDerived": 15.811
+      },
+      "commandCount": 18,
+      "usage": {
+        "input_tokens": 860873,
+        "cached_input_tokens": 798208,
+        "output_tokens": 7313,
+        "reasoning_output_tokens": 346,
+        "cache_write_input_tokens": 0
+      },
+      "mechanismReviewActiveSeconds": 234.431,
+      "billingEstimate": null
+    },
+    {
+      "project": "P",
+      "arm": "structured",
+      "cycle": 1,
+      "outcomes": {
+        "assigned": 1,
+        "sealed": 1,
+        "accepted": 1,
+        "blockedPredecessor": 0,
+        "providerStartedObserved": 1,
+        "providerCompleted": 1,
+        "protectedChecksPass": 1,
+        "productionFiles": 1,
+        "missedImpacts": 0,
+        "staleReasoningErrors": 0,
+        "explicitPolicyDecisionSitesCount": null
+      },
+      "seconds": {
+        "provider": 347.782,
+        "preparation": 23.92,
+        "oracle": 1.731,
+        "finalizationTotal": 20.761,
+        "finalizationHooks": 0.362,
+        "finalizationInventory": 20.379,
+        "otherInventory": null,
+        "orchestrationInclusive": 422.185,
+        "otherStageOverheadDerived": 27.991
+      },
+      "commandCount": 23,
+      "usage": {
+        "input_tokens": 1076465,
+        "cached_input_tokens": 998144,
+        "output_tokens": 9249,
+        "reasoning_output_tokens": 580,
+        "cache_write_input_tokens": 0
+      },
+      "mechanismReviewActiveSeconds": 175,
+      "billingEstimate": null
+    },
+    {
+      "project": "P",
+      "arm": "plain",
+      "cycle": 1,
+      "outcomes": {
+        "assigned": 1,
+        "sealed": 1,
+        "accepted": 1,
+        "blockedPredecessor": 0,
+        "providerStartedObserved": 1,
+        "providerCompleted": 1,
+        "protectedChecksPass": 1,
+        "productionFiles": 1,
+        "missedImpacts": 0,
+        "staleReasoningErrors": 0,
+        "explicitPolicyDecisionSitesCount": null
+      },
+      "seconds": {
+        "provider": 286.85,
+        "preparation": 7.233,
+        "oracle": 2.086,
+        "finalizationTotal": null,
+        "finalizationHooks": null,
+        "finalizationInventory": null,
+        "otherInventory": null,
+        "orchestrationInclusive": 324.509,
+        "otherStageOverheadDerived": 28.34
+      },
+      "commandCount": 16,
+      "usage": {
+        "input_tokens": 842477,
+        "cached_input_tokens": 782848,
+        "output_tokens": 7663,
+        "reasoning_output_tokens": 572,
+        "cache_write_input_tokens": 0
+      },
+      "mechanismReviewActiveSeconds": 115,
+      "billingEstimate": null
+    },
+    {
+      "project": "Q",
+      "arm": "plain",
+      "cycle": 1,
+      "outcomes": {
+        "assigned": 1,
+        "sealed": 1,
+        "accepted": 1,
+        "blockedPredecessor": 0,
+        "providerStartedObserved": 1,
+        "providerCompleted": 1,
+        "protectedChecksPass": 1,
+        "productionFiles": 1,
+        "missedImpacts": 0,
+        "staleReasoningErrors": 0,
+        "explicitPolicyDecisionSitesCount": 2
+      },
+      "seconds": {
+        "provider": 314.412,
+        "preparation": 3.672,
+        "oracle": 1.866,
+        "finalizationTotal": null,
+        "finalizationHooks": null,
+        "finalizationInventory": null,
+        "otherInventory": null,
+        "orchestrationInclusive": 336.576,
+        "otherStageOverheadDerived": 16.626
+      },
+      "commandCount": 14,
+      "usage": {
+        "input_tokens": 526402,
+        "cached_input_tokens": 480384,
+        "output_tokens": 8094,
+        "reasoning_output_tokens": 511,
+        "cache_write_input_tokens": 0
+      },
+      "mechanismReviewActiveSeconds": 115.652,
+      "billingEstimate": null
+    },
+    {
+      "project": "P",
+      "arm": "structured",
+      "cycle": 2,
+      "outcomes": {
+        "assigned": 1,
+        "sealed": 1,
+        "accepted": 1,
+        "blockedPredecessor": 0,
+        "providerStartedObserved": 1,
+        "providerCompleted": 1,
+        "protectedChecksPass": 1,
+        "productionFiles": 1,
+        "missedImpacts": 0,
+        "staleReasoningErrors": 0,
+        "explicitPolicyDecisionSitesCount": null
+      },
+      "seconds": {
+        "provider": 382.949,
+        "preparation": 23.228,
+        "oracle": 2.013,
+        "finalizationTotal": 20.439,
+        "finalizationHooks": 0.368,
+        "finalizationInventory": 20.051,
+        "otherInventory": null,
+        "orchestrationInclusive": 457.681,
+        "otherStageOverheadDerived": 29.052
+      },
+      "commandCount": 29,
+      "usage": {
+        "input_tokens": 1102811,
+        "cached_input_tokens": 1011840,
+        "output_tokens": 10293,
+        "reasoning_output_tokens": 285,
+        "cache_write_input_tokens": 0
+      },
+      "mechanismReviewActiveSeconds": 135,
+      "billingEstimate": null
+    },
+    {
+      "project": "P",
+      "arm": "plain",
+      "cycle": 2,
+      "outcomes": {
+        "assigned": 1,
+        "sealed": 1,
+        "accepted": 1,
+        "blockedPredecessor": 0,
+        "providerStartedObserved": 1,
+        "providerCompleted": 1,
+        "protectedChecksPass": 1,
+        "productionFiles": 1,
+        "missedImpacts": 0,
+        "staleReasoningErrors": 0,
+        "explicitPolicyDecisionSitesCount": null
+      },
+      "seconds": {
+        "provider": 293.385,
+        "preparation": 7.389,
+        "oracle": 1.606,
+        "finalizationTotal": null,
+        "finalizationHooks": null,
+        "finalizationInventory": null,
+        "otherInventory": null,
+        "orchestrationInclusive": 331.824,
+        "otherStageOverheadDerived": 29.444
+      },
+      "commandCount": 20,
+      "usage": {
+        "input_tokens": 671748,
+        "cached_input_tokens": 609664,
+        "output_tokens": 8336,
+        "reasoning_output_tokens": 238,
+        "cache_write_input_tokens": 0
+      },
+      "mechanismReviewActiveSeconds": 158,
+      "billingEstimate": null
+    },
+    {
+      "project": "Q",
+      "arm": "plain",
+      "cycle": 2,
+      "outcomes": {
+        "assigned": 1,
+        "sealed": 1,
+        "accepted": 0,
+        "blockedPredecessor": 0,
+        "providerStartedObserved": 1,
+        "providerCompleted": 1,
+        "protectedChecksPass": 1,
+        "productionFiles": 1,
+        "missedImpacts": 1,
+        "staleReasoningErrors": 0,
+        "explicitPolicyDecisionSitesCount": 1
+      },
+      "seconds": {
+        "provider": 225.329,
+        "preparation": 4.063,
+        "oracle": 2.259,
+        "finalizationTotal": null,
+        "finalizationHooks": null,
+        "finalizationInventory": null,
+        "otherInventory": null,
+        "orchestrationInclusive": 247.806,
+        "otherStageOverheadDerived": 16.155
+      },
+      "commandCount": 12,
+      "usage": {
+        "input_tokens": 342935,
+        "cached_input_tokens": 295296,
+        "output_tokens": 6257,
+        "reasoning_output_tokens": 144,
+        "cache_write_input_tokens": 0
+      },
+      "mechanismReviewActiveSeconds": 159.409,
+      "billingEstimate": null
+    },
+    {
+      "project": "Q",
+      "arm": "structured",
+      "cycle": 2,
+      "outcomes": {
+        "assigned": 1,
+        "sealed": 1,
+        "accepted": 0,
+        "blockedPredecessor": 0,
+        "providerStartedObserved": 1,
+        "providerCompleted": 1,
+        "protectedChecksPass": 1,
+        "productionFiles": 1,
+        "missedImpacts": 1,
+        "staleReasoningErrors": 0,
+        "explicitPolicyDecisionSitesCount": 1
+      },
+      "seconds": {
+        "provider": 258.106,
+        "preparation": 10.341,
+        "oracle": 2.888,
+        "finalizationTotal": 11.143,
+        "finalizationHooks": 0.252,
+        "finalizationInventory": 10.882,
+        "otherInventory": null,
+        "orchestrationInclusive": 298.956,
+        "otherStageOverheadDerived": 16.478
+      },
+      "commandCount": 16,
+      "usage": {
+        "input_tokens": 723402,
+        "cached_input_tokens": 652672,
+        "output_tokens": 6798,
+        "reasoning_output_tokens": 285,
+        "cache_write_input_tokens": 0
+      },
+      "mechanismReviewActiveSeconds": 182.921,
+      "billingEstimate": null
+    },
+    {
+      "project": "Q",
+      "arm": "structured",
+      "cycle": 3,
+      "outcomes": {
+        "assigned": 1,
+        "sealed": 1,
+        "accepted": null,
+        "blockedPredecessor": 1,
+        "providerStartedObserved": 0,
+        "providerCompleted": null,
+        "protectedChecksPass": null,
+        "productionFiles": null,
+        "missedImpacts": null,
+        "staleReasoningErrors": null,
+        "explicitPolicyDecisionSitesCount": null
+      },
+      "seconds": {
+        "provider": null,
+        "preparation": null,
+        "oracle": null,
+        "finalizationTotal": null,
+        "finalizationHooks": null,
+        "finalizationInventory": null,
+        "otherInventory": null,
+        "orchestrationInclusive": null,
+        "otherStageOverheadDerived": null
+      },
+      "commandCount": null,
+      "usage": {
+        "input_tokens": null,
+        "cached_input_tokens": null,
+        "output_tokens": null,
+        "reasoning_output_tokens": null,
+        "cache_write_input_tokens": null
+      },
+      "mechanismReviewActiveSeconds": null,
+      "billingEstimate": null
+    },
+    {
+      "project": "P",
+      "arm": "plain",
+      "cycle": 3,
+      "outcomes": {
+        "assigned": 1,
+        "sealed": 1,
+        "accepted": 1,
+        "blockedPredecessor": 0,
+        "providerStartedObserved": 1,
+        "providerCompleted": 1,
+        "protectedChecksPass": 1,
+        "productionFiles": 0,
+        "missedImpacts": 0,
+        "staleReasoningErrors": 0,
+        "explicitPolicyDecisionSitesCount": null
+      },
+      "seconds": {
+        "provider": 315.319,
+        "preparation": 7.584,
+        "oracle": 1.848,
+        "finalizationTotal": null,
+        "finalizationHooks": null,
+        "finalizationInventory": null,
+        "otherInventory": null,
+        "orchestrationInclusive": 352.251,
+        "otherStageOverheadDerived": 27.5
+      },
+      "commandCount": 25,
+      "usage": {
+        "input_tokens": 770507,
+        "cached_input_tokens": 698368,
+        "output_tokens": 9011,
+        "reasoning_output_tokens": 518,
+        "cache_write_input_tokens": 0
+      },
+      "mechanismReviewActiveSeconds": 189,
+      "billingEstimate": null
+    },
+    {
+      "project": "P",
+      "arm": "structured",
+      "cycle": 3,
+      "outcomes": {
+        "assigned": 1,
+        "sealed": 1,
+        "accepted": 1,
+        "blockedPredecessor": 0,
+        "providerStartedObserved": 1,
+        "providerCompleted": 1,
+        "protectedChecksPass": 1,
+        "productionFiles": 0,
+        "missedImpacts": 0,
+        "staleReasoningErrors": 0,
+        "explicitPolicyDecisionSitesCount": null
+      },
+      "seconds": {
+        "provider": 387.514,
+        "preparation": 22.766,
+        "oracle": 1.788,
+        "finalizationTotal": 20.342,
+        "finalizationHooks": 0.355,
+        "finalizationInventory": 19.968,
+        "otherInventory": null,
+        "orchestrationInclusive": 457.818,
+        "otherStageOverheadDerived": 25.408
+      },
+      "commandCount": 27,
+      "usage": {
+        "input_tokens": 1511577,
+        "cached_input_tokens": 1420800,
+        "output_tokens": 10238,
+        "reasoning_output_tokens": 556,
+        "cache_write_input_tokens": 0
+      },
+      "mechanismReviewActiveSeconds": 193,
+      "billingEstimate": null
+    },
+    {
+      "project": "Q",
+      "arm": "plain",
+      "cycle": 3,
+      "outcomes": {
+        "assigned": 1,
+        "sealed": 1,
+        "accepted": null,
+        "blockedPredecessor": 1,
+        "providerStartedObserved": 0,
+        "providerCompleted": null,
+        "protectedChecksPass": null,
+        "productionFiles": null,
+        "missedImpacts": null,
+        "staleReasoningErrors": null,
+        "explicitPolicyDecisionSitesCount": null
+      },
+      "seconds": {
+        "provider": null,
+        "preparation": null,
+        "oracle": null,
+        "finalizationTotal": null,
+        "finalizationHooks": null,
+        "finalizationInventory": null,
+        "otherInventory": null,
+        "orchestrationInclusive": null,
+        "otherStageOverheadDerived": null
+      },
+      "commandCount": null,
+      "usage": {
+        "input_tokens": null,
+        "cached_input_tokens": null,
+        "output_tokens": null,
+        "reasoning_output_tokens": null,
+        "cache_write_input_tokens": null
+      },
+      "mechanismReviewActiveSeconds": null,
+      "billingEstimate": null
+    }
+  ],
+  "wholeCycleWallSeparate": [
+    {
+      "cycle": 1,
+      "seconds": 765.232514916
+    },
+    {
+      "cycle": 2,
+      "seconds": 765.7037155419999
+    },
+    {
+      "cycle": 3,
+      "seconds": 821.9950400829999
+    }
+  ],
+  "effortSeparate": {
+    "mechanismReviewActiveSeconds": 1657.413,
+    "traceAuditActiveSeconds": 1364.574,
+    "traceAudits": [
+      {
+        "cycle": 1,
+        "activeSeconds": 742.145
+      },
+      {
+        "cycle": 2,
+        "activeSeconds": 346.973
+      },
+      {
+        "cycle": 3,
+        "activeSeconds": 275.456
+      }
+    ],
+    "missionPreparationActiveSeconds": 1146.737,
+    "aggregatePreparationActiveSeconds": 311.645,
+    "rootSetupSeconds": null,
+    "rootCoordinationSeconds": null,
+    "billingEstimate": null
+  },
+  "limitations": [
+    "Two bounded projects and sequential accepted lineages do not establish general scalability or causal benefit.",
+    "Blocked assignments remain in the denominator; no replacement provider runs were made.",
+    "Protected checks and mechanism acceptance are distinct outcomes.",
+    "Stage orchestration includes nested provider, preparation, evaluation and finalization work. Finalization includes hooks and inventory. These columns must not be added together.",
+    "Whole-cycle wall includes concurrent stages. Reviewer and pooled trace-audit effort are separate and may overlap in wall time.",
+    "Token counters are raw available fields. Cached and other categories may overlap; no billing estimate or effort-savings inference is made.",
+    "Missing measurements are null. Initial reconnaissance, root setup and coordination were not fully measured.",
+    "Reviewers are AI agents with partial blinding. Trace audit includes task-design familiarity; no independent human certification or formal proof is claimed.",
+    "Retained observations and authored tests are investigation artifacts, not approvals or protected oracle evidence."
+  ]
+}

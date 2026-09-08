@@ -168,7 +168,7 @@ node packages/agent/dist/src/local-cli.js drift 2 --db .assurance-cache/payments
 
 Replace `125` with the returned row cursor. An unchanged scan can have no drift. A candidate that disappears was not detected in the new snapshot; that does not establish behavior correctness or repay a reviewed debt obligation.
 
-Failed scans leave the previous committed snapshot intact. Source facts are rebuildable, but the index also retains user review records and drift history without automatic compaction. Keep it local and exclude it from Git. Preserve a SQLite-consistent backup before choosing a new path or resetting history/partitioning. Bounded [review archives](REVIEW_ARCHIVES.md) can also carry originating annotations to another index, where they remain stale or absent until a fresh local review. Version 1.3 requires schema 3; older indexes must complete a scan migration before read-only export. Tool upgrades can stale reviews even with unchanged application source because scanner implementation is captured context.
+Failed scans leave the previous committed snapshot intact. Source facts are rebuildable, but the index also retains user review records and drift history without automatic compaction. Keep it local and exclude it from Git. Preserve a SQLite-consistent backup before choosing a new path or resetting history/partitioning. Bounded [review archives](REVIEW_ARCHIVES.md) can also carry originating annotations to another index, where they remain stale or absent until a fresh local review. Version 1.5 requires schema 4; older indexes must complete a scan migration before read-only export. Tool upgrades can stale reviews even with unchanged application source because scanner implementation is captured context.
 
 For slow scans, add `--profile` to the scan command. It reports compiler analysis phases separately from SQLite ingestion and reconciliation plus commit; see [diagnostics and measured limits](INVESTIGATION_SCALE.md).
 
@@ -234,6 +234,6 @@ export ASSURANCE_AUTH_FILE=/absolute/operator/path/auth.json
 java -jar services/server/target/assurance-server-1.0.0.jar
 ```
 
-Provision the PostgreSQL database and authentication file first. The Maven modules retain their `1.0.0` artifact version while the agent package is `1.4.0`, so the JAR filename above is intentional. The service requires explicit credentials and database access. Read [security](SECURITY.md) before exposure beyond a trusted environment, and use the [contributor test matrix](../CONTRIBUTING.md#test-matrix) to verify PostgreSQL and restart persistence.
+Provision the PostgreSQL database and authentication file first. The Maven modules retain their `1.0.0` artifact version while the agent package is `1.5.0`, so the JAR filename above is intentional. The service requires explicit credentials and database access. Read [security](SECURITY.md) before exposure beyond a trusted environment, and use the [contributor test matrix](../CONTRIBUTING.md#test-matrix) to verify PostgreSQL and restart persistence.
 
 Next, follow the [agent protocol](AGENT_PROTOCOL.md) for reviewed requirements, plans, leases, checker results, and debt repayment. The [pilot plan](PILOT_PLAN.md) describes how to evaluate these workflows on a representative large project.

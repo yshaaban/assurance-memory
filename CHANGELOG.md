@@ -1,5 +1,14 @@
 # Changelog
 
+## Node tooling 1.5.0 — source reasoning and task handoff
+
+- Extended the existing review lifecycle to source observations without a detector candidate, with schema-4 atomic migration, shared CLI/MCP history, conservative source/dependency invalidation and permanent stale restoration. Candidate ranking and kernel approval authority remain separate.
+- Added compatible version-2 mixed review archives while preserving version-1 candidate captures and digests.
+- Improved task anchor selection and bounded context allocation. Independent retrieval improved labeled owner/consumer recall but missed one intentional counterexample; all scored failures and byte costs remain reported.
+- Added verified quiescent task-end export and fixed reviewed filename-selection and packet-output alias bugs. Both-arm authored tests carry separately from trusted source and protected evaluation.
+- Completed the fresh twelve-assignment study: eight accepted submissions, two independent lifecycle rejections despite passing checks, and two blocked descendants. Source archives survive successive checkouts; missed prior-owner delivery and higher recorded structured effort keep benefit gates open. Anonymous outcomes, costs and unknowns are published.
+- Full validation passes 138 Node tests, 43 Python tests, 25 Java scenarios / 85 assertions, real PostgreSQL and restart checks. The [1.5 report](docs/VALIDATION_1_5.md) separates implementation validation from the bounded fresh paired study. No detector graduates from these changes.
+
 ## Node tooling 1.4.0 — successive maintenance tasks
 
 - Added `npm run task-context -- ...` to refresh source and deliver a bounded task brief, explicit scan changes and exact unverified prior notes. New output files are exclusive; invalid inputs fail before scanning.

@@ -1,0 +1,77 @@
+[
+  {
+    "id": "cancel-callback",
+    "task": "Why does cancellation allow a callback to update a released session?",
+    "owners": [
+      [
+        "async/session.ts#cancelSession",
+        "async/session.ts#deliverCallback"
+      ]
+    ],
+    "consumers": [
+      [
+        "async/subscriber.ts#subscribeSession"
+      ]
+    ],
+    "counterexamples": []
+  },
+  {
+    "id": "named-registry",
+    "task": "Please investigate the issue carefully considering reproduction logs environment configuration observed behavior performance maintainability previous discussion implementation details and preserve existing contracts.  Inspect `requestResource` in cache/resourceRegistry.ts and renderResourcePanel.",
+    "owners": [
+      [
+        "cache/resourceRegistry.ts#requestResource"
+      ]
+    ],
+    "consumers": [
+      [
+        "cache/requestPanel.ts#renderResourcePanel"
+      ]
+    ],
+    "counterexamples": []
+  },
+  {
+    "id": "transaction",
+    "task": "Check rollback behavior at commitTransaction and exportDocument.",
+    "owners": [
+      [
+        "io/transactionWriter.ts#commitTransaction"
+      ]
+    ],
+    "consumers": [
+      [
+        "io/exportController.ts#exportDocument"
+      ]
+    ],
+    "counterexamples": []
+  },
+  {
+    "id": "intentional-display",
+    "task": "Could resourceDisplayLabel share cache/resourceRegistry.ts requestResource normalization? Preserve intentional presentation differences.",
+    "owners": [
+      [
+        "cache/resourceRegistry.ts#requestResource"
+      ]
+    ],
+    "consumers": [],
+    "counterexamples": [
+      [
+        "cache/displayLabel.ts#resourceDisplayLabel"
+      ]
+    ]
+  },
+  {
+    "id": "empty-lexical",
+    "task": "the and is",
+    "owners": [],
+    "consumers": [],
+    "counterexamples": []
+  },
+  {
+    "id": "unmatched",
+    "task": "quasarNeutrino fluxosphere",
+    "owners": [],
+    "consumers": [],
+    "counterexamples": []
+  }
+]

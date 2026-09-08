@@ -1,0 +1,746 @@
+{
+  "schemaVersion": 1,
+  "split": "held-out",
+  "measuredAt": "2026-09-08T20:05:11.696Z",
+  "freezeSha256": "d5d5b650cd625d4ffb2da9b68636ddd184c23752e3f0a919885465e2b3e97594",
+  "implementationSha256": "b1dd2e763eb87d08e968b334e88eba4e0cbb7c9636eee6469f53240f87d75a51",
+  "runtime": {
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "rg": "ripgrep 15.1.0"
+  },
+  "protocol": {
+    "limit": 5,
+    "maxBytes": 24000,
+    "latencyRepetitions": 7,
+    "heldOutPolicy": "Independently authored by root after implementation freeze8472320, before scoring; implementation engineer does not see tasks or labels. Adversarial authored sample, not randomized production tasks. Single run retained without ranking edits.",
+    "substantive": "Exact fact locator in source, matches, owners, nearbySymbols or source-bearing search snippet. A filename, import neighbor, warning or unrelated same-file symbol is not a hit.",
+    "groups": "Any exact locator within one predeclared group counts once; owners, consumers and intentional-difference counterexamples have separate denominators.",
+    "ordinarySearch": "Case-insensitive literal rg OR over task words, two context lines, first five matching files in sorted path order, same complete-response byte cap. This fixed scripted baseline is not an adaptive human/agent search session.",
+    "syntheticLimits": "Public hand-authored retrieval fixture, not production scale or observed user incidents."
+  },
+  "rows": [
+    {
+      "id": "epoch-reconnect",
+      "ambiguous": false,
+      "preparationMs": 634.3918749999999,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 1,
+            "total": 1
+          },
+          "returnedEntries": 4,
+          "irrelevantEntries": 1,
+          "irrelevantEntryBytes": 2226,
+          "briefBytes": 11565,
+          "truncated": true,
+          "substantiveLocators": [
+            "codec/frameStream.ts#file",
+            "codec/frameStream.ts#readFrames",
+            "replication/applyFrame.ts#applyFrame",
+            "replication/applyFrame.ts#file",
+            "replication/epochFence.ts#file",
+            "replication/epochFence.ts#isCurrentEpoch",
+            "replication/replayArchive.ts#file",
+            "replication/replayArchive.ts#replayHistoricalFrame"
+          ],
+          "paths": [
+            "replication/replayArchive.ts",
+            "replication/epochFence.ts",
+            "replication/applyFrame.ts",
+            "codec/frameStream.ts"
+          ],
+          "packetBytes": 13639,
+          "queryMs": [
+            3.6083340000000135,
+            1.758707999999956,
+            1.4932909999999993,
+            1.335042000000044,
+            1.2961250000000746,
+            1.3536659999999756,
+            1.415290999999911
+          ],
+          "medianQueryMs": 1.415290999999911,
+          "p95QueryMs": 3.6083340000000135
+        },
+        "current": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 1,
+            "total": 1
+          },
+          "returnedEntries": 5,
+          "irrelevantEntries": 2,
+          "irrelevantEntryBytes": 4355,
+          "briefBytes": 14346,
+          "truncated": true,
+          "substantiveLocators": [
+            "codec/frameStream.ts#file",
+            "codec/frameStream.ts#readFrames",
+            "noise/operations.ts#file",
+            "noise/operations.ts#formatOperationalStatus",
+            "replication/applyFrame.ts#applyFrame",
+            "replication/applyFrame.ts#file",
+            "replication/epochFence.ts#file",
+            "replication/epochFence.ts#isCurrentEpoch",
+            "replication/replayArchive.ts#file",
+            "replication/replayArchive.ts#replayHistoricalFrame"
+          ],
+          "paths": [
+            "replication/replayArchive.ts",
+            "replication/epochFence.ts",
+            "codec/frameStream.ts",
+            "replication/applyFrame.ts",
+            "noise/operations.ts"
+          ],
+          "packetBytes": 16420,
+          "queryMs": [
+            8.216041000000018,
+            2.4646659999999656,
+            2.244957999999997,
+            1.965791999999965,
+            2.425624999999968,
+            1.905999999999949,
+            2.0524580000000014
+          ],
+          "medianQueryMs": 2.244957999999997,
+          "p95QueryMs": 8.216041000000018
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 1
+          },
+          "returnedEntries": 5,
+          "irrelevantEntries": 3,
+          "irrelevantEntryBytes": 950,
+          "briefBytes": 1841,
+          "truncated": true,
+          "substantiveLocators": [
+            "codec/frameStream.ts#readFrames",
+            "delivery/retryLoop.ts#retryDelivery",
+            "noise/operations.ts#formatOperationalStatus",
+            "replication/applyFrame.ts#applyFrame",
+            "replication/epochFence.ts#isCurrentEpoch"
+          ],
+          "paths": [
+            "codec/frameStream.ts",
+            "delivery/retryLoop.ts",
+            "noise/operations.ts",
+            "replication/applyFrame.ts",
+            "replication/epochFence.ts"
+          ],
+          "packetBytes": 3915,
+          "queryMs": [
+            13.31391599999995,
+            4.813249999999925,
+            4.706125000000043,
+            4.950125000000071,
+            4.6897089999999935,
+            4.683458999999971,
+            4.45920799999999
+          ],
+          "medianQueryMs": 4.706125000000043,
+          "p95QueryMs": 13.31391599999995
+        }
+      }
+    },
+    {
+      "id": "delay-versus-exhaustion",
+      "ambiguous": false,
+      "preparationMs": 611.5905409999999,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 1,
+            "total": 1
+          },
+          "returnedEntries": 3,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 10040,
+          "truncated": false,
+          "substantiveLocators": [
+            "delivery/backoffPolicy.ts#chooseDelay",
+            "delivery/backoffPolicy.ts#file",
+            "delivery/retryBudget.ts#canRetry",
+            "delivery/retryBudget.ts#file",
+            "delivery/retryLoop.ts#file",
+            "delivery/retryLoop.ts#retryDelivery"
+          ],
+          "paths": [
+            "delivery/backoffPolicy.ts",
+            "delivery/retryLoop.ts",
+            "delivery/retryBudget.ts"
+          ],
+          "packetBytes": 12059,
+          "queryMs": [
+            1.471708000000035,
+            1.4214999999999236,
+            1.0002090000000408,
+            1.1396250000000236,
+            0.9735419999999522,
+            1.1517089999999826,
+            0.9928750000001401
+          ],
+          "medianQueryMs": 1.1396250000000236,
+          "p95QueryMs": 1.471708000000035
+        },
+        "current": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 1
+          },
+          "returnedEntries": 2,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 7860,
+          "truncated": true,
+          "substantiveLocators": [
+            "delivery/backoffPolicy.ts#chooseDelay",
+            "delivery/backoffPolicy.ts#file",
+            "delivery/retryLoop.ts#file",
+            "delivery/retryLoop.ts#retryDelivery"
+          ],
+          "paths": [
+            "delivery/backoffPolicy.ts",
+            "delivery/retryLoop.ts"
+          ],
+          "packetBytes": 9879,
+          "queryMs": [
+            1.2559579999999642,
+            1.48112500000002,
+            1.1381250000001728,
+            1.290707999999995,
+            1.1782919999998285,
+            1.1970410000001266,
+            1.3919999999998254
+          ],
+          "medianQueryMs": 1.2559579999999642,
+          "p95QueryMs": 1.48112500000002
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 1,
+            "total": 1
+          },
+          "returnedEntries": 4,
+          "irrelevantEntries": 1,
+          "irrelevantEntryBytes": 279,
+          "briefBytes": 1420,
+          "truncated": false,
+          "substantiveLocators": [
+            "delivery/backoffPolicy.ts#chooseDelay",
+            "delivery/retryBudget.ts#canRetry",
+            "delivery/retryLoop.ts#retryDelivery",
+            "noise/operations.ts#formatOperationalStatus"
+          ],
+          "paths": [
+            "delivery/backoffPolicy.ts",
+            "delivery/retryBudget.ts",
+            "delivery/retryLoop.ts",
+            "noise/operations.ts"
+          ],
+          "packetBytes": 3439,
+          "queryMs": [
+            4.6711669999999685,
+            4.311916999999994,
+            4.304166000000123,
+            4.03995800000007,
+            4.080874999999878,
+            4.125999999999976,
+            4.514249999999947
+          ],
+          "medianQueryMs": 4.304166000000123,
+          "p95QueryMs": 4.6711669999999685
+        }
+      }
+    },
+    {
+      "id": "late-codec-owner",
+      "ambiguous": false,
+      "preparationMs": 619.127291,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 0,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 1,
+          "irrelevantEntries": 1,
+          "irrelevantEntryBytes": 1919,
+          "briefBytes": 3496,
+          "truncated": true,
+          "substantiveLocators": [
+            "noise/operations.ts#file",
+            "noise/operations.ts#formatOperationalStatus"
+          ],
+          "paths": [
+            "noise/operations.ts"
+          ],
+          "packetBytes": 5747,
+          "queryMs": [
+            0.6386669999999413,
+            0.5407920000002377,
+            0.4167080000001988,
+            0.3413330000003043,
+            0.3789999999999054,
+            0.3601250000001528,
+            0.3341249999998581
+          ],
+          "medianQueryMs": 0.3789999999999054,
+          "p95QueryMs": 0.6386669999999413
+        },
+        "current": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 2,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 7380,
+          "truncated": true,
+          "substantiveLocators": [
+            "codec/frameCodec.ts#decodeFrame",
+            "codec/frameCodec.ts#file",
+            "codec/frameStream.ts#file",
+            "codec/frameStream.ts#readFrames"
+          ],
+          "paths": [
+            "codec/frameStream.ts",
+            "codec/frameCodec.ts"
+          ],
+          "packetBytes": 9631,
+          "queryMs": [
+            1.3762080000001333,
+            1.6635420000002341,
+            1.271291999999903,
+            1.271708000000217,
+            1.2636250000000473,
+            1.2037909999999101,
+            1.6469159999996918
+          ],
+          "medianQueryMs": 1.271708000000217,
+          "p95QueryMs": 1.6635420000002341
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 1,
+            "total": 1
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 5,
+          "irrelevantEntries": 3,
+          "irrelevantEntryBytes": 977,
+          "briefBytes": 2013,
+          "truncated": true,
+          "substantiveLocators": [
+            "codec/frameCodec.ts#decodeFrame",
+            "codec/frameStream.ts#readFrames",
+            "delivery/retryBudget.ts#canRetry",
+            "delivery/retryLoop.ts#retryDelivery",
+            "noise/operations.ts#formatOperationalStatus"
+          ],
+          "paths": [
+            "codec/frameCodec.ts",
+            "codec/frameStream.ts",
+            "delivery/retryBudget.ts",
+            "delivery/retryLoop.ts",
+            "noise/operations.ts"
+          ],
+          "packetBytes": 4264,
+          "queryMs": [
+            8.517583000000059,
+            7.866499999999633,
+            7.583000000000084,
+            7.7099160000002485,
+            7.469957999999679,
+            7.395040999999765,
+            7.640541999999641
+          ],
+          "medianQueryMs": 7.640541999999641,
+          "p95QueryMs": 8.517583000000059
+        }
+      }
+    },
+    {
+      "id": "ambiguous-serializer",
+      "ambiguous": true,
+      "preparationMs": 735.8721250000003,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 2,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 5892,
+          "truncated": false,
+          "substantiveLocators": [
+            "debug/serialize.ts#file",
+            "debug/serialize.ts#serialize",
+            "wire/serialize.ts#file",
+            "wire/serialize.ts#serialize"
+          ],
+          "paths": [
+            "wire/serialize.ts",
+            "debug/serialize.ts"
+          ],
+          "packetBytes": 7823,
+          "queryMs": [
+            0.8986669999999322,
+            0.8523749999999382,
+            0.8709999999996398,
+            0.5610840000003918,
+            0.5665840000001481,
+            0.6891660000001139,
+            0.5490829999998823
+          ],
+          "medianQueryMs": 0.6891660000001139,
+          "p95QueryMs": 0.8986669999999322
+        },
+        "current": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 2,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 6291,
+          "truncated": false,
+          "substantiveLocators": [
+            "debug/serialize.ts#file",
+            "debug/serialize.ts#serialize",
+            "wire/serialize.ts#file",
+            "wire/serialize.ts#serialize"
+          ],
+          "paths": [
+            "wire/serialize.ts",
+            "debug/serialize.ts"
+          ],
+          "packetBytes": 8222,
+          "queryMs": [
+            0.8698329999997441,
+            0.995082999999795,
+            0.8573750000000473,
+            0.6832089999998061,
+            0.7315000000003238,
+            0.7348329999999805,
+            0.956416999999874
+          ],
+          "medianQueryMs": 0.8573750000000473,
+          "p95QueryMs": 0.995082999999795
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 1,
+            "total": 1
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 2,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 524,
+          "truncated": false,
+          "substantiveLocators": [
+            "debug/serialize.ts#serialize",
+            "wire/serialize.ts#serialize"
+          ],
+          "paths": [
+            "debug/serialize.ts",
+            "wire/serialize.ts"
+          ],
+          "packetBytes": 2455,
+          "queryMs": [
+            4.352499999999964,
+            3.9664169999996375,
+            4.004500000000007,
+            3.6785829999998896,
+            3.394749999999931,
+            3.3901670000000195,
+            3.570082999999613
+          ],
+          "medianQueryMs": 3.6785829999998896,
+          "p95QueryMs": 4.352499999999964
+        }
+      }
+    },
+    {
+      "id": "missing-domain",
+      "ambiguous": false,
+      "preparationMs": 627.1549999999997,
+      "methods": {
+        "previous": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 0,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 1489,
+          "truncated": false,
+          "substantiveLocators": [],
+          "paths": [],
+          "packetBytes": 3476,
+          "queryMs": [
+            0.19574999999986176,
+            0.09087499999986903,
+            0.08020800000031159,
+            0.0773749999998472,
+            0.1574999999997999,
+            0.10987499999964712,
+            0.07037499999978536
+          ],
+          "medianQueryMs": 0.09087499999986903,
+          "p95QueryMs": 0.19574999999986176
+        },
+        "current": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 0,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 1630,
+          "truncated": false,
+          "substantiveLocators": [],
+          "paths": [],
+          "packetBytes": 3617,
+          "queryMs": [
+            0.3527079999998932,
+            0.3244590000003882,
+            0.32933399999956237,
+            0.28637499999967986,
+            0.39645800000016607,
+            0.302208999999948,
+            0.2815410000002885
+          ],
+          "medianQueryMs": 0.3244590000003882,
+          "p95QueryMs": 0.39645800000016607
+        },
+        "ordinary": {
+          "owners": {
+            "hit": 0,
+            "total": 0
+          },
+          "consumers": {
+            "hit": 0,
+            "total": 0
+          },
+          "counterexamples": {
+            "hit": 0,
+            "total": 0
+          },
+          "returnedEntries": 0,
+          "irrelevantEntries": 0,
+          "irrelevantEntryBytes": 0,
+          "briefBytes": 178,
+          "truncated": false,
+          "substantiveLocators": [],
+          "paths": [],
+          "packetBytes": 2165,
+          "queryMs": [
+            4.166541999999936,
+            3.730083999999806,
+            3.904624999999669,
+            3.7777079999996204,
+            3.6940420000000813,
+            3.9753749999999854,
+            3.6771670000002814
+          ],
+          "medianQueryMs": 3.7777079999996204,
+          "p95QueryMs": 4.166541999999936
+        }
+      }
+    }
+  ],
+  "totals": {
+    "previous": {
+      "owners": {
+        "hit": 3,
+        "total": 4
+      },
+      "consumers": {
+        "hit": 2,
+        "total": 3
+      },
+      "counterexamples": {
+        "hit": 2,
+        "total": 2
+      },
+      "returnedEntries": 10,
+      "irrelevantEntries": 2,
+      "irrelevantEntryBytes": 4145,
+      "briefBytes": 32482,
+      "packetBytes": 42744,
+      "medianQueryMs": 0.6891660000001139,
+      "p95QueryMs": 1.758707999999956
+    },
+    "current": {
+      "owners": {
+        "hit": 4,
+        "total": 4
+      },
+      "consumers": {
+        "hit": 3,
+        "total": 3
+      },
+      "counterexamples": {
+        "hit": 1,
+        "total": 2
+      },
+      "returnedEntries": 11,
+      "irrelevantEntries": 2,
+      "irrelevantEntryBytes": 4355,
+      "briefBytes": 37507,
+      "packetBytes": 47769,
+      "medianQueryMs": 1.2037909999999101,
+      "p95QueryMs": 2.4646659999999656
+    },
+    "ordinary": {
+      "owners": {
+        "hit": 4,
+        "total": 4
+      },
+      "consumers": {
+        "hit": 3,
+        "total": 3
+      },
+      "counterexamples": {
+        "hit": 1,
+        "total": 2
+      },
+      "returnedEntries": 16,
+      "irrelevantEntries": 7,
+      "irrelevantEntryBytes": 2206,
+      "briefBytes": 5976,
+      "packetBytes": 16238,
+      "medianQueryMs": 4.311916999999994,
+      "p95QueryMs": 8.517583000000059
+    }
+  },
+  "limitations": [
+    "Public authored fixture, not independently blinded task labels, production capacity or agent benefit.",
+    "Complete packet bytes use each actual task-start packet with its nested response replaced for comparator arms; identical scan/provenance envelope, no notes.",
+    "Preparation is measured once for the current real scan + hook per task. Warm query latency separately compares all three methods; ordinary rg needs no index.",
+    "Snippet matches are retrieval opportunities, not evidence an agent substantively read or correctly used a source.",
+    "Empty-label negative and ambiguous tasks remain in irrelevant-entry and byte denominators. No recall is invented for a zero-label task."
+  ]
+}
