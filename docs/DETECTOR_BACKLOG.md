@@ -31,6 +31,8 @@ Each proposal must retain source provenance, state missing facts explicitly, and
 - **Graduation criteria:** A failing delayed-delivery trace is required for positives; downstream guards prevent false positives; restartable and absorbing lifecycles are distinguished. Unknown callback or mutation ownership remains a coverage gap.
 - **Dependencies:** Cross-callback data flow, resolved state ownership and generation checks, independent behavioral fixtures with verified cleanup and test-order isolation.
 
+**1.3 development status:** the opt-in [lifecycle admission lab](LIFECYCLE_LAB.md) now executes pinned unsafe, downstream-guarded and restartable synthetic implementations against an independent explicit contract. It records observable state and replayable delayed-callback witnesses; incomplete route/ownership/admission coverage yields `UNKNOWN`. The [reuse example](../examples/lifecycle-lab/reuse.mjs) uses the existing local review store to exercise unrelated changes, guard changes, reverts and fresh re-review. These are development fixtures and manually registered workflow candidates, not automatically extracted production findings. The scanner rule remains disabled pending independent unrelated-codebase examples, reviewed adapter/source mappings, held-out behavioral discrimination and measured extraction overhead. Neither a passing lab trace nor a current annotation suppresses existing structural warnings.
+
 ## Divergent normalization at entry points
 
 - **Hypothesis:** Multiple restore/import paths normalize the same durable model independently, so adding or changing a common field creates inconsistent canonical state.

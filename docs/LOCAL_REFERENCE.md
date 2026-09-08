@@ -1,6 +1,6 @@
 # Local CLI and MCP reference
 
-This reference describes the implementation in version 1.2.0. Start with the [local workflow](LOCAL_WORKFLOW.md) for a walkthrough, [concepts](CONCEPTS.md) for the authority model, and [extension guide](EXTENDING.md) for detector behavior. The local index is an optional SQLite projection; the assurance service is a separate, authoritative workflow.
+This reference describes the implementation in version 1.3.0. Start with the [local workflow](LOCAL_WORKFLOW.md) for a walkthrough, [concepts](CONCEPTS.md) for the authority model, and [extension guide](EXTENDING.md) for detector behavior. The local index is an optional SQLite projection; the assurance service is a separate, authoritative workflow.
 
 ## Executables and prerequisites
 
@@ -22,7 +22,7 @@ The workspace declares three executable names:
 
 The examples use explicit `node` paths so they do not depend on a global installation or shell link. `npm run local -- …` invokes the local entry point, but npm may print its own script banner: invoke `node` directly when stdout must contain only JSON.
 
-Successful local commands write one JSON object to stdout. Scan progress goes to stderr. Errors write a message to stderr and exit with status 1. Queries open an existing database read-only; run `scan` first. `review` is a separate CLI write that appends a local annotation. The local CLI does not require service credentials.
+Successful local commands write one JSON object to stdout. Scan progress goes to stderr. Errors write a message to stderr and exit with status 1. Queries open an existing database read-only; run `scan` first. `review` appends a local annotation; `review-import` restores archived annotations in a separate transaction. Archive export reads without mutating the index. The local CLI does not require service credentials.
 
 ## Workspace configuration
 
@@ -68,14 +68,17 @@ Discovery recognizes TS/JS variants (`.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx
 ## Local command overview
 
 ```text
-assurance-local scan --config FILE [--db FILE]
+assurance-local scan --config FILE [--db FILE] [--profile]
 assurance-local status --db FILE
+assurance-local investigate TASK --db FILE [--limit N] [--max-bytes N]
 assurance-local search QUERY --db FILE [--limit N]
 assurance-local backlog --db FILE [--limit N] [--category CATEGORY] [--after CURSOR]
 assurance-local context SUBJECT_ID --db FILE [--limit N]
 assurance-local impact SUBJECT_ID --db FILE [--limit N]
 assurance-local review --input FILE --db FILE
 assurance-local reviews CANDIDATE_ID --db FILE [--limit N] [--after CURSOR]
+assurance-local review-export --output FILE --db FILE
+assurance-local review-import --input FILE --db FILE
 assurance-local drift SNAPSHOT --db FILE [--limit N] [--after ROW_ID]
 ```
 
@@ -83,13 +86,16 @@ assurance-local drift SNAPSHOT --db FILE [--limit N] [--after ROW_ID]
 |---|---|
 | `--db FILE` | Absolute or current-directory-relative database path. |
 | `--config FILE` | Required by `scan`. If `--db` is omitted, select `.assurance-cache/index.sqlite` beside this JSON file. Queries can also use `--config` solely to select this default path; they do not reload or validate the configuration. |
-| `--limit N` | Integer 1–200, default **20 for every local query**, including `drift`. |
+| `--limit N` | `investigate`: 1–20 files, default **5**. Other bounded queries: 1–200 records, default **20**. |
+| `--max-bytes N` | `investigate` only: compact JSON budget of 4,096–128,000 UTF-8 bytes, default **24,000**. |
+| `--profile` | `scan` only: add analysis phase timings, ingestion time, commit time and analysis-stage process memory. |
 | `--category CATEGORY` | Backlog filter: `SIMPLIFICATION`, `INCONSISTENCY`, `RELIABILITY` or `COVERAGE`. Omission includes all categories. Case-sensitive. |
 | `--after CURSOR` | Backlog/review-history opaque string cursor or drift's nonnegative numeric row cursor. Their formats are not interchangeable. |
-| `--input FILE` | Required by `review`: path to one JSON file, at most 65,536 bytes. This option does not read stdin. |
+| `--input FILE` | `review`: one JSON object, at most 65,536 bytes. `review-import`: unchanged canonical archive, at most 16 MiB. Neither reads stdin. |
+| `--output FILE` | Required by `review-export`; create a private archive file without overwriting an existing path. |
 | `--help` | Print help without opening the index. |
 
-Commands reject unsupported options and unexpected positional arguments. Quote multi-word search queries. There is no local `--component`: every configured component participates in a scan.
+Commands reject unsupported options and unexpected positional arguments. Quote multi-word tasks and search queries. There is no local `--component`: every configured component participates in a scan.
 
 ## Scan and status
 
@@ -100,12 +106,14 @@ node packages/agent/dist/src/local-cli.js status --db examples/.assurance-cache/
 
 `scan` returns `{snapshot, database, components, summary}`. Each entry in `components` contains `id`, counts of `added`, `changed`, `removed` and `unchanged` facts, `elapsedMs`, and `coverage`. The database path is absolute. The first committed local snapshot is 1. Every successful scan creates another snapshot, including scans with no changed facts; this differs from service component heads, which can remain stable on no-op publication.
 
+With `--profile`, each component adds `profile.analysis` and `profile.projectionMs`. Analysis separates discovery, TypeScript work, Java work, configuration, source validation and context construction, with file/fact counts and process RSS/peak RSS sampled at analysis completion. The top-level `profile` reports index-open time, commit time and total time after configuration loading. Commit includes review reconciliation and SQLite durability work. These timings do not isolate TypeScript parsing from checking or fact extraction, and memory is process-wide. See [workload diagnostics](INVESTIGATION_SCALE.md).
+
 `status` returns the same summary shape embedded by `scan`:
 
 | Field | Meaning |
 |---|---|
 | `workspace`, `snapshot` | Index identity and latest committed local scan number |
-| `schemaVersion`, `reviewRevision` | Local schema version (2) and annotation revision; append or permanent invalidation advances the latter |
+| `schemaVersion`, `reviewRevision` | Local schema version (3) and annotation revision; append or permanent invalidation advances the latter |
 | `searchPolicyDigest` | Digest of compiled search policy, matched against the policy used to build stored search metadata |
 | `facts`, `opportunities` | Total current facts and currently emitted candidates |
 | `components` | Up to 200 components, sorted by ID; each includes root, snapshot, source revision, coverage, analyzer, rules, configuration/environment digests, `candidatePolicyDigest`, `factCount` and `findingCount` |
@@ -120,7 +128,7 @@ Counts and paths depend on your checkout. This is an illustrative excerpt, with 
 {
   "workspace": "payments",
   "snapshot": 2,
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "reviewRevision": 0,
   "facts": 1200,
   "opportunities": 43,
@@ -130,11 +138,29 @@ Counts and paths depend on your checkout. This is an illustrative excerpt, with 
 }
 ```
 
-Version 1.2.0 uses local schema 2. CLI `scan` validates its configuration before opening writable storage. Schema-1 migration adds append-only review storage and rebuilds normalized search metadata, then commits together with the first successful scan. If that scan fails, the previous schema and source snapshot remain intact. Read-only queries and MCP reject older/uninitialized indexes with an instruction to run `scan`; `review` also requires that migration first. Schema versions newer than 2 are rejected.
+Version 1.3.0 uses local schema 3. CLI `scan` validates configuration before writable open and commits schema-1/2 migration, normalized search rebuild and source publication together. Schema 3 preserves archive provenance and the precedence of locally submitted reviews. A failed upgrade scan retains the previous schema and source snapshot. Read-only queries, MCP and `review-export` reject older indexes; review append and imports into an existing index also require migration first. Schema versions newer than 3 are rejected.
 
-The index also records `searchPolicyDigest`, a digest of compiled `local-search.js`. If the tool's search policy changes, read-only access (including `status` and MCP) and review append reject the old projection until a successful `scan` rebuilds search metadata, even when source facts are unchanged. Rebuild and restart tool processes after code changes; the digest is computed on module load. Read-only queries check stored metadata without extracting source or rebuilding search. A search-only rebuild does not itself change source/review revisions, produce source/context drift or invalidate reviews; the accompanying CLI scan still creates a new snapshot and checks ordinary source/context applicability.
+In particular, `review-export` cannot recover directly from schema 2. Preserve a SQLite-consistent backup before migration. If the original source inventory cannot be scanned successfully, retain that database and a compatible historical tool for reading its history; this version supplies no archive-only migration or manual schema-version bypass. A missing destination may be initialized by `review-import` before its first source scan, with restored candidates initially absent.
+
+The scanner implementation digest participates in captured environment context. A 1.2-to-1.3 rescan can therefore make old reviews stale with unchanged application source; history is preserved, but current applicability across the upgrade is not guaranteed. Enabling `--profile` with the same scanner build changes timing output only.
+
+The index also records `searchPolicyDigest`, a digest of compiled `local-search.js`. If the tool's search policy changes, read-only access (including `status` and MCP) and review append/import into an existing index reject the old projection until a successful `scan` rebuilds search metadata, even when source facts are unchanged. Rebuild and restart tool processes after code changes; the digest is computed on module load. Read-only queries check stored metadata without extracting source or rebuilding search. A search-only rebuild does not itself change source/review revisions, produce source/context drift or invalidate reviews; the accompanying CLI scan still creates a new snapshot and checks ordinary source/context applicability.
 
 The database uses SQLite WAL and a 5-second busy timeout. A workspace scan begins one write transaction before extraction, ingests components in sorted ID order and commits them together. Readers retain the prior committed state, subject to schema/search-policy compatibility. Errors roll back pending migration, search metadata, facts, candidates, review invalidations, drift and snapshot metadata together. All previously indexed components must still be present and rescanned. To remove a component from the inventory or change its root, use a new index after preserving the old database and its review history with a SQLite-consistent backup. A new component ID alone does not permit silently dropping an old component.
+
+## Task investigation
+
+```sh
+node packages/agent/dist/src/local-cli.js investigate "callbacks arriving after cancellation" --db examples/.assurance-cache/index.sqlite --limit 5 --max-bytes 24000
+```
+
+`TASK` is a nonempty string of at most 2,000 characters; NUL is rejected. The query selects the first 12 distinct non-stopword normalized terms that fit within 384 UTF-8 bytes. `ignoredStopwordCount`, `omittedTermCount` and `termSelection` disclose that reduction. It uses the existing lexical search and groups its bounded hits by component/file; it does not infer a behavioral contract or run a model.
+
+The brief contains `snapshot`, `reviewRevision`, task digest/preview, `authority`, `freshness`, `retrieval`, `entries`, `omittedEntryIds`, `truncated`, `budget`, `nextSteps` and `limitations`. Each entry includes source/match locations and hashes, lexical owners, nearby symbols, import neighbors, source revision, coverage and up to four candidates with compact review summaries. Candidate reads cover at most three visible source subjects per entry. `candidateCoverage.queriedSubjectIds` and `omittedSubjectIds` make that boundary explicit; an empty candidate list is not a file-wide absence claim. Review text remains untrusted data.
+
+`retrieval.matchingFileCount` describes the grouped bounded hit set, not every matching file in the index. Pool, term, file, subject and entry limits propagate truncation. Entries that cannot fit are omitted whole and their primary IDs appear in `omittedEntryIds`; other limits are disclosed by their respective flags. A small budget may return no entries. Use the returned follow-up context/review IDs or a narrower task; there is no continuation cursor.
+
+`budget.responseBytes` counts `JSON.stringify(brief)` in UTF-8 and cannot exceed `maxBytes`. CLI investigation output uses compact JSON; its trailing newline adds one framing byte. MCP counts the structured payload, not the duplicated text block or JSON-RPC envelope, against this investigation budget. The byte ceiling bounds returned content, not FTS work or query CPU time.
 
 ## Search
 
@@ -294,7 +320,7 @@ node packages/agent/dist/src/local-cli.js reviews '<candidate ID>' --db examples
 | `author`, `reason`, `evidence` | Required nonempty strings, at most 200, 2,000 and 8,000 characters respectively; NUL is rejected |
 | `factIds` | Optional array of at most 32 additional source IDs, each at most 200 characters; every cited fact must exist; the primary source is always included |
 
-`review` appends in a write transaction and returns `{review, reviewRevision}`. History is append-only: correct an earlier note by appending a new one. The latest review controls the ranking adjustment. A current `COUNTEREVIDENCE` note subtracts 20 from the existing source-adjusted score; a latest `INVESTIGATE` note makes no review discount. Multiple historical notes do not stack discounts, and no disposition removes the candidate.
+`review` appends in a write transaction and returns `{review, reviewRevision}`. History is append-only: correct an earlier note by appending a new one. The latest locally submitted review controls the ranking adjustment when one exists; restored history cannot displace it. Without a local submission, the latest imported record is shown with stale or absent state and no discount. A current `COUNTEREVIDENCE` note subtracts 20 from the existing source-adjusted score; a latest `INVESTIGATE` note makes no review discount. Multiple historical notes do not stack discounts, and no disposition removes the candidate.
 
 Each record stores the candidate, primary/cited source facts, containing file facts, fingerprints/counts of all direct imports and importers, and component context. Scan reconciliation permanently invalidates a record after a captured source/file, cited fact, direct dependency content or membership, candidate, context or ranking-policy change. This includes newly added direct dependencies. A truly unchanged scan preserves applicability, although its new scan number still invalidates pagination cursors. These pins cover the stored direct import projection, not every runtime dependency.
 
@@ -307,6 +333,17 @@ Each record stores the candidate, primary/cited source facts, containing file fa
 Invalidation is append-only and prevents resurrection: reverting source or reintroducing a candidate does not make an invalidated note current again. Inspect the new snapshot and append a fresh review if the reasoning still applies. This does not establish the truth of a `CURRENT` note; applicability and evidence quality are separate.
 
 `reviews` returns `{snapshot, reviewRevision, items, hasMore, next}`, newest record first. Each item includes the source capture, `fingerprint`, `state`, `invalidation` (or null), `authority: USER_REPORTED_LOCAL_ANNOTATION` and `freshness: AS_OF_SCAN`. Continue with the returned opaque `next` while `hasMore`; the cursor pins scan, review revision and candidate ID. A change to any pin produces `Index changed; restart review pagination`. Page size may change. Review append is CLI-only; local MCP exposes history reads, not a write tool.
+
+## Review archive commands
+
+```sh
+node packages/agent/dist/src/local-cli.js review-export --db .assurance-cache/index.sqlite --output retained-reviews.json
+node packages/agent/dist/src/local-cli.js review-import --db recovered/index.sqlite --input retained-reviews.json
+```
+
+Export reads one consistent snapshot and writes a new file with private creation permissions; an existing output path is rejected. Its JSON summary reports archive path, bytes and source workspace/scan/review revision. Import validates canonical JSON and integrity before opening storage, then appends the complete archive in one transaction. Its result includes `imported`, `skipped`, `total`, `reviewRevision` and archive `digest`. Repeating identical imports skips records without advancing revision.
+
+The archive carries every distinct originating annotation, including superseded and absent-candidate history, up to 10,000 records and 16 MiB. Exceeding a complete-export bound fails; it does not export a successful prefix. Restore retains original captures and provenance but adds a permanent `ARCHIVE_RESTORE_REQUIRES_REVIEW` invalidation. It cannot produce current counterevidence, supersede a local submission or remap source identities. Preserve a full SQLite backup for source projections, drift and every local restore event. See [review archives](REVIEW_ARCHIVES.md) for format, trust and recovery details, and the schema-2 restriction under [scan and status](#scan-and-status).
 
 ## Import impact
 
@@ -352,7 +389,7 @@ Response: `{items, hasMore, next}`. Unlike the other local read responses, drift
 
 Fact changes compare `contentHash`, `signatureHash`, `tags`, `effects`, `metrics`, `path`, `locator`, `kind` and `language`. A line-number-only change updates stored metadata but is not itself a `CHANGED` row. A locator/identity change commonly appears as removal plus addition. Context drift compares configuration digest, environment, analyzer, coverage and the compiled investigation policy's `candidatePolicyDigest`. Rebuild and restart scanner processes after changing that policy; its digest is computed on module load. A source revision label alone does not create context drift. Changing findings alone does not create fact drift.
 
-## Seven local MCP tools
+## Eight local MCP tools
 
 Set `ASSURANCE_LOCAL_DB` to select local mode before launching the existing bridge:
 
@@ -374,6 +411,7 @@ The outer client configuration may differ; this is a conventional server declara
 
 | Tool | Required arguments | Optional arguments | Result |
 |---|---|---|---|
+| `assurance_local_investigate` | `task` string, 1–2,000 characters | `limit` 1–20; `maxBytes` 4,096–128,000 | Same task brief as CLI `investigate` |
 | `assurance_local_status` | `{}` | None | Same as CLI `status` |
 | `assurance_local_search` | `query` string, at most 500 characters | `limit` | Same as CLI `search` |
 | `assurance_local_backlog` | `{}` | `category`, `after` string, `limit` | Same as CLI `backlog` |
@@ -382,9 +420,9 @@ The outer client configuration may differ; this is a conventional server declara
 | `assurance_local_drift` | `snapshot` integer, at least 1 | `after` integer, at least 0; `limit` | Same as CLI `drift` |
 | `assurance_local_reviews` | Candidate `id` string | `after` opaque string, `limit` | Same as CLI `reviews` |
 
-All local limits default to 20 and accept 1–200. The same `localQuery` function implements CLI and MCP reads. The MCP schemas advertise bounded strings for IDs; the shared local query layer further limits strings to 2,000 characters. Valid subject IDs are the returned 64-character digests. Tool arguments must be objects, including `{}` for status. Unknown or missing properties are rejected.
+Investigation defaults to five files and 24,000 compact JSON bytes; its file ceiling is 20. Other bounded query limits default to 20 and accept 1–200. The same `localQuery` function implements CLI and MCP reads. The MCP schemas advertise bounded strings for IDs; the shared local query layer further limits strings to 2,000 characters. Valid subject IDs are the returned 64-character digests. Tool arguments must be objects, including `{}` for status. Unknown or missing properties are rejected.
 
-Local mode exposes exactly these seven tools, all annotated read-only. It opens the database read-only, does not scan or append reviews, and does not expose remote proposal, approval, evidence or lease operations. Use CLI `scan` for schema migration and CLI `review` to append an annotation. A failed local open does not fall back to remote mode. Remove `ASSURANCE_LOCAL_DB` and configure service credentials to use the separate [service tool surface](AGENT_PROTOCOL.md).
+Local mode exposes exactly these eight tools, all annotated read-only. It opens the database read-only, does not scan or append reviews, and does not expose remote proposal, approval, evidence or lease operations. Use CLI `scan` for schema migration, `review` to append an annotation, and `review-export`/`review-import` for archives. A failed local open does not fall back to remote mode. Remove `ASSURANCE_LOCAL_DB` and configure service credentials to use the separate [service tool surface](AGENT_PROTOCOL.md).
 
 The bridge uses newline-delimited JSON-RPC over stdio and protocol version `2025-06-18`. Initialize before `tools/list` or `tools/call`. A request example:
 
@@ -403,7 +441,7 @@ The scanner stores metadata and before/after drift facts, not full source bodies
 
 Source projections can be rebuilt, but the SQLite database may hold the **only copy of local review records and their invalidation history**. Do not delete or replace it as disposable cache once annotations exist. Before moving to a new inventory or replacing an index, preserve the old database using SQLite-consistent backup tooling, such as the SQLite backup API, and retain that backup. Copying only a live main file can omit committed WAL data.
 
-History has no automatic compaction or retention. If a new index is needed, keep the preserved old database available for review-history lookup; snapshot numbers, review IDs and cursors belong to their original database and do not transfer. No review import/merge protocol is provided. Durable authoritative evidence and decisions remain in the separate service; that service does not automatically back up local annotations.
+History has no automatic compaction or retention. A review archive transfers distinct originating annotations and captured provenance, with permanent restore invalidation; it does not transfer live applicability, remap component/source IDs, or preserve every local restore event. Snapshot numbers, local insertion IDs and cursors belong to their original database. Keep a SQLite-consistent backup for full history and follow the [archive contract](REVIEW_ARCHIVES.md) for bounded transfer. Durable authoritative evidence and decisions remain in the separate service; that service does not automatically back up local annotations.
 
 ## Separate service CLI
 
@@ -426,4 +464,4 @@ For `--json -`, stdin JSON is limited to 8,000,000 bytes. Service operation payl
 
 ## Implementation map
 
-Search normalization and lexical context live in [local-search.ts](../packages/agent/src/local-search.ts); append-only review captures and invalidation live in [local-review.ts](../packages/agent/src/local-review.ts). The command/query behavior above is implemented by [local-cli.ts](../packages/agent/src/local-cli.ts), [local-query.ts](../packages/agent/src/local-query.ts), [local-index.ts](../packages/agent/src/local-index.ts), [scan.ts](../packages/agent/src/scan.ts) and [mcp.ts](../packages/agent/src/mcp.ts). The [local tests](../packages/agent/test/local.test.ts) exercise rollback, drift, invalidation, cursor consistency, candidate lifecycle, import cycles and the MCP process boundary.
+Search normalization and lexical context live in [local-search.ts](../packages/agent/src/local-search.ts); task-brief composition lives in [local-investigate.ts](../packages/agent/src/local-investigate.ts). Review capture, invalidation and restore transactions live in [local-review.ts](../packages/agent/src/local-review.ts), with the bounded canonical archive format in [local-review-archive.ts](../packages/agent/src/local-review-archive.ts). CLI/MCP share [local-query.ts](../packages/agent/src/local-query.ts); [local-cli.ts](../packages/agent/src/local-cli.ts), [local-index.ts](../packages/agent/src/local-index.ts), [scan.ts](../packages/agent/src/scan.ts) and [mcp.ts](../packages/agent/src/mcp.ts) own transport, persistence and scan boundaries. Run `npm run test:local` for investigation, archive and existing local behavior checks.

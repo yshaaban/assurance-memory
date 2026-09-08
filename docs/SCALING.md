@@ -59,3 +59,11 @@ The optional SQLite workbench does not use the workspace's PostgreSQL writer. It
 The local benchmark now exercises 100,000 facts across ten components; see [measured results](VALIDATION_1_1.md). Limits are intentionally component-local and queries explicitly bounded. The local index has one writer, unbounded retained drift history, and no cross-workspace transactions. Direct and reverse import retrieval are TS/JS component-local projections, not a complete Java or cross-repository call graph.
 
 The service `claims.frontier` query bounds a mission to 500 claims by default (maximum 5,000), 20,000 argument edges, and the existing 256-level assessment limit. Exceeding a graph budget fails instead of returning a seemingly complete assurance frontier. Paginated output requires its returned fingerprint on continuation. This read-only operation changes no gate policy.
+
+## Investigation and retained recovery in 1.3
+
+The task brief defaults to five files within 24,000 compact JSON bytes, with maxima of twenty files and 128,000 bytes. It composes existing lexical reads in one snapshot and discloses term, subject, candidate and entry omissions. These output limits do not bound FTS work independently of the matching population. Local MCP exposes eight read-only tools; its transport limit remains separate from the brief's structured-payload budget.
+
+Review archives hold up to 10,000 distinct originating records and 16 MiB. They preserve captured annotations with permanently stale restore state, rather than replacing full SQLite backup or supplying automatic retention. Complete export fails when its limits are exceeded. See [recovery semantics](REVIEW_ARCHIVES.md).
+
+Use `scan --profile` to separate compiler analysis, source validation, SQLite ingestion and reconciliation plus commit. The [investigation diagnostics](INVESTIGATION_SCALE.md) exercise broad queries, a high-degree owner, retained reviews, permanent invalidation and restore, alongside frozen-component profiles. TypeScript dominated those unchanged scans; no compiler-result cache is added. Any incremental path must prove complete input/membership equivalence and measure retained memory and end-to-end benefit.

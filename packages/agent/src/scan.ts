@@ -86,12 +86,25 @@ async function localJava(classPath: string, body: unknown): Promise<AnalysisResu
     child.stdin.end(JSON.stringify(body));
   });
 }
+export interface ScanProfile {
+  phaseMs: Record<string, number>;
+  elapsedMs: number;
+  files: number;
+  facts: number;
+  processRssBytes: number;
+  processPeakRssBytes: number;
+}
 export async function analyzeComponent(client: AssuranceClient | undefined, component: string, root: string,
-  config: ComponentConfig, analyzer = new TypeScriptAnalyzer()): Promise<AnalysisResult & { sourceRevision: string; configurationDigest: string; environment: Record<string, string> }> {
+  config: ComponentConfig, analyzer = new TypeScriptAnalyzer(), onProfile?: (profile: ScanProfile) => void): Promise<AnalysisResult & { sourceRevision: string; configurationDigest: string; environment: Record<string, string> }> {
+  const started = performance.now(); let phaseStart = started;
+  const phaseMs: Record<string, number> = {};
+  const checkpoint = (phase: string) => { const now = performance.now(); phaseMs[phase] = now - phaseStart; phaseStart = now; };
   root = await realpath(resolve(root));
   const discovery = await discover(root, config);
+  checkpoint('discovery');
   const scripts = discovery.files.filter(path => script.test(path));
   const tsResult = scripts.length ? analyzer.analyze(component, root, scripts, config) : undefined;
+  checkpoint('typescript');
   const facts: Fact[] = [...(tsResult?.facts ?? [])], findings: Finding[] = [...(tsResult?.findings ?? [])];
   const limitations = [...discovery.limitations, ...(tsResult?.coverage.limitations ?? [])];
   let complete = discovery.complete && tsResult?.coverage.discovery !== "PARTIAL";
@@ -127,7 +140,9 @@ export async function analyzeComponent(client: AssuranceClient | undefined, comp
     facts.push(...result.facts); findings.push(...result.findings); result.rulesExecuted.forEach(rule => rules.add(rule));
     limitations.push(...result.coverage.limitations); complete &&= result.coverage.discovery === "COMPLETE"; semantic &&= result.coverage.semantic === "RESOLVED";
   }
+  checkpoint('java');
   for (const path of discovery.files.filter(path => !script.test(path) && !path.endsWith(".java"))) facts.push(configFact(component, portablePath(root, path), await readFile(path, "utf8"), findings));
+  checkpoint('configuration');
   // Detect working-tree mutation during collection rather than publishing a mixture of file versions.
   for (const fact of facts.filter(fact => fact.kind === "FILE" || fact.kind === "CONFIG")) {
     if (sha256(await readFile(resolve(root, fact.path))) !== fact.contentHash) throw new Error(`Source changed during scan: ${fact.path}; retry from an immutable checkout`);
@@ -138,6 +153,7 @@ export async function analyzeComponent(client: AssuranceClient | undefined, comp
   const unique = new Map<string, Fact>();
   for (const fact of facts) { if (unique.has(fact.id)) throw new Error("Duplicate subject identity; scan cannot be published safely"); unique.set(fact.id, fact); }
   if (unique.size > 50_000) throw new Error("Component exceeds the server's 50000-fact partition bound");
+  checkpoint('sourceValidation');
   let sourceRevision: string;
   try {
     const git = (args: string[]) => execFileSync("git", ["-C", root, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: 10_000 }).trim();
@@ -156,11 +172,15 @@ export async function analyzeComponent(client: AssuranceClient | undefined, comp
   environment.scannerImplementation = sha256(JSON.stringify(await Promise.all(
     ["scan.js", "analyzer.js", "rules.js", "util.js", "dependency-inputs.js"].map(async name => sha256(await readFile(new URL(name, import.meta.url)))))));
   for (const digest of Object.values(environment)) if (!/^[a-f0-9]{64}$/.test(digest)) throw new Error("Environment context must use SHA-256 digests; do not place secrets in scanner configuration");
-  return { facts: [...unique.values()].sort((a, b) => a.id.localeCompare(b.id)), findings: deduplicateFindings(findings),
+  const result = { facts: [...unique.values()].sort((a, b) => a.id.localeCompare(b.id)), findings: deduplicateFindings(findings),
     rulesExecuted: [...rules].sort(), analyzer: `${tsResult?.analyzer ?? "no-ts"}+jdk-tree-21/1.0.0+config/1.0.0`,
-    coverage: { discovery: complete ? "COMPLETE" : "PARTIAL", semantic: semantic ? "RESOLVED" : "PARTIAL",
+    coverage: { discovery: complete ? "COMPLETE" as const : "PARTIAL" as const, semantic: semantic ? "RESOLVED" as const : "PARTIAL" as const,
       limitations: [...new Set(limitations)].slice(0, 100) },
     sourceRevision, configurationDigest: sha256(JSON.stringify(config)), environment };
+  checkpoint('context');
+  onProfile?.({ phaseMs, elapsedMs: performance.now() - started, files: discovery.files.length, facts: unique.size,
+    processRssBytes: process.memoryUsage().rss, processPeakRssBytes: process.resourceUsage().maxRSS * 1024 });
+  return result;
 }
 export async function publishComponent(client: AssuranceClient, component: string, root: string,
   config: ComponentConfig): Promise<{ head: Head; impactedClaims: string[] }> {

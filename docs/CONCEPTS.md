@@ -134,7 +134,7 @@ node packages/agent/dist/src/cli.js call claims.frontier --json frontier.json
 { "id": "payments.cancellation", "limit": 20, "maxClaims": 500 }
 ```
 
-The same operation is exposed as `assurance_frontier` in **service MCP mode**. It is not one of the seven local index tools.
+The same operation is exposed as `assurance_frontier` in **service MCP mode**. It is not one of the eight local index tools.
 
 | Request field | Contract |
 |---|---|

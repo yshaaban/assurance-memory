@@ -7,12 +7,15 @@ Build with `npm ci --ignore-scripts && npm run build`. The local CLI is `node pa
 ```sh
 node packages/agent/dist/src/local-cli.js scan --config workspace.json --db .assurance-cache/index.sqlite
 node packages/agent/dist/src/local-cli.js status --db .assurance-cache/index.sqlite
+node packages/agent/dist/src/local-cli.js investigate "callbacks arriving after cancellation" --db .assurance-cache/index.sqlite --limit 5 --max-bytes 24000
 node packages/agent/dist/src/local-cli.js backlog --db .assurance-cache/index.sqlite --limit 10 --category SIMPLIFICATION
 node packages/agent/dist/src/local-cli.js search "payment retry" --db .assurance-cache/index.sqlite
 node packages/agent/dist/src/local-cli.js context SUBJECT_ID --db .assurance-cache/index.sqlite
 node packages/agent/dist/src/local-cli.js impact SUBJECT_ID --db .assurance-cache/index.sqlite --limit 100
 node packages/agent/dist/src/local-cli.js drift 2 --db .assurance-cache/index.sqlite
 ```
+
+`investigate` turns a task into a bounded source brief using the existing lexical query. It includes source locations, owners, coverage and compact candidate/review context in one scan/review snapshot. Inspect term selection, `candidateCoverage`, omitted IDs and truncation before reading the cited implementation. The default covers five files and 24,000 compact JSON bytes, not complete task context; source-level candidate queries cover at most three visible subjects per entry.
 
 `search` normalizes camelCase, underscores and a small explicit set of morphology aliases over locators, tags and effects. It tries all terms first and broadens only after zero all-term matches, reporting `matchMode: ANY_TERM`. Exact symbol/file boosts and per-item `rankingReasons` explain bounded reranking; `candidatePoolTruncated` reports pool exhaustion. It does not embed code or index raw file bodies. Read the cited source using ordinary repository tools.
 
@@ -59,6 +62,17 @@ Notes append rather than overwrite. Only the latest `CURRENT` counterevidence no
 
 Local applicability is not assurance. A note never removes a candidate, establishes a requirement, or closes debt. For stronger proposed ownership/retry/lifecycle detectors, consult the [gated backlog](DETECTOR_BACKLOG.md) rather than treating ordinary branch counts as proof.
 
+## Transfer retained notes and check reuse
+
+```sh
+node packages/agent/dist/src/local-cli.js review-export --db .assurance-cache/index.sqlite --output retained-reviews.json
+node packages/agent/dist/src/local-cli.js review-import --db recovered/index.sqlite --input retained-reviews.json
+```
+
+Keep the archive private and unchanged. It preserves distinct originating notes and their captures, including stale or absent history, within 10,000 records and 16 MiB. Import is idempotent and keeps restored records stale or absent; it never displaces a locally submitted review. Inspect the new source and append a fresh review if the reasoning still applies. A full SQLite backup additionally preserves drift, scans and each local restore event. See [review archives](REVIEW_ARCHIVES.md) and the [schema/recovery contract](LOCAL_REFERENCE.md#scan-and-status).
+
+The opt-in [lifecycle lab](LIFECYCLE_LAB.md) executes pinned synthetic implementations against an independent explicit contract. Run its [reuse example](../examples/lifecycle-lab/reuse.mjs) with `node examples/lifecycle-lab/reuse.mjs` to carry a report into the existing investigation/review workflow. Lab results require source and assumption pins; they add neither an alternate review store nor a production scanner rule. Run `npm run test:lab` for the behavioral checks.
+
 ## Workspace boundaries and Java
 
 Choose one component per build target, with at most 50,000 extracted facts and 20,000 source/config files by default (configurable discovery ceiling: 50,000 files). All indexed components must participate in a workspace scan. Changing a component root or dropping an indexed component requires a new index after preserving the old database with a SQLite-consistent backup; it cannot silently erase a component's findings or review history.
@@ -98,7 +112,7 @@ Use the existing bridge in local mode:
 }
 ```
 
-The exact outer configuration belongs to the client. Local mode opens SQLite read-only and exposes seven tools: status, search, backlog, context, impact, drift and candidate review history (`assurance_local_reviews`). Scan and append reviews through the CLI; MCP has no local mutation tool. The service token is unnecessary. Remove `ASSURANCE_LOCAL_DB` to use the original authenticated service tools instead; local mode never falls back to a remote mutation.
+The exact outer configuration belongs to the client. Local mode opens SQLite read-only and exposes eight tools: investigate, status, search, backlog, context, impact, drift and candidate review history (`assurance_local_reviews`). Scan, append reviews and export/import archives through the CLI; MCP has no local mutation tool. The service token is unnecessary. Remove `ASSURANCE_LOCAL_DB` to use the original authenticated service tools instead; local mode never falls back to a remote mutation.
 
 ## Reviewed mission frontier
 
@@ -118,12 +132,14 @@ The result distinguishes local evidence/repair work, missing reviewed decomposit
 
 ## Persistence and limits
 
-Version 1.2.0 uses schema 2. CLI `scan` validates configuration before opening writable storage, then commits a schema-1 upgrade and normalized search rebuild with the first successful scan. A failed upgrade scan retains the previous schema and snapshot. Read-only queries/MCP and CLI review append reject older indexes until that scan succeeds.
+Version 1.3.0 uses schema 3. CLI `scan` validates configuration before writable open, then commits schema-1/2 migration and search rebuild with the first successful scan. A failed upgrade scan retains the previous schema and snapshot. Queries/MCP, archive export, review append and imports into existing indexes require the compatible schema. Preserve a SQLite-consistent backup first: schema-2 export cannot bypass migration if the original source inventory is unavailable.
+
+An upgrade can change the scanner implementation digest and make existing reviews stale despite unchanged application source. History survives; current applicability across tool versions is not promised. Toggling `--profile` with the same scanner build does not change fact or context identities.
 
 After changing the compiled search policy, rebuild/restart the tool and run `scan` again. The stored `searchPolicyDigest` must match before read-only access, including `status`, or review append. The scan rebuilds search metadata even for unchanged facts. Reads do not extract source or rebuild the index. Search-only metadata changes do not invalidate reviews or create source drift; the CLI scan still advances its snapshot and checks source/context applicability.
 
 The index uses SQLite WAL, one writer per workspace, and one atomic transaction across the configured scan, including pending migration, search rebuild and review invalidation. Readers retain the last committed state, subject to schema/search-policy compatibility. Failed scans roll back these changes with source facts, findings, drift and snapshot metadata. A compiler is instantiated per component; the CLI does not retain every component's AST.
 
-Persistence updates changed facts and FTS rows; unchanged rows are reused. **Compiler extraction still runs on every scan.** There is no unsafe cache based only on a Git commit or path timestamp. The 100,000-fact benchmark measures the projection independently of parsing.
+Persistence updates changed facts and FTS rows; unchanged rows are reused. **Compiler extraction still runs on every scan.** Use `scan --profile` to separate analysis, ingestion and reconciliation plus commit. The [investigation scale report](INVESTIGATION_SCALE.md) measures both synthetic review/query work and frozen-component extraction. Incremental compiler-result reuse is not implemented; any future path must preserve complete input and membership equivalence.
 
-Default queries return 20 records; the ceiling is 200. MCP also bounds response bytes. The scanner stores extracted metadata and drift history rather than raw source bodies; local review text is also stored and may include excerpts. Paths, identifiers and annotations can still be sensitive. Keep the database with the workspace. Drift and append-only review history grow without automatic retention. Source metadata can be rebuilt, but this database may be the only copy of its review records. Preserve it with SQLite-consistent backup tooling before replacement or deletion, and retain the old copy for review-history lookup. Copying only a live main database file can miss committed WAL data. The service owns authoritative assurance/evidence history and does not automatically copy local annotations.
+`investigate` defaults to five files and 24,000 compact JSON bytes, with ceilings of twenty files and 128,000 bytes. Other bounded queries default to twenty records with a ceiling of 200. MCP also bounds response bytes. The scanner stores extracted metadata and drift history rather than raw source bodies; local review text is also stored and may include excerpts. Paths, identifiers and annotations can still be sensitive. Keep the database with the workspace. Drift and append-only review history grow without automatic retention. Source metadata can be rebuilt, but this database may be the only copy of its review records. Preserve it with SQLite-consistent backup tooling before replacement or deletion, and retain the old copy for review-history lookup. Copying only a live main database file can miss committed WAL data. The service owns authoritative assurance/evidence history and does not automatically copy local annotations.

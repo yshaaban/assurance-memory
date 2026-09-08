@@ -166,19 +166,24 @@ test('local MCP process exposes bounded read-only tools without credentials or a
       { jsonrpc: '2.0', id: 5, method: 'tools/call', params: { name: 'assurance_propose_requirement', arguments: {} } },
       { jsonrpc: '2.0', id: 6, method: 'tools/call', params: { name: 'assurance_local_reviews', arguments: { id: candidateId } } },
       { jsonrpc: '2.0', id: 7, method: 'tools/call', params: { name: 'assurance_local_review', arguments: {} } },
+      { jsonrpc: '2.0', id: 8, method: 'tools/call', params: { name: 'assurance_local_investigate', arguments: { task: 'payment', maxBytes: 8000 } } },
     ].map(m => JSON.stringify(m)).join('\n') + '\n';
     const child = spawnSync(process.execPath, [fileURLToPath(new URL('../src/mcp.js', import.meta.url))], {
       input, encoding: 'utf8', timeout: 10000, env: { PATH: process.env.PATH, ASSURANCE_LOCAL_DB: path } });
     assert.equal(child.status, 0, child.stderr);
     const messages = child.stdout.trim().split('\n').map(line => JSON.parse(line));
     const tools = messages.find(m => m.id === 2).result.tools;
-    assert.equal(tools.length, 7);
+    assert.equal(tools.length, 8);
     assert.ok(tools.every((tool: any) => tool.annotations.readOnlyHint));
     assert.equal(messages.find(m => m.id === 3).result.structuredContent.items.length, 1);
     assert.equal(messages.find(m => m.id === 4).result.isError, true);
     assert.equal(messages.find(m => m.id === 5).error.code, -32602);
     assert.equal(messages.find(m => m.id === 6).result.structuredContent.items[0].authority, 'USER_REPORTED_LOCAL_ANNOTATION');
     assert.equal(messages.find(m => m.id === 7).error.code, -32602);
+    const brief = messages.find(m => m.id === 8).result.structuredContent;
+    assert.equal(brief.authority, 'LOCAL_INVESTIGATION_ONLY');
+    assert.equal(brief.entries[0].candidates[0].review.authority, 'USER_REPORTED_LOCAL_ANNOTATION');
+    assert.equal(brief.budget.responseBytes, Buffer.byteLength(JSON.stringify(brief)));
   } finally { await rm(dir, { recursive: true }); }
 });
 
@@ -242,7 +247,7 @@ test('changing the candidate implementation emits context drift across process r
   const { spawnSync } = await import('node:child_process');
   const dir = await mkdtemp(join(tmpdir(), 'assurance-policy-'));
   try {
-    for (const name of ['local-index.js', 'local-search.js', 'local-review.js', 'investigation.js', 'util.js']) {
+    for (const name of ['local-index.js', 'local-search.js', 'local-review.js', 'local-review-archive.js', 'investigation.js', 'util.js']) {
       await copyFile(fileURLToPath(new URL(`../src/${name}`, import.meta.url)), join(dir, name));
     }
     await writeFile(join(dir, 'package.json'), '{"type":"module"}');
